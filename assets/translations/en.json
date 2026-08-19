@@ -1,0 +1,73 @@
+{
+  "general": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "confirm": "Confirm",
+    "undo": "Undo",
+    "search": "Search",
+    "no_results": "No results found",
+    "loading": "Loading..."
+  },
+  "expenses": {
+    "title": "Expenses",
+    "add": "Add Expense",
+    "edit": "Edit Expense",
+    "deleted": "Expense {} deleted",
+    "empty": "No expenses yet",
+    "empty_hint": "Tap the + button to add an expense",
+    "total": "Total",
+    "filter": "Filter"
+  },
+  "categories": {
+    "title": "Categories",
+    "add": "Add Category"
+  },
+  "recurring": {
+    "title": "Recurring Expenses",
+    "add": "Add Recurring Expense",
+    "next_due": "Next due: {}",
+    "daily": "Daily",
+    "weekly": "Weekly",
+    "monthly": "Monthly",
+    "yearly": "Yearly"
+  },
+  "analytics": {
+    "title": "Analytics",
+    "this_week": "This Week",
+    "this_month": "This Month",
+    "last_month": "Last Month",
+    "custom": "Custom Range",
+    "vs_last": "vs Last Period",
+    "no_data": "Not enough data for analytics"
+  },
+  "budgets": {
+    "title": "Budgets",
+    "add": "Add Budget",
+    "over_budget": "{} over budget",
+    "remaining": "{} remaining",
+    "exceeded_alert": "Budget exceeded for {}!"
+  },
+  "settings": {
+    "title": "Settings",
+    "currency": "Currency",
+    "language": "Language",
+    "theme": "Theme",
+    "app_lock": "App Lock",
+    "categories": "Manage Categories",
+    "budgets": "Manage Budgets",
+    "export": "Export Data",
+    "clear_data": "Clear All Data",
+    "clear_confirm": "Are you sure you want to delete all data? This action cannot be undone.",
+    "currency_warning": "Changing currency will not convert existing amounts.",
+    "version": "Version"
+  },
+  "auth": {
+    "enter_pin": "Enter PIN",
+    "set_pin": "Set PIN",
+    "confirm_pin": "Confirm PIN",
+    "wrong_pin": "Incorrect PIN. Try again.",
+    "biometric_prompt": "Authenticate to unlock",
+    "enable_biometric": "Enable Biometric Login"
+  }
+}
