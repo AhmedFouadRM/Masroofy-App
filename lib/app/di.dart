@@ -1,5 +1,14 @@
+import 'package:flutter/services.dart' show rootBundle;
 import 'package:get_it/get_it.dart';
 import 'package:masroofy/core/database/app_database.dart';
+import 'package:masroofy/features/categories/data/datasources/category_local_datasource.dart';
+import 'package:masroofy/features/categories/data/datasources/reserved_category_names_asset.dart';
+import 'package:masroofy/features/categories/data/repositories/category_repository_impl.dart';
+import 'package:masroofy/features/categories/domain/repositories/i_category_repository.dart';
+import 'package:masroofy/features/categories/domain/usecases/delete_category.dart';
+import 'package:masroofy/features/categories/domain/usecases/save_category.dart';
+import 'package:masroofy/features/categories/presentation/cubits/categories_cubit.dart';
+import 'package:masroofy/features/categories/presentation/cubits/category_form_cubit.dart';
 import 'package:masroofy/shared/settings/settings_cubit.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -24,5 +33,21 @@ Future<void> configureDependencies({AppDatabase Function() openDatabase = AppDat
     ..registerLazySingleton<SettingsCubit>(
       () => SettingsCubit(preferences: getIt(), database: getIt()),
       dispose: (cubit) => cubit.close(),
+    );
+
+  _registerCategories();
+}
+
+void _registerCategories() {
+  getIt
+    ..registerLazySingleton(() => CategoryLocalDatasource(getIt()))
+    ..registerLazySingleton<ICategoryRepository>(() => CategoryRepositoryImpl(getIt()))
+    ..registerLazySingleton<IReservedCategoryNames>(() => ReservedCategoryNamesAsset(rootBundle))
+    ..registerLazySingleton(() => SaveCategory(getIt(), getIt()))
+    ..registerLazySingleton(() => DeleteCategory(getIt()))
+    ..registerFactory(() => CategoriesCubit(getIt(), getIt()))
+    // param1: the id of the category to edit, or null for a new one.
+    ..registerFactoryParam<CategoryFormCubit, int?, void>(
+      (categoryId, _) => CategoryFormCubit(getIt(), getIt(), getIt(), categoryId: categoryId),
     );
 }

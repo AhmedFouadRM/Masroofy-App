@@ -3,6 +3,8 @@ import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:masroofy/app/di.dart';
 import 'package:masroofy/core/database/app_database.dart';
+import 'package:masroofy/features/categories/presentation/cubits/categories_cubit.dart';
+import 'package:masroofy/features/categories/presentation/cubits/category_form_cubit.dart';
 import 'package:masroofy/shared/settings/settings_cubit.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -19,5 +21,11 @@ void main() {
     expect(getIt<SettingsCubit>(), same(getIt<SettingsCubit>()));
     expect(getIt<AppDatabase>(), same(getIt<AppDatabase>()));
     expect(getIt<SettingsCubit>().state.currency.code, 'EGP');
+
+    final categories = getIt<CategoriesCubit>();
+    expect(categories, isNot(same(getIt<CategoriesCubit>())));
+    expect(getIt<CategoryFormCubit>(param1: 3).state.id, 3);
+    expect(getIt<CategoryFormCubit>().state.isEditing, isFalse);
+    await categories.close();
   });
 }

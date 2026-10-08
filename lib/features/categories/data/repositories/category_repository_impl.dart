@@ -1,32 +1,77 @@
-﻿import 'package:fpdart/fpdart.dart';
+import 'package:fpdart/fpdart.dart';
+import 'package:masroofy/core/database/app_database.dart';
+import 'package:masroofy/core/database/db_guard.dart';
+import 'package:masroofy/core/domain/money.dart';
 import 'package:masroofy/core/error/failures.dart';
-import 'package:masroofy/features/categories/domain/entities/category.dart';
-import 'package:masroofy/features/categories/domain/repositories/i_category_repository.dart';
+import 'package:masroofy/features/budgets/domain/entities/budget_period.dart';
 import 'package:masroofy/features/categories/data/datasources/category_local_datasource.dart';
+import 'package:masroofy/features/categories/domain/entities/category.dart';
+import 'package:masroofy/features/categories/domain/entities/category_draft.dart';
+import 'package:masroofy/features/categories/domain/entities/category_summary.dart';
+import 'package:masroofy/features/categories/domain/repositories/i_category_repository.dart';
 
 class CategoryRepositoryImpl implements ICategoryRepository {
-  final CategoryLocalDatasource _localDatasource;
+  CategoryRepositoryImpl(this._datasource);
 
-  CategoryRepositoryImpl(this._localDatasource);
-
-  // TODO: Implement methods
-  @override
-  Stream<Either<Failure, List<Category>>> watchAll() {
-    throw UnimplementedError();
-  }
+  final CategoryLocalDatasource _datasource;
 
   @override
-  Future<Either<Failure, int>> insert(Category category) {
-    throw UnimplementedError();
-  }
+  Stream<Either<Failure, List<Category>>> watchAll({bool includeHidden = false}) =>
+      _datasource.watchAll(includeHidden: includeHidden).map((rows) => rows.map(_toCategory).toList()).guarded();
 
   @override
-  Future<Either<Failure, bool>> update(Category category) {
-    throw UnimplementedError();
-  }
+  Stream<Either<Failure, List<CategorySummary>>> watchSummaries() =>
+      _datasource.watchSummaries().map((rows) => rows.map(_toSummary).toList()).guarded();
 
   @override
-  Future<Either<Failure, bool>> delete(int id) {
-    throw UnimplementedError();
-  }
+  Future<Either<Failure, Category>> getById(int id) async =>
+      (await guardDb(() => _datasource.getById(id))).flatMap(
+        (row) => row == null ? const Left(Failure.notFound()) : Right(_toCategory(row)),
+      );
+
+  @override
+  Future<Either<Failure, CategorySummary>> getSummary(int id) async =>
+      (await guardDb(() => _datasource.getSummary(id))).flatMap(
+        (row) => row == null ? const Left(Failure.notFound()) : Right(_toSummary(row)),
+      );
+
+  @override
+  Future<Either<Failure, List<String>>> customNames({int? excludeId}) =>
+      guardDb(() => _datasource.customNames(excludeId: excludeId));
+
+  @override
+  Future<Either<Failure, int>> create(CategoryDraft draft) =>
+      guardDb(() => _datasource.insertCategory(name: draft.name, icon: draft.icon, color: draft.color));
+
+  @override
+  Future<Either<Failure, Unit>> update(int id, CategoryDraft draft) async =>
+      (await guardDb(
+        () => _datasource.updateCategory(id, name: draft.name, icon: draft.icon, color: draft.color),
+      )).flatMap(_oneRowChanged);
+
+  @override
+  Future<Either<Failure, Unit>> delete(int id) async =>
+      (await guardDb(() => _datasource.deleteCategory(id))).flatMap(_oneRowChanged);
+
+  static Either<Failure, Unit> _oneRowChanged(int rows) => rows == 1 ? const Right(unit) : const Left(Failure.notFound());
+
+  static Category _toCategory(CategoriesTableData row) => Category(
+    id: row.id,
+    seedKey: row.seedKey,
+    name: row.name,
+    icon: row.icon,
+    color: row.color,
+    sortOrder: row.sortOrder,
+    isHidden: row.isHidden,
+    createdAt: row.createdAt,
+    updatedAt: row.updatedAt,
+  );
+
+  static CategorySummary _toSummary(CategorySummaryRow row) => CategorySummary(
+    category: _toCategory(row.category),
+    expenseCount: row.expenseCount,
+    recurringCount: row.recurringCount,
+    budgetLimit: row.budgetLimitMinor == null ? null : Money(row.budgetLimitMinor!),
+    budgetPeriod: row.budgetPeriod == null ? null : BudgetPeriod.values.byName(row.budgetPeriod!),
+  );
 }
