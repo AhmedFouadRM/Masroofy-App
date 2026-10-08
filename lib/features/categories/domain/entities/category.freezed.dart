@@ -1,4 +1,4 @@
-﻿// GENERATED CODE - DO NOT MODIFY BY HAND
+// GENERATED CODE - DO NOT MODIFY BY HAND
 // coverage:ignore-file
 // ignore_for_file: type=lint
 // ignore_for_file: unused_element, deprecated_member_use, deprecated_member_use_from_same_package, use_function_type_syntax_for_parameters, unnecessary_const, avoid_init_to_null, invalid_override_different_default_values_named, prefer_expression_function_bodies, annotate_overrides, invalid_annotation_target, unnecessary_question_mark
@@ -11,33 +11,30 @@ part of 'category.dart';
 
 // dart format off
 T _$identity<T>(T value) => value;
-
 /// @nodoc
 mixin _$Category {
 
- int get id; String get nameEn; String? get nameAr; String get icon; String get color; bool get isDefault; DateTime get createdAt;
+ int get id; String get icon; int get color; int get sortOrder; DateTime get createdAt; DateTime get updatedAt; String? get seedKey; String? get name; bool get isHidden;
 /// Create a copy of Category
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
 @pragma('vm:prefer-inline')
 $CategoryCopyWith<Category> get copyWith => _$CategoryCopyWithImpl<Category>(this as Category, _$identity);
 
-  /// Serializes this Category to a JSON map.
-  Map<String, dynamic> toJson();
 
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is Category&&(identical(other.id, id) || other.id == id)&&(identical(other.nameEn, nameEn) || other.nameEn == nameEn)&&(identical(other.nameAr, nameAr) || other.nameAr == nameAr)&&(identical(other.icon, icon) || other.icon == icon)&&(identical(other.color, color) || other.color == color)&&(identical(other.isDefault, isDefault) || other.isDefault == isDefault)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is Category&&(identical(other.id, id) || other.id == id)&&(identical(other.icon, icon) || other.icon == icon)&&(identical(other.color, color) || other.color == color)&&(identical(other.sortOrder, sortOrder) || other.sortOrder == sortOrder)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt)&&(identical(other.seedKey, seedKey) || other.seedKey == seedKey)&&(identical(other.name, name) || other.name == name)&&(identical(other.isHidden, isHidden) || other.isHidden == isHidden));
 }
 
-@JsonKey(includeFromJson: false, includeToJson: false)
+
 @override
-int get hashCode => Object.hash(runtimeType,id,nameEn,nameAr,icon,color,isDefault,createdAt);
+int get hashCode => Object.hash(runtimeType,id,icon,color,sortOrder,createdAt,updatedAt,seedKey,name,isHidden);
 
 @override
 String toString() {
-  return 'Category(id: $id, nameEn: $nameEn, nameAr: $nameAr, icon: $icon, color: $color, isDefault: $isDefault, createdAt: $createdAt)';
+  return 'Category(id: $id, icon: $icon, color: $color, sortOrder: $sortOrder, createdAt: $createdAt, updatedAt: $updatedAt, seedKey: $seedKey, name: $name, isHidden: $isHidden)';
 }
 
 
@@ -48,7 +45,7 @@ abstract mixin class $CategoryCopyWith<$Res>  {
   factory $CategoryCopyWith(Category value, $Res Function(Category) _then) = _$CategoryCopyWithImpl;
 @useResult
 $Res call({
- int id, String nameEn, String? nameAr, String icon, String color, bool isDefault, DateTime createdAt
+ int id, String icon, int color, int sortOrder, DateTime createdAt, DateTime updatedAt, String? seedKey, String? name, bool isHidden
 });
 
 
@@ -65,16 +62,18 @@ class _$CategoryCopyWithImpl<$Res>
 
 /// Create a copy of Category
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? nameEn = null,Object? nameAr = freezed,Object? icon = null,Object? color = null,Object? isDefault = null,Object? createdAt = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? icon = null,Object? color = null,Object? sortOrder = null,Object? createdAt = null,Object? updatedAt = null,Object? seedKey = freezed,Object? name = freezed,Object? isHidden = null,}) {
   return _then(_self.copyWith(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
-as int,nameEn: null == nameEn ? _self.nameEn : nameEn // ignore: cast_nullable_to_non_nullable
-as String,nameAr: freezed == nameAr ? _self.nameAr : nameAr // ignore: cast_nullable_to_non_nullable
-as String?,icon: null == icon ? _self.icon : icon // ignore: cast_nullable_to_non_nullable
+as int,icon: null == icon ? _self.icon : icon // ignore: cast_nullable_to_non_nullable
 as String,color: null == color ? _self.color : color // ignore: cast_nullable_to_non_nullable
-as String,isDefault: null == isDefault ? _self.isDefault : isDefault // ignore: cast_nullable_to_non_nullable
-as bool,createdAt: null == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable
-as DateTime,
+as int,sortOrder: null == sortOrder ? _self.sortOrder : sortOrder // ignore: cast_nullable_to_non_nullable
+as int,createdAt: null == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable
+as DateTime,updatedAt: null == updatedAt ? _self.updatedAt : updatedAt // ignore: cast_nullable_to_non_nullable
+as DateTime,seedKey: freezed == seedKey ? _self.seedKey : seedKey // ignore: cast_nullable_to_non_nullable
+as String?,name: freezed == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
+as String?,isHidden: null == isHidden ? _self.isHidden : isHidden // ignore: cast_nullable_to_non_nullable
+as bool,
   ));
 }
 
@@ -159,10 +158,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( int id,  String nameEn,  String? nameAr,  String icon,  String color,  bool isDefault,  DateTime createdAt)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( int id,  String icon,  int color,  int sortOrder,  DateTime createdAt,  DateTime updatedAt,  String? seedKey,  String? name,  bool isHidden)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _Category() when $default != null:
-return $default(_that.id,_that.nameEn,_that.nameAr,_that.icon,_that.color,_that.isDefault,_that.createdAt);case _:
+return $default(_that.id,_that.icon,_that.color,_that.sortOrder,_that.createdAt,_that.updatedAt,_that.seedKey,_that.name,_that.isHidden);case _:
   return orElse();
 
 }
@@ -180,10 +179,10 @@ return $default(_that.id,_that.nameEn,_that.nameAr,_that.icon,_that.color,_that.
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( int id,  String nameEn,  String? nameAr,  String icon,  String color,  bool isDefault,  DateTime createdAt)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( int id,  String icon,  int color,  int sortOrder,  DateTime createdAt,  DateTime updatedAt,  String? seedKey,  String? name,  bool isHidden)  $default,) {final _that = this;
 switch (_that) {
 case _Category():
-return $default(_that.id,_that.nameEn,_that.nameAr,_that.icon,_that.color,_that.isDefault,_that.createdAt);case _:
+return $default(_that.id,_that.icon,_that.color,_that.sortOrder,_that.createdAt,_that.updatedAt,_that.seedKey,_that.name,_that.isHidden);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -200,10 +199,10 @@ return $default(_that.id,_that.nameEn,_that.nameAr,_that.icon,_that.color,_that.
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( int id,  String nameEn,  String? nameAr,  String icon,  String color,  bool isDefault,  DateTime createdAt)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( int id,  String icon,  int color,  int sortOrder,  DateTime createdAt,  DateTime updatedAt,  String? seedKey,  String? name,  bool isHidden)?  $default,) {final _that = this;
 switch (_that) {
 case _Category() when $default != null:
-return $default(_that.id,_that.nameEn,_that.nameAr,_that.icon,_that.color,_that.isDefault,_that.createdAt);case _:
+return $default(_that.id,_that.icon,_that.color,_that.sortOrder,_that.createdAt,_that.updatedAt,_that.seedKey,_that.name,_that.isHidden);case _:
   return null;
 
 }
@@ -212,19 +211,21 @@ return $default(_that.id,_that.nameEn,_that.nameAr,_that.icon,_that.color,_that.
 }
 
 /// @nodoc
-@JsonSerializable()
+
 
 class _Category extends Category {
-  const _Category({required this.id, required this.nameEn, this.nameAr, required this.icon, required this.color, this.isDefault = false, required this.createdAt}): super._();
-  factory _Category.fromJson(Map<String, dynamic> json) => _$CategoryFromJson(json);
+  const _Category({required this.id, required this.icon, required this.color, required this.sortOrder, required this.createdAt, required this.updatedAt, this.seedKey, this.name, this.isHidden = false}): super._();
+  
 
 @override final  int id;
-@override final  String nameEn;
-@override final  String? nameAr;
 @override final  String icon;
-@override final  String color;
-@override@JsonKey() final  bool isDefault;
+@override final  int color;
+@override final  int sortOrder;
 @override final  DateTime createdAt;
+@override final  DateTime updatedAt;
+@override final  String? seedKey;
+@override final  String? name;
+@override@JsonKey() final  bool isHidden;
 
 /// Create a copy of Category
 /// with the given fields replaced by the non-null parameter values.
@@ -232,23 +233,20 @@ class _Category extends Category {
 @pragma('vm:prefer-inline')
 _$CategoryCopyWith<_Category> get copyWith => __$CategoryCopyWithImpl<_Category>(this, _$identity);
 
-@override
-Map<String, dynamic> toJson() {
-  return _$CategoryToJson(this, );
-}
+
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Category&&(identical(other.id, id) || other.id == id)&&(identical(other.nameEn, nameEn) || other.nameEn == nameEn)&&(identical(other.nameAr, nameAr) || other.nameAr == nameAr)&&(identical(other.icon, icon) || other.icon == icon)&&(identical(other.color, color) || other.color == color)&&(identical(other.isDefault, isDefault) || other.isDefault == isDefault)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Category&&(identical(other.id, id) || other.id == id)&&(identical(other.icon, icon) || other.icon == icon)&&(identical(other.color, color) || other.color == color)&&(identical(other.sortOrder, sortOrder) || other.sortOrder == sortOrder)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt)&&(identical(other.seedKey, seedKey) || other.seedKey == seedKey)&&(identical(other.name, name) || other.name == name)&&(identical(other.isHidden, isHidden) || other.isHidden == isHidden));
 }
 
-@JsonKey(includeFromJson: false, includeToJson: false)
+
 @override
-int get hashCode => Object.hash(runtimeType,id,nameEn,nameAr,icon,color,isDefault,createdAt);
+int get hashCode => Object.hash(runtimeType,id,icon,color,sortOrder,createdAt,updatedAt,seedKey,name,isHidden);
 
 @override
 String toString() {
-  return 'Category(id: $id, nameEn: $nameEn, nameAr: $nameAr, icon: $icon, color: $color, isDefault: $isDefault, createdAt: $createdAt)';
+  return 'Category(id: $id, icon: $icon, color: $color, sortOrder: $sortOrder, createdAt: $createdAt, updatedAt: $updatedAt, seedKey: $seedKey, name: $name, isHidden: $isHidden)';
 }
 
 
@@ -259,7 +257,7 @@ abstract mixin class _$CategoryCopyWith<$Res> implements $CategoryCopyWith<$Res>
   factory _$CategoryCopyWith(_Category value, $Res Function(_Category) _then) = __$CategoryCopyWithImpl;
 @override @useResult
 $Res call({
- int id, String nameEn, String? nameAr, String icon, String color, bool isDefault, DateTime createdAt
+ int id, String icon, int color, int sortOrder, DateTime createdAt, DateTime updatedAt, String? seedKey, String? name, bool isHidden
 });
 
 
@@ -276,16 +274,18 @@ class __$CategoryCopyWithImpl<$Res>
 
 /// Create a copy of Category
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? nameEn = null,Object? nameAr = freezed,Object? icon = null,Object? color = null,Object? isDefault = null,Object? createdAt = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? icon = null,Object? color = null,Object? sortOrder = null,Object? createdAt = null,Object? updatedAt = null,Object? seedKey = freezed,Object? name = freezed,Object? isHidden = null,}) {
   return _then(_Category(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
-as int,nameEn: null == nameEn ? _self.nameEn : nameEn // ignore: cast_nullable_to_non_nullable
-as String,nameAr: freezed == nameAr ? _self.nameAr : nameAr // ignore: cast_nullable_to_non_nullable
-as String?,icon: null == icon ? _self.icon : icon // ignore: cast_nullable_to_non_nullable
+as int,icon: null == icon ? _self.icon : icon // ignore: cast_nullable_to_non_nullable
 as String,color: null == color ? _self.color : color // ignore: cast_nullable_to_non_nullable
-as String,isDefault: null == isDefault ? _self.isDefault : isDefault // ignore: cast_nullable_to_non_nullable
-as bool,createdAt: null == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable
-as DateTime,
+as int,sortOrder: null == sortOrder ? _self.sortOrder : sortOrder // ignore: cast_nullable_to_non_nullable
+as int,createdAt: null == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable
+as DateTime,updatedAt: null == updatedAt ? _self.updatedAt : updatedAt // ignore: cast_nullable_to_non_nullable
+as DateTime,seedKey: freezed == seedKey ? _self.seedKey : seedKey // ignore: cast_nullable_to_non_nullable
+as String?,name: freezed == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
+as String?,isHidden: null == isHidden ? _self.isHidden : isHidden // ignore: cast_nullable_to_non_nullable
+as bool,
   ));
 }
 

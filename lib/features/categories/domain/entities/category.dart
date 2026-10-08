@@ -1,28 +1,25 @@
-﻿import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:freezed_annotation/freezed_annotation.dart';
 
 part 'category.freezed.dart';
-part 'category.g.dart';
 
+/// A default category has a [seedKey] (its name comes from the translation
+/// files); a custom category has a user-typed [name]. Exactly one is set.
+/// Resolving the display name needs translations, so it lives in presentation.
 @freezed
 abstract class Category with _$Category {
   const factory Category({
     required int id,
-    required String nameEn,
-    String? nameAr,
     required String icon,
-    required String color,
-    @Default(false) bool isDefault,
+    required int color,
+    required int sortOrder,
     required DateTime createdAt,
+    required DateTime updatedAt,
+    String? seedKey,
+    String? name,
+    @Default(false) bool isHidden,
   }) = _Category;
-
-  factory Category.fromJson(Map<String, dynamic> json) => _$CategoryFromJson(json);
 
   const Category._();
 
-  String displayName(String languageCode) {
-    if (languageCode == 'ar' && nameAr != null && nameAr!.isNotEmpty) {
-      return nameAr!;
-    }
-    return nameEn;
-  }
+  bool get isDefault => seedKey != null;
 }

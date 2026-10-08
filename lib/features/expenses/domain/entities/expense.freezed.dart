@@ -1,4 +1,4 @@
-﻿// GENERATED CODE - DO NOT MODIFY BY HAND
+// GENERATED CODE - DO NOT MODIFY BY HAND
 // coverage:ignore-file
 // ignore_for_file: type=lint
 // ignore_for_file: unused_element, deprecated_member_use, deprecated_member_use_from_same_package, use_function_type_syntax_for_parameters, unnecessary_const, avoid_init_to_null, invalid_override_different_default_values_named, prefer_expression_function_bodies, annotate_overrides, invalid_annotation_target, unnecessary_question_mark
@@ -11,33 +11,32 @@ part of 'expense.dart';
 
 // dart format off
 T _$identity<T>(T value) => value;
-
 /// @nodoc
 mixin _$Expense {
 
- int get id; String get title; double get amount; int get categoryId; DateTime get date; String? get note; int? get recurringExpenseId; DateTime get createdAt; DateTime get updatedAt;
+ int get id; Money get amount; int get categoryId; LocalDate get date; DateTime get createdAt; DateTime get updatedAt;/// Optional; when null the UI shows the category's display name.
+ String? get title; String? get note; int? get recurringExpenseId;/// Template due date this entry was generated for (recurring only).
+ LocalDate? get occurrenceDate;
 /// Create a copy of Expense
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
 @pragma('vm:prefer-inline')
 $ExpenseCopyWith<Expense> get copyWith => _$ExpenseCopyWithImpl<Expense>(this as Expense, _$identity);
 
-  /// Serializes this Expense to a JSON map.
-  Map<String, dynamic> toJson();
 
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is Expense&&(identical(other.id, id) || other.id == id)&&(identical(other.title, title) || other.title == title)&&(identical(other.amount, amount) || other.amount == amount)&&(identical(other.categoryId, categoryId) || other.categoryId == categoryId)&&(identical(other.date, date) || other.date == date)&&(identical(other.note, note) || other.note == note)&&(identical(other.recurringExpenseId, recurringExpenseId) || other.recurringExpenseId == recurringExpenseId)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is Expense&&(identical(other.id, id) || other.id == id)&&(identical(other.amount, amount) || other.amount == amount)&&(identical(other.categoryId, categoryId) || other.categoryId == categoryId)&&(identical(other.date, date) || other.date == date)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt)&&(identical(other.title, title) || other.title == title)&&(identical(other.note, note) || other.note == note)&&(identical(other.recurringExpenseId, recurringExpenseId) || other.recurringExpenseId == recurringExpenseId)&&(identical(other.occurrenceDate, occurrenceDate) || other.occurrenceDate == occurrenceDate));
 }
 
-@JsonKey(includeFromJson: false, includeToJson: false)
+
 @override
-int get hashCode => Object.hash(runtimeType,id,title,amount,categoryId,date,note,recurringExpenseId,createdAt,updatedAt);
+int get hashCode => Object.hash(runtimeType,id,amount,categoryId,date,createdAt,updatedAt,title,note,recurringExpenseId,occurrenceDate);
 
 @override
 String toString() {
-  return 'Expense(id: $id, title: $title, amount: $amount, categoryId: $categoryId, date: $date, note: $note, recurringExpenseId: $recurringExpenseId, createdAt: $createdAt, updatedAt: $updatedAt)';
+  return 'Expense(id: $id, amount: $amount, categoryId: $categoryId, date: $date, createdAt: $createdAt, updatedAt: $updatedAt, title: $title, note: $note, recurringExpenseId: $recurringExpenseId, occurrenceDate: $occurrenceDate)';
 }
 
 
@@ -48,7 +47,7 @@ abstract mixin class $ExpenseCopyWith<$Res>  {
   factory $ExpenseCopyWith(Expense value, $Res Function(Expense) _then) = _$ExpenseCopyWithImpl;
 @useResult
 $Res call({
- int id, String title, double amount, int categoryId, DateTime date, String? note, int? recurringExpenseId, DateTime createdAt, DateTime updatedAt
+ int id, Money amount, int categoryId, LocalDate date, DateTime createdAt, DateTime updatedAt, String? title, String? note, int? recurringExpenseId, LocalDate? occurrenceDate
 });
 
 
@@ -65,18 +64,19 @@ class _$ExpenseCopyWithImpl<$Res>
 
 /// Create a copy of Expense
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? title = null,Object? amount = null,Object? categoryId = null,Object? date = null,Object? note = freezed,Object? recurringExpenseId = freezed,Object? createdAt = null,Object? updatedAt = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? amount = null,Object? categoryId = null,Object? date = null,Object? createdAt = null,Object? updatedAt = null,Object? title = freezed,Object? note = freezed,Object? recurringExpenseId = freezed,Object? occurrenceDate = freezed,}) {
   return _then(_self.copyWith(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
-as int,title: null == title ? _self.title : title // ignore: cast_nullable_to_non_nullable
-as String,amount: null == amount ? _self.amount : amount // ignore: cast_nullable_to_non_nullable
-as double,categoryId: null == categoryId ? _self.categoryId : categoryId // ignore: cast_nullable_to_non_nullable
+as int,amount: null == amount ? _self.amount : amount // ignore: cast_nullable_to_non_nullable
+as Money,categoryId: null == categoryId ? _self.categoryId : categoryId // ignore: cast_nullable_to_non_nullable
 as int,date: null == date ? _self.date : date // ignore: cast_nullable_to_non_nullable
-as DateTime,note: freezed == note ? _self.note : note // ignore: cast_nullable_to_non_nullable
-as String?,recurringExpenseId: freezed == recurringExpenseId ? _self.recurringExpenseId : recurringExpenseId // ignore: cast_nullable_to_non_nullable
-as int?,createdAt: null == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable
+as LocalDate,createdAt: null == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable
 as DateTime,updatedAt: null == updatedAt ? _self.updatedAt : updatedAt // ignore: cast_nullable_to_non_nullable
-as DateTime,
+as DateTime,title: freezed == title ? _self.title : title // ignore: cast_nullable_to_non_nullable
+as String?,note: freezed == note ? _self.note : note // ignore: cast_nullable_to_non_nullable
+as String?,recurringExpenseId: freezed == recurringExpenseId ? _self.recurringExpenseId : recurringExpenseId // ignore: cast_nullable_to_non_nullable
+as int?,occurrenceDate: freezed == occurrenceDate ? _self.occurrenceDate : occurrenceDate // ignore: cast_nullable_to_non_nullable
+as LocalDate?,
   ));
 }
 
@@ -161,10 +161,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( int id,  String title,  double amount,  int categoryId,  DateTime date,  String? note,  int? recurringExpenseId,  DateTime createdAt,  DateTime updatedAt)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( int id,  Money amount,  int categoryId,  LocalDate date,  DateTime createdAt,  DateTime updatedAt,  String? title,  String? note,  int? recurringExpenseId,  LocalDate? occurrenceDate)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _Expense() when $default != null:
-return $default(_that.id,_that.title,_that.amount,_that.categoryId,_that.date,_that.note,_that.recurringExpenseId,_that.createdAt,_that.updatedAt);case _:
+return $default(_that.id,_that.amount,_that.categoryId,_that.date,_that.createdAt,_that.updatedAt,_that.title,_that.note,_that.recurringExpenseId,_that.occurrenceDate);case _:
   return orElse();
 
 }
@@ -182,10 +182,10 @@ return $default(_that.id,_that.title,_that.amount,_that.categoryId,_that.date,_t
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( int id,  String title,  double amount,  int categoryId,  DateTime date,  String? note,  int? recurringExpenseId,  DateTime createdAt,  DateTime updatedAt)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( int id,  Money amount,  int categoryId,  LocalDate date,  DateTime createdAt,  DateTime updatedAt,  String? title,  String? note,  int? recurringExpenseId,  LocalDate? occurrenceDate)  $default,) {final _that = this;
 switch (_that) {
 case _Expense():
-return $default(_that.id,_that.title,_that.amount,_that.categoryId,_that.date,_that.note,_that.recurringExpenseId,_that.createdAt,_that.updatedAt);case _:
+return $default(_that.id,_that.amount,_that.categoryId,_that.date,_that.createdAt,_that.updatedAt,_that.title,_that.note,_that.recurringExpenseId,_that.occurrenceDate);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -202,10 +202,10 @@ return $default(_that.id,_that.title,_that.amount,_that.categoryId,_that.date,_t
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( int id,  String title,  double amount,  int categoryId,  DateTime date,  String? note,  int? recurringExpenseId,  DateTime createdAt,  DateTime updatedAt)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( int id,  Money amount,  int categoryId,  LocalDate date,  DateTime createdAt,  DateTime updatedAt,  String? title,  String? note,  int? recurringExpenseId,  LocalDate? occurrenceDate)?  $default,) {final _that = this;
 switch (_that) {
 case _Expense() when $default != null:
-return $default(_that.id,_that.title,_that.amount,_that.categoryId,_that.date,_that.note,_that.recurringExpenseId,_that.createdAt,_that.updatedAt);case _:
+return $default(_that.id,_that.amount,_that.categoryId,_that.date,_that.createdAt,_that.updatedAt,_that.title,_that.note,_that.recurringExpenseId,_that.occurrenceDate);case _:
   return null;
 
 }
@@ -214,21 +214,24 @@ return $default(_that.id,_that.title,_that.amount,_that.categoryId,_that.date,_t
 }
 
 /// @nodoc
-@JsonSerializable()
 
-class _Expense implements Expense {
-  const _Expense({required this.id, required this.title, required this.amount, required this.categoryId, required this.date, this.note, this.recurringExpenseId, required this.createdAt, required this.updatedAt});
-  factory _Expense.fromJson(Map<String, dynamic> json) => _$ExpenseFromJson(json);
+
+class _Expense extends Expense {
+  const _Expense({required this.id, required this.amount, required this.categoryId, required this.date, required this.createdAt, required this.updatedAt, this.title, this.note, this.recurringExpenseId, this.occurrenceDate}): super._();
+  
 
 @override final  int id;
-@override final  String title;
-@override final  double amount;
+@override final  Money amount;
 @override final  int categoryId;
-@override final  DateTime date;
-@override final  String? note;
-@override final  int? recurringExpenseId;
+@override final  LocalDate date;
 @override final  DateTime createdAt;
 @override final  DateTime updatedAt;
+/// Optional; when null the UI shows the category's display name.
+@override final  String? title;
+@override final  String? note;
+@override final  int? recurringExpenseId;
+/// Template due date this entry was generated for (recurring only).
+@override final  LocalDate? occurrenceDate;
 
 /// Create a copy of Expense
 /// with the given fields replaced by the non-null parameter values.
@@ -236,23 +239,20 @@ class _Expense implements Expense {
 @pragma('vm:prefer-inline')
 _$ExpenseCopyWith<_Expense> get copyWith => __$ExpenseCopyWithImpl<_Expense>(this, _$identity);
 
-@override
-Map<String, dynamic> toJson() {
-  return _$ExpenseToJson(this, );
-}
+
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Expense&&(identical(other.id, id) || other.id == id)&&(identical(other.title, title) || other.title == title)&&(identical(other.amount, amount) || other.amount == amount)&&(identical(other.categoryId, categoryId) || other.categoryId == categoryId)&&(identical(other.date, date) || other.date == date)&&(identical(other.note, note) || other.note == note)&&(identical(other.recurringExpenseId, recurringExpenseId) || other.recurringExpenseId == recurringExpenseId)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Expense&&(identical(other.id, id) || other.id == id)&&(identical(other.amount, amount) || other.amount == amount)&&(identical(other.categoryId, categoryId) || other.categoryId == categoryId)&&(identical(other.date, date) || other.date == date)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt)&&(identical(other.title, title) || other.title == title)&&(identical(other.note, note) || other.note == note)&&(identical(other.recurringExpenseId, recurringExpenseId) || other.recurringExpenseId == recurringExpenseId)&&(identical(other.occurrenceDate, occurrenceDate) || other.occurrenceDate == occurrenceDate));
 }
 
-@JsonKey(includeFromJson: false, includeToJson: false)
+
 @override
-int get hashCode => Object.hash(runtimeType,id,title,amount,categoryId,date,note,recurringExpenseId,createdAt,updatedAt);
+int get hashCode => Object.hash(runtimeType,id,amount,categoryId,date,createdAt,updatedAt,title,note,recurringExpenseId,occurrenceDate);
 
 @override
 String toString() {
-  return 'Expense(id: $id, title: $title, amount: $amount, categoryId: $categoryId, date: $date, note: $note, recurringExpenseId: $recurringExpenseId, createdAt: $createdAt, updatedAt: $updatedAt)';
+  return 'Expense(id: $id, amount: $amount, categoryId: $categoryId, date: $date, createdAt: $createdAt, updatedAt: $updatedAt, title: $title, note: $note, recurringExpenseId: $recurringExpenseId, occurrenceDate: $occurrenceDate)';
 }
 
 
@@ -263,7 +263,7 @@ abstract mixin class _$ExpenseCopyWith<$Res> implements $ExpenseCopyWith<$Res> {
   factory _$ExpenseCopyWith(_Expense value, $Res Function(_Expense) _then) = __$ExpenseCopyWithImpl;
 @override @useResult
 $Res call({
- int id, String title, double amount, int categoryId, DateTime date, String? note, int? recurringExpenseId, DateTime createdAt, DateTime updatedAt
+ int id, Money amount, int categoryId, LocalDate date, DateTime createdAt, DateTime updatedAt, String? title, String? note, int? recurringExpenseId, LocalDate? occurrenceDate
 });
 
 
@@ -280,18 +280,19 @@ class __$ExpenseCopyWithImpl<$Res>
 
 /// Create a copy of Expense
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? title = null,Object? amount = null,Object? categoryId = null,Object? date = null,Object? note = freezed,Object? recurringExpenseId = freezed,Object? createdAt = null,Object? updatedAt = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? amount = null,Object? categoryId = null,Object? date = null,Object? createdAt = null,Object? updatedAt = null,Object? title = freezed,Object? note = freezed,Object? recurringExpenseId = freezed,Object? occurrenceDate = freezed,}) {
   return _then(_Expense(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
-as int,title: null == title ? _self.title : title // ignore: cast_nullable_to_non_nullable
-as String,amount: null == amount ? _self.amount : amount // ignore: cast_nullable_to_non_nullable
-as double,categoryId: null == categoryId ? _self.categoryId : categoryId // ignore: cast_nullable_to_non_nullable
+as int,amount: null == amount ? _self.amount : amount // ignore: cast_nullable_to_non_nullable
+as Money,categoryId: null == categoryId ? _self.categoryId : categoryId // ignore: cast_nullable_to_non_nullable
 as int,date: null == date ? _self.date : date // ignore: cast_nullable_to_non_nullable
-as DateTime,note: freezed == note ? _self.note : note // ignore: cast_nullable_to_non_nullable
-as String?,recurringExpenseId: freezed == recurringExpenseId ? _self.recurringExpenseId : recurringExpenseId // ignore: cast_nullable_to_non_nullable
-as int?,createdAt: null == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable
+as LocalDate,createdAt: null == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable
 as DateTime,updatedAt: null == updatedAt ? _self.updatedAt : updatedAt // ignore: cast_nullable_to_non_nullable
-as DateTime,
+as DateTime,title: freezed == title ? _self.title : title // ignore: cast_nullable_to_non_nullable
+as String?,note: freezed == note ? _self.note : note // ignore: cast_nullable_to_non_nullable
+as String?,recurringExpenseId: freezed == recurringExpenseId ? _self.recurringExpenseId : recurringExpenseId // ignore: cast_nullable_to_non_nullable
+as int?,occurrenceDate: freezed == occurrenceDate ? _self.occurrenceDate : occurrenceDate // ignore: cast_nullable_to_non_nullable
+as LocalDate?,
   ));
 }
 

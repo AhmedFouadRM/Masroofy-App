@@ -20,7 +20,9 @@ dependencies:
   go_router: ^17.5.0
 
   # Local Database
-  drift: ^2.25.0
+  # Pinned to match drift_dev 2.34.0: drift 2.34.1+ breaks `drift_dev make-migrations`,
+  # and newer drift_dev needs analyzer 13+, which freezed 3.x doesn't allow yet.
+  drift: 2.34.0
   drift_flutter: ^0.3.1
   sqlite3_flutter_libs: ^0.6.0+eol
 
@@ -30,6 +32,9 @@ dependencies:
 
   # Error Handling
   fpdart: ^1.1.0
+
+  # Pure-Dart annotations (@immutable) for domain value objects
+  meta: ^1.18.0
 
   # Localization
   easy_localization: ^3.0.7

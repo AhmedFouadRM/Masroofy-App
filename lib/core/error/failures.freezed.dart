@@ -14,61 +14,30 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$Failure {
 
- String get message;
-/// Create a copy of Failure
-/// with the given fields replaced by the non-null parameter values.
-@JsonKey(includeFromJson: false, includeToJson: false)
-@pragma('vm:prefer-inline')
-$FailureCopyWith<Failure> get copyWith => _$FailureCopyWithImpl<Failure>(this as Failure, _$identity);
+
 
 
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is Failure&&(identical(other.message, message) || other.message == message));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is Failure);
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,message);
+int get hashCode => runtimeType.hashCode;
 
 @override
 String toString() {
-  return 'Failure(message: $message)';
+  return 'Failure()';
 }
 
 
 }
 
 /// @nodoc
-abstract mixin class $FailureCopyWith<$Res>  {
-  factory $FailureCopyWith(Failure value, $Res Function(Failure) _then) = _$FailureCopyWithImpl;
-@useResult
-$Res call({
- String message
-});
-
-
-
-
-}
-/// @nodoc
-class _$FailureCopyWithImpl<$Res>
-    implements $FailureCopyWith<$Res> {
-  _$FailureCopyWithImpl(this._self, this._then);
-
-  final Failure _self;
-  final $Res Function(Failure) _then;
-
-/// Create a copy of Failure
-/// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? message = null,}) {
-  return _then(_self.copyWith(
-message: null == message ? _self.message : message // ignore: cast_nullable_to_non_nullable
-as String,
-  ));
-}
-
+class $FailureCopyWith<$Res>  {
+$FailureCopyWith(Failure _, $Res Function(Failure) __);
 }
 
 
@@ -86,13 +55,16 @@ extension FailurePatterns on Failure {
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeMap<TResult extends Object?>({TResult Function( DatabaseFailure value)?  database,TResult Function( ValidationFailure value)?  validation,TResult Function( NotFoundFailure value)?  notFound,TResult Function( UnexpectedFailure value)?  unexpected,required TResult orElse(),}){
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>({TResult Function( ValidationFailure value)?  validation,TResult Function( NotFoundFailure value)?  notFound,TResult Function( ConstraintFailure value)?  constraint,TResult Function( StorageFailure value)?  storage,TResult Function( SecureStorageFailure value)?  secureStorage,TResult Function( ExportFailure value)?  exportFailed,TResult Function( UnexpectedFailure value)?  unexpected,required TResult orElse(),}){
 final _that = this;
 switch (_that) {
-case DatabaseFailure() when database != null:
-return database(_that);case ValidationFailure() when validation != null:
+case ValidationFailure() when validation != null:
 return validation(_that);case NotFoundFailure() when notFound != null:
-return notFound(_that);case UnexpectedFailure() when unexpected != null:
+return notFound(_that);case ConstraintFailure() when constraint != null:
+return constraint(_that);case StorageFailure() when storage != null:
+return storage(_that);case SecureStorageFailure() when secureStorage != null:
+return secureStorage(_that);case ExportFailure() when exportFailed != null:
+return exportFailed(_that);case UnexpectedFailure() when unexpected != null:
 return unexpected(_that);case _:
   return orElse();
 
@@ -111,13 +83,16 @@ return unexpected(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult map<TResult extends Object?>({required TResult Function( DatabaseFailure value)  database,required TResult Function( ValidationFailure value)  validation,required TResult Function( NotFoundFailure value)  notFound,required TResult Function( UnexpectedFailure value)  unexpected,}){
+@optionalTypeArgs TResult map<TResult extends Object?>({required TResult Function( ValidationFailure value)  validation,required TResult Function( NotFoundFailure value)  notFound,required TResult Function( ConstraintFailure value)  constraint,required TResult Function( StorageFailure value)  storage,required TResult Function( SecureStorageFailure value)  secureStorage,required TResult Function( ExportFailure value)  exportFailed,required TResult Function( UnexpectedFailure value)  unexpected,}){
 final _that = this;
 switch (_that) {
-case DatabaseFailure():
-return database(_that);case ValidationFailure():
+case ValidationFailure():
 return validation(_that);case NotFoundFailure():
-return notFound(_that);case UnexpectedFailure():
+return notFound(_that);case ConstraintFailure():
+return constraint(_that);case StorageFailure():
+return storage(_that);case SecureStorageFailure():
+return secureStorage(_that);case ExportFailure():
+return exportFailed(_that);case UnexpectedFailure():
 return unexpected(_that);}
 }
 /// A variant of `map` that fallback to returning `null`.
@@ -132,13 +107,16 @@ return unexpected(_that);}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>({TResult? Function( DatabaseFailure value)?  database,TResult? Function( ValidationFailure value)?  validation,TResult? Function( NotFoundFailure value)?  notFound,TResult? Function( UnexpectedFailure value)?  unexpected,}){
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>({TResult? Function( ValidationFailure value)?  validation,TResult? Function( NotFoundFailure value)?  notFound,TResult? Function( ConstraintFailure value)?  constraint,TResult? Function( StorageFailure value)?  storage,TResult? Function( SecureStorageFailure value)?  secureStorage,TResult? Function( ExportFailure value)?  exportFailed,TResult? Function( UnexpectedFailure value)?  unexpected,}){
 final _that = this;
 switch (_that) {
-case DatabaseFailure() when database != null:
-return database(_that);case ValidationFailure() when validation != null:
+case ValidationFailure() when validation != null:
 return validation(_that);case NotFoundFailure() when notFound != null:
-return notFound(_that);case UnexpectedFailure() when unexpected != null:
+return notFound(_that);case ConstraintFailure() when constraint != null:
+return constraint(_that);case StorageFailure() when storage != null:
+return storage(_that);case SecureStorageFailure() when secureStorage != null:
+return secureStorage(_that);case ExportFailure() when exportFailed != null:
+return exportFailed(_that);case UnexpectedFailure() when unexpected != null:
 return unexpected(_that);case _:
   return null;
 
@@ -156,13 +134,16 @@ return unexpected(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function( String message)?  database,TResult Function( String message)?  validation,TResult Function( String message)?  notFound,TResult Function( String message)?  unexpected,required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function( String field,  ValidationReason reason)?  validation,TResult Function()?  notFound,TResult Function( String message)?  constraint,TResult Function( String message)?  storage,TResult Function( String message)?  secureStorage,TResult Function( String message)?  exportFailed,TResult Function( Object error,  StackTrace? stackTrace)?  unexpected,required TResult orElse(),}) {final _that = this;
 switch (_that) {
-case DatabaseFailure() when database != null:
-return database(_that.message);case ValidationFailure() when validation != null:
-return validation(_that.message);case NotFoundFailure() when notFound != null:
-return notFound(_that.message);case UnexpectedFailure() when unexpected != null:
-return unexpected(_that.message);case _:
+case ValidationFailure() when validation != null:
+return validation(_that.field,_that.reason);case NotFoundFailure() when notFound != null:
+return notFound();case ConstraintFailure() when constraint != null:
+return constraint(_that.message);case StorageFailure() when storage != null:
+return storage(_that.message);case SecureStorageFailure() when secureStorage != null:
+return secureStorage(_that.message);case ExportFailure() when exportFailed != null:
+return exportFailed(_that.message);case UnexpectedFailure() when unexpected != null:
+return unexpected(_that.error,_that.stackTrace);case _:
   return orElse();
 
 }
@@ -180,13 +161,16 @@ return unexpected(_that.message);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function( String message)  database,required TResult Function( String message)  validation,required TResult Function( String message)  notFound,required TResult Function( String message)  unexpected,}) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function( String field,  ValidationReason reason)  validation,required TResult Function()  notFound,required TResult Function( String message)  constraint,required TResult Function( String message)  storage,required TResult Function( String message)  secureStorage,required TResult Function( String message)  exportFailed,required TResult Function( Object error,  StackTrace? stackTrace)  unexpected,}) {final _that = this;
 switch (_that) {
-case DatabaseFailure():
-return database(_that.message);case ValidationFailure():
-return validation(_that.message);case NotFoundFailure():
-return notFound(_that.message);case UnexpectedFailure():
-return unexpected(_that.message);}
+case ValidationFailure():
+return validation(_that.field,_that.reason);case NotFoundFailure():
+return notFound();case ConstraintFailure():
+return constraint(_that.message);case StorageFailure():
+return storage(_that.message);case SecureStorageFailure():
+return secureStorage(_that.message);case ExportFailure():
+return exportFailed(_that.message);case UnexpectedFailure():
+return unexpected(_that.error,_that.stackTrace);}
 }
 /// A variant of `when` that fallback to returning `null`
 ///
@@ -200,13 +184,16 @@ return unexpected(_that.message);}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function( String message)?  database,TResult? Function( String message)?  validation,TResult? Function( String message)?  notFound,TResult? Function( String message)?  unexpected,}) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function( String field,  ValidationReason reason)?  validation,TResult? Function()?  notFound,TResult? Function( String message)?  constraint,TResult? Function( String message)?  storage,TResult? Function( String message)?  secureStorage,TResult? Function( String message)?  exportFailed,TResult? Function( Object error,  StackTrace? stackTrace)?  unexpected,}) {final _that = this;
 switch (_that) {
-case DatabaseFailure() when database != null:
-return database(_that.message);case ValidationFailure() when validation != null:
-return validation(_that.message);case NotFoundFailure() when notFound != null:
-return notFound(_that.message);case UnexpectedFailure() when unexpected != null:
-return unexpected(_that.message);case _:
+case ValidationFailure() when validation != null:
+return validation(_that.field,_that.reason);case NotFoundFailure() when notFound != null:
+return notFound();case ConstraintFailure() when constraint != null:
+return constraint(_that.message);case StorageFailure() when storage != null:
+return storage(_that.message);case SecureStorageFailure() when secureStorage != null:
+return secureStorage(_that.message);case ExportFailure() when exportFailed != null:
+return exportFailed(_that.message);case UnexpectedFailure() when unexpected != null:
+return unexpected(_that.error,_that.stackTrace);case _:
   return null;
 
 }
@@ -217,81 +204,16 @@ return unexpected(_that.message);case _:
 /// @nodoc
 
 
-class DatabaseFailure implements Failure {
-  const DatabaseFailure({required this.message});
-  
-
-@override final  String message;
-
-/// Create a copy of Failure
-/// with the given fields replaced by the non-null parameter values.
-@override @JsonKey(includeFromJson: false, includeToJson: false)
-@pragma('vm:prefer-inline')
-$DatabaseFailureCopyWith<DatabaseFailure> get copyWith => _$DatabaseFailureCopyWithImpl<DatabaseFailure>(this, _$identity);
-
-
-
-@override
-bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is DatabaseFailure&&(identical(other.message, message) || other.message == message));
-}
-
-
-@override
-int get hashCode => Object.hash(runtimeType,message);
-
-@override
-String toString() {
-  return 'Failure.database(message: $message)';
-}
-
-
-}
-
-/// @nodoc
-abstract mixin class $DatabaseFailureCopyWith<$Res> implements $FailureCopyWith<$Res> {
-  factory $DatabaseFailureCopyWith(DatabaseFailure value, $Res Function(DatabaseFailure) _then) = _$DatabaseFailureCopyWithImpl;
-@override @useResult
-$Res call({
- String message
-});
-
-
-
-
-}
-/// @nodoc
-class _$DatabaseFailureCopyWithImpl<$Res>
-    implements $DatabaseFailureCopyWith<$Res> {
-  _$DatabaseFailureCopyWithImpl(this._self, this._then);
-
-  final DatabaseFailure _self;
-  final $Res Function(DatabaseFailure) _then;
-
-/// Create a copy of Failure
-/// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? message = null,}) {
-  return _then(DatabaseFailure(
-message: null == message ? _self.message : message // ignore: cast_nullable_to_non_nullable
-as String,
-  ));
-}
-
-
-}
-
-/// @nodoc
-
-
 class ValidationFailure implements Failure {
-  const ValidationFailure({required this.message});
+  const ValidationFailure({required this.field, required this.reason});
   
 
-@override final  String message;
+ final  String field;
+ final  ValidationReason reason;
 
 /// Create a copy of Failure
 /// with the given fields replaced by the non-null parameter values.
-@override @JsonKey(includeFromJson: false, includeToJson: false)
+@JsonKey(includeFromJson: false, includeToJson: false)
 @pragma('vm:prefer-inline')
 $ValidationFailureCopyWith<ValidationFailure> get copyWith => _$ValidationFailureCopyWithImpl<ValidationFailure>(this, _$identity);
 
@@ -299,16 +221,16 @@ $ValidationFailureCopyWith<ValidationFailure> get copyWith => _$ValidationFailur
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is ValidationFailure&&(identical(other.message, message) || other.message == message));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ValidationFailure&&(identical(other.field, field) || other.field == field)&&(identical(other.reason, reason) || other.reason == reason));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,message);
+int get hashCode => Object.hash(runtimeType,field,reason);
 
 @override
 String toString() {
-  return 'Failure.validation(message: $message)';
+  return 'Failure.validation(field: $field, reason: $reason)';
 }
 
 
@@ -317,9 +239,9 @@ String toString() {
 /// @nodoc
 abstract mixin class $ValidationFailureCopyWith<$Res> implements $FailureCopyWith<$Res> {
   factory $ValidationFailureCopyWith(ValidationFailure value, $Res Function(ValidationFailure) _then) = _$ValidationFailureCopyWithImpl;
-@override @useResult
+@useResult
 $Res call({
- String message
+ String field, ValidationReason reason
 });
 
 
@@ -336,8 +258,107 @@ class _$ValidationFailureCopyWithImpl<$Res>
 
 /// Create a copy of Failure
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? message = null,}) {
+@pragma('vm:prefer-inline') $Res call({Object? field = null,Object? reason = null,}) {
   return _then(ValidationFailure(
+field: null == field ? _self.field : field // ignore: cast_nullable_to_non_nullable
+as String,reason: null == reason ? _self.reason : reason // ignore: cast_nullable_to_non_nullable
+as ValidationReason,
+  ));
+}
+
+
+}
+
+/// @nodoc
+
+
+class NotFoundFailure implements Failure {
+  const NotFoundFailure();
+  
+
+
+
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is NotFoundFailure);
+}
+
+
+@override
+int get hashCode => runtimeType.hashCode;
+
+@override
+String toString() {
+  return 'Failure.notFound()';
+}
+
+
+}
+
+
+
+
+/// @nodoc
+
+
+class ConstraintFailure implements Failure {
+  const ConstraintFailure({required this.message});
+  
+
+ final  String message;
+
+/// Create a copy of Failure
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$ConstraintFailureCopyWith<ConstraintFailure> get copyWith => _$ConstraintFailureCopyWithImpl<ConstraintFailure>(this, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ConstraintFailure&&(identical(other.message, message) || other.message == message));
+}
+
+
+@override
+int get hashCode => Object.hash(runtimeType,message);
+
+@override
+String toString() {
+  return 'Failure.constraint(message: $message)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $ConstraintFailureCopyWith<$Res> implements $FailureCopyWith<$Res> {
+  factory $ConstraintFailureCopyWith(ConstraintFailure value, $Res Function(ConstraintFailure) _then) = _$ConstraintFailureCopyWithImpl;
+@useResult
+$Res call({
+ String message
+});
+
+
+
+
+}
+/// @nodoc
+class _$ConstraintFailureCopyWithImpl<$Res>
+    implements $ConstraintFailureCopyWith<$Res> {
+  _$ConstraintFailureCopyWithImpl(this._self, this._then);
+
+  final ConstraintFailure _self;
+  final $Res Function(ConstraintFailure) _then;
+
+/// Create a copy of Failure
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') $Res call({Object? message = null,}) {
+  return _then(ConstraintFailure(
 message: null == message ? _self.message : message // ignore: cast_nullable_to_non_nullable
 as String,
   ));
@@ -349,23 +370,23 @@ as String,
 /// @nodoc
 
 
-class NotFoundFailure implements Failure {
-  const NotFoundFailure({required this.message});
+class StorageFailure implements Failure {
+  const StorageFailure({required this.message});
   
 
-@override final  String message;
+ final  String message;
 
 /// Create a copy of Failure
 /// with the given fields replaced by the non-null parameter values.
-@override @JsonKey(includeFromJson: false, includeToJson: false)
+@JsonKey(includeFromJson: false, includeToJson: false)
 @pragma('vm:prefer-inline')
-$NotFoundFailureCopyWith<NotFoundFailure> get copyWith => _$NotFoundFailureCopyWithImpl<NotFoundFailure>(this, _$identity);
+$StorageFailureCopyWith<StorageFailure> get copyWith => _$StorageFailureCopyWithImpl<StorageFailure>(this, _$identity);
 
 
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is NotFoundFailure&&(identical(other.message, message) || other.message == message));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is StorageFailure&&(identical(other.message, message) || other.message == message));
 }
 
 
@@ -374,16 +395,16 @@ int get hashCode => Object.hash(runtimeType,message);
 
 @override
 String toString() {
-  return 'Failure.notFound(message: $message)';
+  return 'Failure.storage(message: $message)';
 }
 
 
 }
 
 /// @nodoc
-abstract mixin class $NotFoundFailureCopyWith<$Res> implements $FailureCopyWith<$Res> {
-  factory $NotFoundFailureCopyWith(NotFoundFailure value, $Res Function(NotFoundFailure) _then) = _$NotFoundFailureCopyWithImpl;
-@override @useResult
+abstract mixin class $StorageFailureCopyWith<$Res> implements $FailureCopyWith<$Res> {
+  factory $StorageFailureCopyWith(StorageFailure value, $Res Function(StorageFailure) _then) = _$StorageFailureCopyWithImpl;
+@useResult
 $Res call({
  String message
 });
@@ -393,17 +414,149 @@ $Res call({
 
 }
 /// @nodoc
-class _$NotFoundFailureCopyWithImpl<$Res>
-    implements $NotFoundFailureCopyWith<$Res> {
-  _$NotFoundFailureCopyWithImpl(this._self, this._then);
+class _$StorageFailureCopyWithImpl<$Res>
+    implements $StorageFailureCopyWith<$Res> {
+  _$StorageFailureCopyWithImpl(this._self, this._then);
 
-  final NotFoundFailure _self;
-  final $Res Function(NotFoundFailure) _then;
+  final StorageFailure _self;
+  final $Res Function(StorageFailure) _then;
 
 /// Create a copy of Failure
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? message = null,}) {
-  return _then(NotFoundFailure(
+@pragma('vm:prefer-inline') $Res call({Object? message = null,}) {
+  return _then(StorageFailure(
+message: null == message ? _self.message : message // ignore: cast_nullable_to_non_nullable
+as String,
+  ));
+}
+
+
+}
+
+/// @nodoc
+
+
+class SecureStorageFailure implements Failure {
+  const SecureStorageFailure({required this.message});
+  
+
+ final  String message;
+
+/// Create a copy of Failure
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$SecureStorageFailureCopyWith<SecureStorageFailure> get copyWith => _$SecureStorageFailureCopyWithImpl<SecureStorageFailure>(this, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is SecureStorageFailure&&(identical(other.message, message) || other.message == message));
+}
+
+
+@override
+int get hashCode => Object.hash(runtimeType,message);
+
+@override
+String toString() {
+  return 'Failure.secureStorage(message: $message)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $SecureStorageFailureCopyWith<$Res> implements $FailureCopyWith<$Res> {
+  factory $SecureStorageFailureCopyWith(SecureStorageFailure value, $Res Function(SecureStorageFailure) _then) = _$SecureStorageFailureCopyWithImpl;
+@useResult
+$Res call({
+ String message
+});
+
+
+
+
+}
+/// @nodoc
+class _$SecureStorageFailureCopyWithImpl<$Res>
+    implements $SecureStorageFailureCopyWith<$Res> {
+  _$SecureStorageFailureCopyWithImpl(this._self, this._then);
+
+  final SecureStorageFailure _self;
+  final $Res Function(SecureStorageFailure) _then;
+
+/// Create a copy of Failure
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') $Res call({Object? message = null,}) {
+  return _then(SecureStorageFailure(
+message: null == message ? _self.message : message // ignore: cast_nullable_to_non_nullable
+as String,
+  ));
+}
+
+
+}
+
+/// @nodoc
+
+
+class ExportFailure implements Failure {
+  const ExportFailure({required this.message});
+  
+
+ final  String message;
+
+/// Create a copy of Failure
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$ExportFailureCopyWith<ExportFailure> get copyWith => _$ExportFailureCopyWithImpl<ExportFailure>(this, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ExportFailure&&(identical(other.message, message) || other.message == message));
+}
+
+
+@override
+int get hashCode => Object.hash(runtimeType,message);
+
+@override
+String toString() {
+  return 'Failure.exportFailed(message: $message)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $ExportFailureCopyWith<$Res> implements $FailureCopyWith<$Res> {
+  factory $ExportFailureCopyWith(ExportFailure value, $Res Function(ExportFailure) _then) = _$ExportFailureCopyWithImpl;
+@useResult
+$Res call({
+ String message
+});
+
+
+
+
+}
+/// @nodoc
+class _$ExportFailureCopyWithImpl<$Res>
+    implements $ExportFailureCopyWith<$Res> {
+  _$ExportFailureCopyWithImpl(this._self, this._then);
+
+  final ExportFailure _self;
+  final $Res Function(ExportFailure) _then;
+
+/// Create a copy of Failure
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') $Res call({Object? message = null,}) {
+  return _then(ExportFailure(
 message: null == message ? _self.message : message // ignore: cast_nullable_to_non_nullable
 as String,
   ));
@@ -416,14 +569,15 @@ as String,
 
 
 class UnexpectedFailure implements Failure {
-  const UnexpectedFailure({required this.message});
+  const UnexpectedFailure({required this.error, this.stackTrace});
   
 
-@override final  String message;
+ final  Object error;
+ final  StackTrace? stackTrace;
 
 /// Create a copy of Failure
 /// with the given fields replaced by the non-null parameter values.
-@override @JsonKey(includeFromJson: false, includeToJson: false)
+@JsonKey(includeFromJson: false, includeToJson: false)
 @pragma('vm:prefer-inline')
 $UnexpectedFailureCopyWith<UnexpectedFailure> get copyWith => _$UnexpectedFailureCopyWithImpl<UnexpectedFailure>(this, _$identity);
 
@@ -431,16 +585,16 @@ $UnexpectedFailureCopyWith<UnexpectedFailure> get copyWith => _$UnexpectedFailur
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is UnexpectedFailure&&(identical(other.message, message) || other.message == message));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is UnexpectedFailure&&const DeepCollectionEquality().equals(other.error, error)&&(identical(other.stackTrace, stackTrace) || other.stackTrace == stackTrace));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,message);
+int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(error),stackTrace);
 
 @override
 String toString() {
-  return 'Failure.unexpected(message: $message)';
+  return 'Failure.unexpected(error: $error, stackTrace: $stackTrace)';
 }
 
 
@@ -449,9 +603,9 @@ String toString() {
 /// @nodoc
 abstract mixin class $UnexpectedFailureCopyWith<$Res> implements $FailureCopyWith<$Res> {
   factory $UnexpectedFailureCopyWith(UnexpectedFailure value, $Res Function(UnexpectedFailure) _then) = _$UnexpectedFailureCopyWithImpl;
-@override @useResult
+@useResult
 $Res call({
- String message
+ Object error, StackTrace? stackTrace
 });
 
 
@@ -468,10 +622,10 @@ class _$UnexpectedFailureCopyWithImpl<$Res>
 
 /// Create a copy of Failure
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? message = null,}) {
+@pragma('vm:prefer-inline') $Res call({Object? error = null,Object? stackTrace = freezed,}) {
   return _then(UnexpectedFailure(
-message: null == message ? _self.message : message // ignore: cast_nullable_to_non_nullable
-as String,
+error: null == error ? _self.error : error ,stackTrace: freezed == stackTrace ? _self.stackTrace : stackTrace // ignore: cast_nullable_to_non_nullable
+as StackTrace?,
   ));
 }
 

@@ -1,32 +1,18 @@
-﻿import 'package:fpdart/fpdart.dart';
+import 'package:fpdart/fpdart.dart';
+import 'package:masroofy/core/domain/local_date.dart';
 import 'package:masroofy/core/error/failures.dart';
-import 'package:masroofy/core/constants/app_constants.dart';
 import 'package:masroofy/features/expenses/domain/entities/expense.dart';
 import 'package:masroofy/features/expenses/domain/repositories/i_expense_repository.dart';
+import 'package:masroofy/features/expenses/domain/validation/expense_validator.dart';
 
 class UpdateExpense {
-  final IExpenseRepository _repository;
-
   UpdateExpense(this._repository);
 
-  Future<Either<Failure, bool>> call(Expense expense) async {
-    // Validate
-    if (expense.title.trim().isEmpty) {
-      return const Left(Failure.validation(message: 'Title is required'));
-    }
-    if (expense.title.length > AppConstants.maxTitleLength) {
-      return const Left(Failure.validation(message: 'Title is too long'));
-    }
-    if (expense.amount <= 0) {
-      return const Left(Failure.validation(message: 'Amount must be greater than zero'));
-    }
-    if (expense.date.isAfter(DateTime.now())) {
-      return const Left(Failure.validation(message: 'Date cannot be in the future'));
-    }
-    if (expense.note != null && expense.note!.length > AppConstants.maxNoteLength) {
-      return const Left(Failure.validation(message: 'Note is too long'));
-    }
+  final IExpenseRepository _repository;
 
+  Future<Either<Failure, bool>> call(Expense expense, {LocalDate? today}) async {
+    final failure = ExpenseValidator.validate(expense, today: today ?? LocalDate.today());
+    if (failure != null) return Left(failure);
     return _repository.updateExpense(expense);
   }
 }

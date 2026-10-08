@@ -1,4 +1,4 @@
-﻿// GENERATED CODE - DO NOT MODIFY BY HAND
+// GENERATED CODE - DO NOT MODIFY BY HAND
 // coverage:ignore-file
 // ignore_for_file: type=lint
 // ignore_for_file: unused_element, deprecated_member_use, deprecated_member_use_from_same_package, use_function_type_syntax_for_parameters, unnecessary_const, avoid_init_to_null, invalid_override_different_default_values_named, prefer_expression_function_bodies, annotate_overrides, invalid_annotation_target, unnecessary_question_mark
@@ -11,33 +11,31 @@ part of 'budget.dart';
 
 // dart format off
 T _$identity<T>(T value) => value;
-
 /// @nodoc
 mixin _$Budget {
 
- int get id; double get amount; int? get categoryId; BudgetPeriod get period; DateTime get createdAt;
+ int get id; int get categoryId; Money get limit; BudgetPeriod get period; DateTime get createdAt; DateTime get updatedAt;/// Start of the period whose one-shot exceed alert was already shown.
+ LocalDate? get lastAlertedPeriodStart;
 /// Create a copy of Budget
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
 @pragma('vm:prefer-inline')
 $BudgetCopyWith<Budget> get copyWith => _$BudgetCopyWithImpl<Budget>(this as Budget, _$identity);
 
-  /// Serializes this Budget to a JSON map.
-  Map<String, dynamic> toJson();
 
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is Budget&&(identical(other.id, id) || other.id == id)&&(identical(other.amount, amount) || other.amount == amount)&&(identical(other.categoryId, categoryId) || other.categoryId == categoryId)&&(identical(other.period, period) || other.period == period)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is Budget&&(identical(other.id, id) || other.id == id)&&(identical(other.categoryId, categoryId) || other.categoryId == categoryId)&&(identical(other.limit, limit) || other.limit == limit)&&(identical(other.period, period) || other.period == period)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt)&&(identical(other.lastAlertedPeriodStart, lastAlertedPeriodStart) || other.lastAlertedPeriodStart == lastAlertedPeriodStart));
 }
 
-@JsonKey(includeFromJson: false, includeToJson: false)
+
 @override
-int get hashCode => Object.hash(runtimeType,id,amount,categoryId,period,createdAt);
+int get hashCode => Object.hash(runtimeType,id,categoryId,limit,period,createdAt,updatedAt,lastAlertedPeriodStart);
 
 @override
 String toString() {
-  return 'Budget(id: $id, amount: $amount, categoryId: $categoryId, period: $period, createdAt: $createdAt)';
+  return 'Budget(id: $id, categoryId: $categoryId, limit: $limit, period: $period, createdAt: $createdAt, updatedAt: $updatedAt, lastAlertedPeriodStart: $lastAlertedPeriodStart)';
 }
 
 
@@ -48,7 +46,7 @@ abstract mixin class $BudgetCopyWith<$Res>  {
   factory $BudgetCopyWith(Budget value, $Res Function(Budget) _then) = _$BudgetCopyWithImpl;
 @useResult
 $Res call({
- int id, double amount, int? categoryId, BudgetPeriod period, DateTime createdAt
+ int id, int categoryId, Money limit, BudgetPeriod period, DateTime createdAt, DateTime updatedAt, LocalDate? lastAlertedPeriodStart
 });
 
 
@@ -65,14 +63,16 @@ class _$BudgetCopyWithImpl<$Res>
 
 /// Create a copy of Budget
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? amount = null,Object? categoryId = freezed,Object? period = null,Object? createdAt = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? categoryId = null,Object? limit = null,Object? period = null,Object? createdAt = null,Object? updatedAt = null,Object? lastAlertedPeriodStart = freezed,}) {
   return _then(_self.copyWith(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
-as int,amount: null == amount ? _self.amount : amount // ignore: cast_nullable_to_non_nullable
-as double,categoryId: freezed == categoryId ? _self.categoryId : categoryId // ignore: cast_nullable_to_non_nullable
-as int?,period: null == period ? _self.period : period // ignore: cast_nullable_to_non_nullable
+as int,categoryId: null == categoryId ? _self.categoryId : categoryId // ignore: cast_nullable_to_non_nullable
+as int,limit: null == limit ? _self.limit : limit // ignore: cast_nullable_to_non_nullable
+as Money,period: null == period ? _self.period : period // ignore: cast_nullable_to_non_nullable
 as BudgetPeriod,createdAt: null == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable
-as DateTime,
+as DateTime,updatedAt: null == updatedAt ? _self.updatedAt : updatedAt // ignore: cast_nullable_to_non_nullable
+as DateTime,lastAlertedPeriodStart: freezed == lastAlertedPeriodStart ? _self.lastAlertedPeriodStart : lastAlertedPeriodStart // ignore: cast_nullable_to_non_nullable
+as LocalDate?,
   ));
 }
 
@@ -157,10 +157,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( int id,  double amount,  int? categoryId,  BudgetPeriod period,  DateTime createdAt)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( int id,  int categoryId,  Money limit,  BudgetPeriod period,  DateTime createdAt,  DateTime updatedAt,  LocalDate? lastAlertedPeriodStart)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _Budget() when $default != null:
-return $default(_that.id,_that.amount,_that.categoryId,_that.period,_that.createdAt);case _:
+return $default(_that.id,_that.categoryId,_that.limit,_that.period,_that.createdAt,_that.updatedAt,_that.lastAlertedPeriodStart);case _:
   return orElse();
 
 }
@@ -178,10 +178,10 @@ return $default(_that.id,_that.amount,_that.categoryId,_that.period,_that.create
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( int id,  double amount,  int? categoryId,  BudgetPeriod period,  DateTime createdAt)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( int id,  int categoryId,  Money limit,  BudgetPeriod period,  DateTime createdAt,  DateTime updatedAt,  LocalDate? lastAlertedPeriodStart)  $default,) {final _that = this;
 switch (_that) {
 case _Budget():
-return $default(_that.id,_that.amount,_that.categoryId,_that.period,_that.createdAt);case _:
+return $default(_that.id,_that.categoryId,_that.limit,_that.period,_that.createdAt,_that.updatedAt,_that.lastAlertedPeriodStart);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -198,10 +198,10 @@ return $default(_that.id,_that.amount,_that.categoryId,_that.period,_that.create
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( int id,  double amount,  int? categoryId,  BudgetPeriod period,  DateTime createdAt)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( int id,  int categoryId,  Money limit,  BudgetPeriod period,  DateTime createdAt,  DateTime updatedAt,  LocalDate? lastAlertedPeriodStart)?  $default,) {final _that = this;
 switch (_that) {
 case _Budget() when $default != null:
-return $default(_that.id,_that.amount,_that.categoryId,_that.period,_that.createdAt);case _:
+return $default(_that.id,_that.categoryId,_that.limit,_that.period,_that.createdAt,_that.updatedAt,_that.lastAlertedPeriodStart);case _:
   return null;
 
 }
@@ -210,17 +210,20 @@ return $default(_that.id,_that.amount,_that.categoryId,_that.period,_that.create
 }
 
 /// @nodoc
-@JsonSerializable()
+
 
 class _Budget implements Budget {
-  const _Budget({required this.id, required this.amount, this.categoryId, required this.period, required this.createdAt});
-  factory _Budget.fromJson(Map<String, dynamic> json) => _$BudgetFromJson(json);
+  const _Budget({required this.id, required this.categoryId, required this.limit, required this.period, required this.createdAt, required this.updatedAt, this.lastAlertedPeriodStart});
+  
 
 @override final  int id;
-@override final  double amount;
-@override final  int? categoryId;
+@override final  int categoryId;
+@override final  Money limit;
 @override final  BudgetPeriod period;
 @override final  DateTime createdAt;
+@override final  DateTime updatedAt;
+/// Start of the period whose one-shot exceed alert was already shown.
+@override final  LocalDate? lastAlertedPeriodStart;
 
 /// Create a copy of Budget
 /// with the given fields replaced by the non-null parameter values.
@@ -228,23 +231,20 @@ class _Budget implements Budget {
 @pragma('vm:prefer-inline')
 _$BudgetCopyWith<_Budget> get copyWith => __$BudgetCopyWithImpl<_Budget>(this, _$identity);
 
-@override
-Map<String, dynamic> toJson() {
-  return _$BudgetToJson(this, );
-}
+
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Budget&&(identical(other.id, id) || other.id == id)&&(identical(other.amount, amount) || other.amount == amount)&&(identical(other.categoryId, categoryId) || other.categoryId == categoryId)&&(identical(other.period, period) || other.period == period)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Budget&&(identical(other.id, id) || other.id == id)&&(identical(other.categoryId, categoryId) || other.categoryId == categoryId)&&(identical(other.limit, limit) || other.limit == limit)&&(identical(other.period, period) || other.period == period)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt)&&(identical(other.lastAlertedPeriodStart, lastAlertedPeriodStart) || other.lastAlertedPeriodStart == lastAlertedPeriodStart));
 }
 
-@JsonKey(includeFromJson: false, includeToJson: false)
+
 @override
-int get hashCode => Object.hash(runtimeType,id,amount,categoryId,period,createdAt);
+int get hashCode => Object.hash(runtimeType,id,categoryId,limit,period,createdAt,updatedAt,lastAlertedPeriodStart);
 
 @override
 String toString() {
-  return 'Budget(id: $id, amount: $amount, categoryId: $categoryId, period: $period, createdAt: $createdAt)';
+  return 'Budget(id: $id, categoryId: $categoryId, limit: $limit, period: $period, createdAt: $createdAt, updatedAt: $updatedAt, lastAlertedPeriodStart: $lastAlertedPeriodStart)';
 }
 
 
@@ -255,7 +255,7 @@ abstract mixin class _$BudgetCopyWith<$Res> implements $BudgetCopyWith<$Res> {
   factory _$BudgetCopyWith(_Budget value, $Res Function(_Budget) _then) = __$BudgetCopyWithImpl;
 @override @useResult
 $Res call({
- int id, double amount, int? categoryId, BudgetPeriod period, DateTime createdAt
+ int id, int categoryId, Money limit, BudgetPeriod period, DateTime createdAt, DateTime updatedAt, LocalDate? lastAlertedPeriodStart
 });
 
 
@@ -272,14 +272,16 @@ class __$BudgetCopyWithImpl<$Res>
 
 /// Create a copy of Budget
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? amount = null,Object? categoryId = freezed,Object? period = null,Object? createdAt = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? categoryId = null,Object? limit = null,Object? period = null,Object? createdAt = null,Object? updatedAt = null,Object? lastAlertedPeriodStart = freezed,}) {
   return _then(_Budget(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
-as int,amount: null == amount ? _self.amount : amount // ignore: cast_nullable_to_non_nullable
-as double,categoryId: freezed == categoryId ? _self.categoryId : categoryId // ignore: cast_nullable_to_non_nullable
-as int?,period: null == period ? _self.period : period // ignore: cast_nullable_to_non_nullable
+as int,categoryId: null == categoryId ? _self.categoryId : categoryId // ignore: cast_nullable_to_non_nullable
+as int,limit: null == limit ? _self.limit : limit // ignore: cast_nullable_to_non_nullable
+as Money,period: null == period ? _self.period : period // ignore: cast_nullable_to_non_nullable
 as BudgetPeriod,createdAt: null == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable
-as DateTime,
+as DateTime,updatedAt: null == updatedAt ? _self.updatedAt : updatedAt // ignore: cast_nullable_to_non_nullable
+as DateTime,lastAlertedPeriodStart: freezed == lastAlertedPeriodStart ? _self.lastAlertedPeriodStart : lastAlertedPeriodStart // ignore: cast_nullable_to_non_nullable
+as LocalDate?,
   ));
 }
 

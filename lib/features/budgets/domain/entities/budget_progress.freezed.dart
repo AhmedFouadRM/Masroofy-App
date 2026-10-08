@@ -1,4 +1,4 @@
-﻿// GENERATED CODE - DO NOT MODIFY BY HAND
+// GENERATED CODE - DO NOT MODIFY BY HAND
 // coverage:ignore-file
 // ignore_for_file: type=lint
 // ignore_for_file: unused_element, deprecated_member_use, deprecated_member_use_from_same_package, use_function_type_syntax_for_parameters, unnecessary_const, avoid_init_to_null, invalid_override_different_default_values_named, prefer_expression_function_bodies, annotate_overrides, invalid_annotation_target, unnecessary_question_mark
@@ -14,7 +14,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$BudgetProgress {
 
- Budget get budget; double get spent; double get remaining; double get percentage; BudgetStatus get status;
+ Budget get budget; Category get category; LocalDate get periodStart; LocalDate get periodEnd; Money get spent;
 /// Create a copy of BudgetProgress
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -25,16 +25,16 @@ $BudgetProgressCopyWith<BudgetProgress> get copyWith => _$BudgetProgressCopyWith
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is BudgetProgress&&(identical(other.budget, budget) || other.budget == budget)&&(identical(other.spent, spent) || other.spent == spent)&&(identical(other.remaining, remaining) || other.remaining == remaining)&&(identical(other.percentage, percentage) || other.percentage == percentage)&&(identical(other.status, status) || other.status == status));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is BudgetProgress&&(identical(other.budget, budget) || other.budget == budget)&&(identical(other.category, category) || other.category == category)&&(identical(other.periodStart, periodStart) || other.periodStart == periodStart)&&(identical(other.periodEnd, periodEnd) || other.periodEnd == periodEnd)&&(identical(other.spent, spent) || other.spent == spent));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,budget,spent,remaining,percentage,status);
+int get hashCode => Object.hash(runtimeType,budget,category,periodStart,periodEnd,spent);
 
 @override
 String toString() {
-  return 'BudgetProgress(budget: $budget, spent: $spent, remaining: $remaining, percentage: $percentage, status: $status)';
+  return 'BudgetProgress(budget: $budget, category: $category, periodStart: $periodStart, periodEnd: $periodEnd, spent: $spent)';
 }
 
 
@@ -45,11 +45,11 @@ abstract mixin class $BudgetProgressCopyWith<$Res>  {
   factory $BudgetProgressCopyWith(BudgetProgress value, $Res Function(BudgetProgress) _then) = _$BudgetProgressCopyWithImpl;
 @useResult
 $Res call({
- Budget budget, double spent, double remaining, double percentage, BudgetStatus status
+ Budget budget, Category category, LocalDate periodStart, LocalDate periodEnd, Money spent
 });
 
 
-$BudgetCopyWith<$Res> get budget;
+$BudgetCopyWith<$Res> get budget;$CategoryCopyWith<$Res> get category;
 
 }
 /// @nodoc
@@ -62,14 +62,14 @@ class _$BudgetProgressCopyWithImpl<$Res>
 
 /// Create a copy of BudgetProgress
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? budget = null,Object? spent = null,Object? remaining = null,Object? percentage = null,Object? status = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? budget = null,Object? category = null,Object? periodStart = null,Object? periodEnd = null,Object? spent = null,}) {
   return _then(_self.copyWith(
 budget: null == budget ? _self.budget : budget // ignore: cast_nullable_to_non_nullable
-as Budget,spent: null == spent ? _self.spent : spent // ignore: cast_nullable_to_non_nullable
-as double,remaining: null == remaining ? _self.remaining : remaining // ignore: cast_nullable_to_non_nullable
-as double,percentage: null == percentage ? _self.percentage : percentage // ignore: cast_nullable_to_non_nullable
-as double,status: null == status ? _self.status : status // ignore: cast_nullable_to_non_nullable
-as BudgetStatus,
+as Budget,category: null == category ? _self.category : category // ignore: cast_nullable_to_non_nullable
+as Category,periodStart: null == periodStart ? _self.periodStart : periodStart // ignore: cast_nullable_to_non_nullable
+as LocalDate,periodEnd: null == periodEnd ? _self.periodEnd : periodEnd // ignore: cast_nullable_to_non_nullable
+as LocalDate,spent: null == spent ? _self.spent : spent // ignore: cast_nullable_to_non_nullable
+as Money,
   ));
 }
 /// Create a copy of BudgetProgress
@@ -80,6 +80,15 @@ $BudgetCopyWith<$Res> get budget {
   
   return $BudgetCopyWith<$Res>(_self.budget, (value) {
     return _then(_self.copyWith(budget: value));
+  });
+}/// Create a copy of BudgetProgress
+/// with the given fields replaced by the non-null parameter values.
+@override
+@pragma('vm:prefer-inline')
+$CategoryCopyWith<$Res> get category {
+  
+  return $CategoryCopyWith<$Res>(_self.category, (value) {
+    return _then(_self.copyWith(category: value));
   });
 }
 }
@@ -163,10 +172,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( Budget budget,  double spent,  double remaining,  double percentage,  BudgetStatus status)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( Budget budget,  Category category,  LocalDate periodStart,  LocalDate periodEnd,  Money spent)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _BudgetProgress() when $default != null:
-return $default(_that.budget,_that.spent,_that.remaining,_that.percentage,_that.status);case _:
+return $default(_that.budget,_that.category,_that.periodStart,_that.periodEnd,_that.spent);case _:
   return orElse();
 
 }
@@ -184,10 +193,10 @@ return $default(_that.budget,_that.spent,_that.remaining,_that.percentage,_that.
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( Budget budget,  double spent,  double remaining,  double percentage,  BudgetStatus status)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( Budget budget,  Category category,  LocalDate periodStart,  LocalDate periodEnd,  Money spent)  $default,) {final _that = this;
 switch (_that) {
 case _BudgetProgress():
-return $default(_that.budget,_that.spent,_that.remaining,_that.percentage,_that.status);case _:
+return $default(_that.budget,_that.category,_that.periodStart,_that.periodEnd,_that.spent);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -204,10 +213,10 @@ return $default(_that.budget,_that.spent,_that.remaining,_that.percentage,_that.
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( Budget budget,  double spent,  double remaining,  double percentage,  BudgetStatus status)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( Budget budget,  Category category,  LocalDate periodStart,  LocalDate periodEnd,  Money spent)?  $default,) {final _that = this;
 switch (_that) {
 case _BudgetProgress() when $default != null:
-return $default(_that.budget,_that.spent,_that.remaining,_that.percentage,_that.status);case _:
+return $default(_that.budget,_that.category,_that.periodStart,_that.periodEnd,_that.spent);case _:
   return null;
 
 }
@@ -218,15 +227,15 @@ return $default(_that.budget,_that.spent,_that.remaining,_that.percentage,_that.
 /// @nodoc
 
 
-class _BudgetProgress implements BudgetProgress {
-  const _BudgetProgress({required this.budget, required this.spent, required this.remaining, required this.percentage, required this.status});
+class _BudgetProgress extends BudgetProgress {
+  const _BudgetProgress({required this.budget, required this.category, required this.periodStart, required this.periodEnd, required this.spent}): super._();
   
 
 @override final  Budget budget;
-@override final  double spent;
-@override final  double remaining;
-@override final  double percentage;
-@override final  BudgetStatus status;
+@override final  Category category;
+@override final  LocalDate periodStart;
+@override final  LocalDate periodEnd;
+@override final  Money spent;
 
 /// Create a copy of BudgetProgress
 /// with the given fields replaced by the non-null parameter values.
@@ -238,16 +247,16 @@ _$BudgetProgressCopyWith<_BudgetProgress> get copyWith => __$BudgetProgressCopyW
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _BudgetProgress&&(identical(other.budget, budget) || other.budget == budget)&&(identical(other.spent, spent) || other.spent == spent)&&(identical(other.remaining, remaining) || other.remaining == remaining)&&(identical(other.percentage, percentage) || other.percentage == percentage)&&(identical(other.status, status) || other.status == status));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _BudgetProgress&&(identical(other.budget, budget) || other.budget == budget)&&(identical(other.category, category) || other.category == category)&&(identical(other.periodStart, periodStart) || other.periodStart == periodStart)&&(identical(other.periodEnd, periodEnd) || other.periodEnd == periodEnd)&&(identical(other.spent, spent) || other.spent == spent));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,budget,spent,remaining,percentage,status);
+int get hashCode => Object.hash(runtimeType,budget,category,periodStart,periodEnd,spent);
 
 @override
 String toString() {
-  return 'BudgetProgress(budget: $budget, spent: $spent, remaining: $remaining, percentage: $percentage, status: $status)';
+  return 'BudgetProgress(budget: $budget, category: $category, periodStart: $periodStart, periodEnd: $periodEnd, spent: $spent)';
 }
 
 
@@ -258,11 +267,11 @@ abstract mixin class _$BudgetProgressCopyWith<$Res> implements $BudgetProgressCo
   factory _$BudgetProgressCopyWith(_BudgetProgress value, $Res Function(_BudgetProgress) _then) = __$BudgetProgressCopyWithImpl;
 @override @useResult
 $Res call({
- Budget budget, double spent, double remaining, double percentage, BudgetStatus status
+ Budget budget, Category category, LocalDate periodStart, LocalDate periodEnd, Money spent
 });
 
 
-@override $BudgetCopyWith<$Res> get budget;
+@override $BudgetCopyWith<$Res> get budget;@override $CategoryCopyWith<$Res> get category;
 
 }
 /// @nodoc
@@ -275,14 +284,14 @@ class __$BudgetProgressCopyWithImpl<$Res>
 
 /// Create a copy of BudgetProgress
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? budget = null,Object? spent = null,Object? remaining = null,Object? percentage = null,Object? status = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? budget = null,Object? category = null,Object? periodStart = null,Object? periodEnd = null,Object? spent = null,}) {
   return _then(_BudgetProgress(
 budget: null == budget ? _self.budget : budget // ignore: cast_nullable_to_non_nullable
-as Budget,spent: null == spent ? _self.spent : spent // ignore: cast_nullable_to_non_nullable
-as double,remaining: null == remaining ? _self.remaining : remaining // ignore: cast_nullable_to_non_nullable
-as double,percentage: null == percentage ? _self.percentage : percentage // ignore: cast_nullable_to_non_nullable
-as double,status: null == status ? _self.status : status // ignore: cast_nullable_to_non_nullable
-as BudgetStatus,
+as Budget,category: null == category ? _self.category : category // ignore: cast_nullable_to_non_nullable
+as Category,periodStart: null == periodStart ? _self.periodStart : periodStart // ignore: cast_nullable_to_non_nullable
+as LocalDate,periodEnd: null == periodEnd ? _self.periodEnd : periodEnd // ignore: cast_nullable_to_non_nullable
+as LocalDate,spent: null == spent ? _self.spent : spent // ignore: cast_nullable_to_non_nullable
+as Money,
   ));
 }
 
@@ -294,6 +303,15 @@ $BudgetCopyWith<$Res> get budget {
   
   return $BudgetCopyWith<$Res>(_self.budget, (value) {
     return _then(_self.copyWith(budget: value));
+  });
+}/// Create a copy of BudgetProgress
+/// with the given fields replaced by the non-null parameter values.
+@override
+@pragma('vm:prefer-inline')
+$CategoryCopyWith<$Res> get category {
+  
+  return $CategoryCopyWith<$Res>(_self.category, (value) {
+    return _then(_self.copyWith(category: value));
   });
 }
 }

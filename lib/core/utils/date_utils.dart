@@ -1,49 +1,59 @@
-﻿import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:masroofy/core/domain/digits.dart';
+import 'package:masroofy/core/domain/local_date.dart';
 
 class DateUtilsHelper {
   DateUtilsHelper._();
 
-  static String formatDate(DateTime date, String locale) {
-    return DateFormat.yMMMd(locale).format(date);
+  /// `Aug 19, 2026` / `١٩ أغسطس ٢٠٢٦` (or Western digits when [westernDigits]).
+  /// Requires `initializeDateFormatting()` to have run (done in `main`).
+  static String formatDate(
+    LocalDate date, {
+    required String languageCode,
+    bool westernDigits = false,
+  }) =>
+      _shape(DateFormat.yMMMd(languageCode).format(date.toDateTime()), languageCode, westernDigits);
+
+  /// `Aug 19` / `١٩ أغسطس`, for list group headers older than yesterday.
+  static String formatShortDate(
+    LocalDate date, {
+    required String languageCode,
+    bool westernDigits = false,
+  }) =>
+      _shape(DateFormat.MMMd(languageCode).format(date.toDateTime()), languageCode, westernDigits);
+
+  static String _shape(String formatted, String languageCode, bool westernDigits) {
+    if (languageCode != 'ar') return formatted;
+    final western = toWesternDigits(formatted);
+    return westernDigits ? western : toEasternArabicNumber(western);
   }
 
-  static bool isToday(DateTime date) {
-    final now = DateTime.now();
-    return date.year == now.year && date.month == now.month && date.day == now.day;
-  }
-
-  static bool isYesterday(DateTime date) {
-    final yesterday = DateTime.now().subtract(const Duration(days: 1));
-    return date.year == yesterday.year && date.month == yesterday.month && date.day == yesterday.day;
-  }
-
-  static bool isThisWeek(DateTime date) {
-    final now = DateTime.now();
-    final startOfWeek = now.subtract(Duration(days: now.weekday - 1));
-    final endOfWeek = startOfWeek.add(const Duration(days: 6));
-    return date.isAfter(startOfWeek.subtract(const Duration(days: 1))) && 
-           date.isBefore(endOfWeek.add(const Duration(days: 1)));
-  }
-
-  static DateTimeRange getWeekRange(DateTime date) {
-    final startOfWeek = date.subtract(Duration(days: date.weekday - 1));
-    final endOfWeek = startOfWeek.add(const Duration(days: 6, hours: 23, minutes: 59, seconds: 59));
-    return DateTimeRange(start: startOfWeek, end: endOfWeek);
-  }
-
-  static DateTimeRange getMonthRange(DateTime date) {
-    final startOfMonth = DateTime(date.year, date.month, 1);
-    final endOfMonth = DateTime(date.year, date.month + 1, 0, 23, 59, 59);
-    return DateTimeRange(start: startOfMonth, end: endOfMonth);
-  }
-
-  static String getDateGroupLabel(DateTime date, String locale) {
-    if (isToday(date)) {
-      return locale == 'ar' ? 'Ø§Ù„ÙŠÙˆÙ…' : 'Today';
-    } else if (isYesterday(date)) {
-      return locale == 'ar' ? 'Ø£Ù…Ø³' : 'Yesterday';
+  /// First day of the week for a device region, as a [DateTime.weekday] value
+  /// (1 = Monday, 6 = Saturday, 7 = Sunday).
+  ///
+  /// From CLDR `weekData/firstDay`. `intl` only ships week data for a handful
+  /// of region locales (no `ar_SA`, `ar_AE`, `ar_KW`…), so the table is kept
+  /// here. Without a region, Arabic falls back to Saturday (the primary
+  /// market, Egypt) and everything else to Monday (CLDR world default).
+  static int firstWeekdayFor({required String languageCode, String? countryCode}) {
+    final region = countryCode?.toUpperCase();
+    if (region != null && region.isNotEmpty) {
+      if (_saturdayRegions.contains(region)) return DateTime.saturday;
+      if (_sundayRegions.contains(region)) return DateTime.sunday;
+      if (region == 'MV') return DateTime.friday;
+      return DateTime.monday;
     }
-    return DateFormat.MMMd(locale).format(date);
+    return languageCode == 'ar' ? DateTime.saturday : DateTime.monday;
   }
+
+  static const _saturdayRegions = {
+    'AF', 'BH', 'DJ', 'DZ', 'EG', 'IQ', 'IR', 'JO', 'KW', 'LY', 'OM', 'QA', 'SD', 'SY',
+  };
+
+  static const _sundayRegions = {
+    'AG', 'AS', 'BD', 'BR', 'BS', 'BT', 'BW', 'BZ', 'CA', 'CN', 'CO', 'DM', 'DO', 'ET',
+    'GT', 'GU', 'HK', 'HN', 'ID', 'IL', 'IN', 'JM', 'JP', 'KE', 'KH', 'KR', 'LA', 'MH',
+    'MM', 'MO', 'MT', 'MX', 'MZ', 'NI', 'NP', 'PA', 'PE', 'PH', 'PK', 'PR', 'PT', 'PY',
+    'SA', 'SG', 'SV', 'TH', 'TT', 'TW', 'UM', 'US', 'VE', 'VI', 'WS', 'YE', 'ZA', 'ZW',
+  };
 }

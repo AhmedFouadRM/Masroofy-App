@@ -1,4 +1,5 @@
-﻿import 'package:fpdart/fpdart.dart';
+import 'package:fpdart/fpdart.dart';
+import 'package:masroofy/core/domain/local_date.dart';
 import 'package:masroofy/core/error/failures.dart';
 import 'package:masroofy/features/recurring_expenses/domain/entities/recurring_expense.dart';
 import 'package:masroofy/features/recurring_expenses/domain/repositories/i_recurring_expense_repository.dart';
@@ -16,7 +17,7 @@ class RecurringExpenseRepositoryImpl implements IRecurringExpenseRepository {
   }
 
   @override
-  Future<Either<Failure, List<RecurringExpense>>> getDueRecurringExpenses(DateTime date) {
+  Future<Either<Failure, List<RecurringExpense>>> getDueRecurringExpenses(LocalDate today) {
     throw UnimplementedError();
   }
 

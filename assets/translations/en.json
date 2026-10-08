@@ -21,7 +21,15 @@
   },
   "categories": {
     "title": "Categories",
-    "add": "Add Category"
+    "add": "Add Category",
+    "food": "Food",
+    "transport": "Transport",
+    "shopping": "Shopping",
+    "bills": "Bills",
+    "health": "Health",
+    "entertainment": "Entertainment",
+    "education": "Education",
+    "other": "Other"
   },
   "recurring": {
     "title": "Recurring Expenses",
@@ -60,7 +68,8 @@
     "clear_data": "Clear All Data",
     "clear_confirm": "Are you sure you want to delete all data? This action cannot be undone.",
     "currency_warning": "Changing currency will not convert existing amounts.",
-    "version": "Version"
+    "version": "Version",
+    "western_digits": "Use Western digits (123)"
   },
   "auth": {
     "enter_pin": "Enter PIN",
@@ -69,5 +78,39 @@
     "wrong_pin": "Incorrect PIN. Try again.",
     "biometric_prompt": "Authenticate to unlock",
     "enable_biometric": "Enable Biometric Login"
+  },
+  "date": {
+    "today": "Today",
+    "yesterday": "Yesterday"
+  },
+  "validation": {
+    "required": "This field is required",
+    "too_long": "This is too long",
+    "must_be_positive": "Enter an amount greater than zero",
+    "in_future": "The date can't be in the future",
+    "invalid_format": "This value is not valid",
+    "duplicate": "This name is already used"
+  },
+  "errors": {
+    "not_found": "This item no longer exists",
+    "constraint": "This change conflicts with existing data",
+    "storage": "Couldn't save your data. Please try again",
+    "secure_storage": "Couldn't access secure storage on this device",
+    "export": "Couldn't create the export file",
+    "unexpected": "Something went wrong"
+  },
+  "currencies": {
+    "EGP": "Egyptian Pound",
+    "SAR": "Saudi Riyal",
+    "AED": "UAE Dirham",
+    "QAR": "Qatari Riyal",
+    "KWD": "Kuwaiti Dinar",
+    "BHD": "Bahraini Dinar",
+    "OMR": "Omani Rial",
+    "JOD": "Jordanian Dinar",
+    "MAD": "Moroccan Dirham",
+    "USD": "US Dollar",
+    "EUR": "Euro",
+    "GBP": "British Pound"
   }
 }

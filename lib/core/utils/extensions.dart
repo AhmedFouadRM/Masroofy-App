@@ -1,4 +1,4 @@
-﻿extension StringExtension on String {
+extension StringExtension on String {
   String capitalize() {
     if (isEmpty) return this;
     return '${this[0].toUpperCase()}${substring(1)}';
@@ -14,8 +14,4 @@ extension DateTimeExtension on DateTime {
   
   bool isSameDay(DateTime other) =>
       year == other.year && month == other.month && day == other.day;
-}
-
-extension DoubleExtension on double {
-  String toFormattedString(int decimals) => toStringAsFixed(decimals);
 }
