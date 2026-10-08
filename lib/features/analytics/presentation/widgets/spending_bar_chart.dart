@@ -5,6 +5,7 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:masroofy/core/domain/date_range.dart';
 import 'package:masroofy/core/domain/local_date.dart';
+import 'package:masroofy/core/domain/money.dart';
 import 'package:masroofy/core/theme/masroofy_colors.dart';
 import 'package:masroofy/features/analytics/domain/analytics_math.dart';
 import 'package:masroofy/shared/formatting/display_format.dart';
@@ -95,6 +96,8 @@ class SpendingBarChart extends StatelessWidget {
           barTouchData: BarTouchData(
             touchTooltipData: BarTouchTooltipData(
               getTooltipColor: (_) => colors.inverseSurface,
+              fitInsideHorizontally: true,
+              fitInsideVertically: true,
               tooltipBorderRadius: BorderRadius.circular(8),
               getTooltipItem: (group, groupIndex, rod, rodIndex) => BarTooltipItem(
                 '${labels[group.x]}\n${amounts[group.x]}',
@@ -110,7 +113,12 @@ class SpendingBarChart extends StatelessWidget {
                   BarChartRodData(
                     toY: bar.total.minor.toDouble(),
                     width: ordered.length > 20 ? 6 : 14,
-                    color: holdsToday(i) ? colors.primary.withValues(alpha: 0.45) : colors.primary,
+                    // A zero-spend day draws nothing (not a rounded stub).
+                    color: bar.total == Money.zero
+                        ? Colors.transparent
+                        : holdsToday(i)
+                        ? colors.primary.withValues(alpha: 0.45)
+                        : colors.primary,
                     borderRadius: const BorderRadius.vertical(top: Radius.circular(4)),
                   ),
                 ],

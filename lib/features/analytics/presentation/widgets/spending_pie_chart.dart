@@ -58,12 +58,11 @@ class _SpendingPieChartState extends State<SpendingPieChart> {
               sectionsSpace: 2,
               startDegreeOffset: -90,
               pieTouchData: PieTouchData(
+                // A tap toggles the slice under it; tapping the hole clears.
                 touchCallback: (event, response) {
-                  if (!event.isInterestedForInteractions) return;
+                  if (event is! FlTapUpEvent) return;
                   final index = response?.touchedSection?.touchedSectionIndex;
-                  if (event is FlTapUpEvent) {
-                    setState(() => _touched = index == null || index < 0 || index == _touched ? null : index);
-                  }
+                  setState(() => _touched = index == null || index < 0 || index == _touched ? null : index);
                 },
               ),
               sections: [
