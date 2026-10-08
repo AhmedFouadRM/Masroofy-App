@@ -56,7 +56,7 @@ class _TabBar extends StatelessWidget {
     ];
     return GlassSurface(
       strong: true,
-      borderRadius: BorderRadius.circular(AppRadius.full),
+      radius: 32,
       child: Padding(
         padding: const EdgeInsets.all(6),
         child: Row(

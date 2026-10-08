@@ -14,6 +14,7 @@ import 'package:masroofy/shared/categories/category_avatar.dart';
 import 'package:masroofy/shared/categories/category_display.dart';
 import 'package:masroofy/shared/formatting/display_format.dart';
 import 'package:masroofy/shared/widgets/aura_background.dart';
+import 'package:masroofy/shared/widgets/glass_app_bar.dart';
 import 'package:masroofy/shared/widgets/grouped_list.dart';
 import 'package:material_symbols_icons/symbols.dart';
 
@@ -32,7 +33,8 @@ class CategoryListScreen extends StatelessWidget {
       child: AuraBackground(
         child: Scaffold(
           backgroundColor: Colors.transparent,
-          appBar: AppBar(title: Text(StringManager.categoriesTitle)),
+          extendBodyBehindAppBar: true,
+          appBar: GlassAppBar(title: Text(StringManager.categoriesTitle)),
           floatingActionButton: _GlowingFab(
             tooltip: StringManager.addCategory,
             onPressed: () => context.push(RoutePaths.newCategory),
@@ -59,7 +61,7 @@ class _CategoryList extends StatelessWidget {
   Widget build(BuildContext context) {
     return ListView(
       // Bottom space keeps the last row clear of the FAB.
-      padding: const EdgeInsets.fromLTRB(AppSpacing.screen, 0, AppSpacing.screen, 96),
+      padding: EdgeInsets.fromLTRB(AppSpacing.screen, MediaQuery.paddingOf(context).top, AppSpacing.screen, 96),
       children: [
         SectionHeader(title: StringManager.categoriesDefaultSection, trailing: context.count(state.defaults.length)),
         GroupedCard(children: [for (final s in state.defaults) _CategoryRow(summary: s)]),

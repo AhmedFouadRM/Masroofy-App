@@ -14,6 +14,7 @@ import 'package:masroofy/shared/categories/category_display.dart';
 import 'package:masroofy/shared/categories/category_icon_registry.dart';
 import 'package:masroofy/shared/formatting/display_format.dart';
 import 'package:masroofy/shared/widgets/aura_background.dart';
+import 'package:masroofy/shared/widgets/glass_app_bar.dart';
 import 'package:masroofy/shared/widgets/select_field.dart';
 import 'package:material_symbols_icons/symbols.dart';
 
@@ -72,7 +73,8 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
         builder: (context, state) => AuraBackground(
           child: Scaffold(
             backgroundColor: Colors.transparent,
-            appBar: AppBar(
+            extendBodyBehindAppBar: true,
+            appBar: GlassAppBar(
               leading: IconButton(
                 icon: const Icon(Symbols.close_rounded),
                 tooltip: MaterialLocalizations.of(context).closeButtonTooltip,
@@ -158,7 +160,12 @@ class _Fields extends StatelessWidget {
     const gap = SizedBox(height: AppSpacing.lg);
 
     return ListView(
-      padding: const EdgeInsets.fromLTRB(AppSpacing.screen, AppSpacing.sm, AppSpacing.screen, AppSpacing.xl),
+      padding: EdgeInsets.fromLTRB(
+        AppSpacing.screen,
+        MediaQuery.paddingOf(context).top + AppSpacing.sm,
+        AppSpacing.screen,
+        AppSpacing.xl,
+      ),
       children: [
         TextField(
           controller: amount,

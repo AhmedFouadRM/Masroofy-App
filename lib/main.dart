@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/date_symbol_data_local.dart';
+import 'package:liquid_glass_widgets/liquid_glass_widgets.dart';
 import 'package:masroofy/app/app.dart';
 import 'package:masroofy/app/di.dart';
 import 'package:masroofy/core/theme/thmanyah_font_loader.dart';
@@ -15,6 +16,8 @@ Future<void> main() async {
   await initializeDateFormatting();
   await configureDependencies();
   await ThmanyahFontLoader.load();
+  // Loads the liquid glass shaders off the UI thread before the first frame.
+  await LiquidGlassWidgets.initialize(enablePerformanceMonitor: false);
   LicenseRegistry.addLicense(() async* {
     yield LicenseEntryWithLineBreaks(['Sora'], await rootBundle.loadString('assets/fonts/sora/OFL.txt'));
   });
@@ -31,7 +34,12 @@ Future<void> main() async {
         useOnlyLangCode: true,
         // Use CLDR plural rules, so Arabic gets its few / many forms.
         ignorePluralRules: false,
-        child: const MasroofyApp(),
+        // Glass follows the app theme (not the OS) and degrades on slow devices.
+        child: LiquidGlassWidgets.wrap(
+          brightnessResolver: Theme.maybeBrightnessOf,
+          adaptiveQuality: true,
+          child: const MasroofyApp(),
+        ),
       ),
     ),
   );

@@ -59,6 +59,7 @@ dependencies:
   share_plus: ^13.3.0
   csv: ^8.0.0
   path_provider: ^2.1.5
+  liquid_glass_widgets: ^1.11.0
 
 dev_dependencies:
   flutter_test:

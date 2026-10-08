@@ -14,6 +14,7 @@ import 'package:masroofy/shared/categories/category_avatar.dart';
 import 'package:masroofy/shared/categories/category_icon_registry.dart';
 import 'package:masroofy/shared/formatting/display_format.dart';
 import 'package:masroofy/shared/widgets/aura_background.dart';
+import 'package:masroofy/shared/widgets/glass_app_bar.dart';
 import 'package:material_symbols_icons/symbols.dart';
 
 /// New / Edit Category. Expects a [CategoryFormCubit] above it.
@@ -64,7 +65,8 @@ class _CategoryFormScreenState extends State<CategoryFormScreen> {
         builder: (context, state) => AuraBackground(
           child: Scaffold(
             backgroundColor: Colors.transparent,
-            appBar: AppBar(
+            extendBodyBehindAppBar: true,
+            appBar: GlassAppBar(
               leading: IconButton(
                 icon: const Icon(Symbols.close_rounded),
                 tooltip: MaterialLocalizations.of(context).closeButtonTooltip,
@@ -102,7 +104,12 @@ class _Form extends StatelessWidget {
     final busy = state.status == CategoryFormStatus.saving || state.status == CategoryFormStatus.deleting;
 
     return ListView(
-      padding: const EdgeInsets.fromLTRB(AppSpacing.screen, AppSpacing.sm, AppSpacing.screen, AppSpacing.xxl),
+      padding: EdgeInsets.fromLTRB(
+        AppSpacing.screen,
+        MediaQuery.paddingOf(context).top + AppSpacing.sm,
+        AppSpacing.screen,
+        AppSpacing.xxl,
+      ),
       children: [
         // Live preview.
         Card(

@@ -20,6 +20,7 @@ import 'package:masroofy/shared/formatting/display_format.dart';
 import 'package:masroofy/shared/widgets/app_shell.dart';
 import 'package:masroofy/shared/widgets/aura_background.dart';
 import 'package:masroofy/shared/widgets/empty_state_widget.dart';
+import 'package:masroofy/shared/widgets/glass_app_bar.dart';
 import 'package:masroofy/shared/widgets/grouped_list.dart';
 import 'package:masroofy/shared/widgets/segmented_pills.dart';
 import 'package:material_symbols_icons/symbols.dart';
@@ -62,7 +63,8 @@ class _ExpenseListScreenState extends State<ExpenseListScreen> {
       child: AuraBackground(
         child: Scaffold(
           backgroundColor: Colors.transparent,
-          appBar: AppBar(
+          extendBodyBehindAppBar: true,
+          appBar: GlassAppBar(
             title: _searching
                 ? TextField(
                     controller: _search,
@@ -105,7 +107,12 @@ class _ExpenseListScreenState extends State<ExpenseListScreen> {
               child: CustomScrollView(
                 slivers: [
                   SliverPadding(
-                    padding: const EdgeInsets.fromLTRB(AppSpacing.screen, AppSpacing.sm, AppSpacing.screen, 0),
+                    padding: EdgeInsets.fromLTRB(
+                      AppSpacing.screen,
+                      MediaQuery.paddingOf(context).top + AppSpacing.sm,
+                      AppSpacing.screen,
+                      0,
+                    ),
                     sliver: SliverList.list(
                       children: [
                         _Summary(state: state),

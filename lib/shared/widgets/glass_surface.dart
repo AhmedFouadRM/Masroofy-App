@@ -1,46 +1,52 @@
-import 'dart:ui';
-
 import 'package:flutter/material.dart';
-import 'package:masroofy/core/theme/app_dimensions.dart';
+import 'package:liquid_glass_widgets/liquid_glass_widgets.dart';
 import 'package:masroofy/core/theme/masroofy_colors.dart';
 
-/// Frosted glass for floating chrome only (Design_System.md → Glass rules):
-/// background blur + translucent fill + 1px highlight stroke. Falls back to
-/// a solid surface when the platform asks for high contrast.
+/// Liquid glass for floating chrome only (Design_System.md → Glass rules):
+/// a shader lens that blurs and bends the content behind it, with specular
+/// highlights on the rim (liquid_glass_widgets). Falls back to a solid
+/// surface when the platform asks for high contrast.
 class GlassSurface extends StatelessWidget {
-  const GlassSurface({required this.child, required this.borderRadius, this.strong = false, super.key});
+  const GlassSurface({required this.child, required this.radius, this.strong = false, super.key});
 
   final Widget child;
-  final BorderRadius borderRadius;
 
-  /// Use the stronger fill when the glass holds text.
+  /// Uniform corner radius of the squircle.
+  final double radius;
+
+  /// A denser tint when the glass holds text over busy content.
   final bool strong;
 
   @override
   Widget build(BuildContext context) {
     final colors = MasroofyColors.of(context);
-    final solid = MediaQuery.highContrastOf(context);
-    final shape = RoundedSuperellipseBorder(
-      borderRadius: borderRadius,
-      side: BorderSide(color: solid ? colors.border : colors.glassStroke),
-    );
-    final surface = DecoratedBox(
-      decoration: ShapeDecoration(
-        shape: shape,
-        color: solid ? colors.surface : (strong ? colors.glassFillStrong : colors.glassFill),
-        shadows: [
-          BoxShadow(color: colors.inverseSurface.withValues(alpha: 0.08), blurRadius: 24, offset: const Offset(0, 8)),
-        ],
+    if (MediaQuery.highContrastOf(context)) {
+      return DecoratedBox(
+        decoration: ShapeDecoration(
+          color: colors.surface,
+          shape: RoundedSuperellipseBorder(
+            borderRadius: BorderRadius.circular(radius),
+            side: BorderSide(color: colors.border),
+          ),
+        ),
+        child: child,
+      );
+    }
+    final dark = Theme.of(context).brightness == Brightness.dark;
+    return GlassContainer(
+      useOwnLayer: true,
+      shape: LiquidRoundedSuperellipse(borderRadius: radius),
+      settings: LiquidGlassSettings(
+        // A light tint keeps the text readable while the content behind
+        // still shows through, bent at the rim.
+        glassColor: (dark ? colors.surface : Colors.white).withValues(alpha: strong ? 0.55 : 0.35),
+        thickness: 24,
+        blur: strong ? 10 : 6,
+        refractiveIndex: 1.25,
+        lightIntensity: dark ? 0.35 : 0.6,
+        saturation: 1.4,
       ),
       child: child,
-    );
-    if (solid) return surface;
-    return ClipRSuperellipse(
-      borderRadius: borderRadius,
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: AppGlass.blurSigma, sigmaY: AppGlass.blurSigma),
-        child: surface,
-      ),
     );
   }
 }
