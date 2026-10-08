@@ -11,6 +11,7 @@ class SelectField extends StatelessWidget {
     required this.onTap,
     this.leading,
     this.placeholder,
+    this.helperText,
     this.errorText,
     super.key,
   });
@@ -21,6 +22,7 @@ class SelectField extends StatelessWidget {
   final String? value;
   final String? placeholder;
   final Widget? leading;
+  final String? helperText;
   final String? errorText;
   final VoidCallback? onTap;
 
@@ -39,6 +41,8 @@ class SelectField extends StatelessWidget {
           decoration: InputDecoration(
             labelText: label,
             hintText: placeholder,
+            helperText: helperText,
+            helperMaxLines: 2,
             errorText: errorText,
             prefixIcon: leading == null
                 ? null

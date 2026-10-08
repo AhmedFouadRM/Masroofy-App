@@ -105,11 +105,30 @@ class StringManager {
   // ── Recurring ──
   static String get recurringTitle => 'recurring.title'.tr();
   static String get addRecurring => 'recurring.add'.tr();
+  static String get editRecurring => 'recurring.edit'.tr();
   static String nextDue(String date) => 'recurring.next_due'.tr(args: [date]);
-  static String get daily => 'recurring.daily'.tr();
-  static String get weekly => 'recurring.weekly'.tr();
-  static String get monthly => 'recurring.monthly'.tr();
-  static String get yearly => 'recurring.yearly'.tr();
+
+  /// `Daily`, `Weekly`, ... by frequency name (`daily`, `weekly`, ...).
+  static String frequency(String name) => 'recurring.$name'.tr();
+  static String get recurringActiveSection => 'recurring.section_active'.tr();
+  static String get recurringPausedSection => 'recurring.section_paused'.tr();
+  static String get recurringPaused => 'recurring.paused'.tr();
+  static String get emptyRecurring => 'recurring.empty'.tr();
+  static String get emptyRecurringHint => 'recurring.empty_hint'.tr();
+  static String get addFirstRecurring => 'recurring.add_first'.tr();
+  static String get recurringTitleLabel => 'recurring.title_label'.tr();
+  static String get recurringTitleHint => 'recurring.title_hint'.tr();
+  static String get repeats => 'recurring.repeats'.tr();
+  static String get startDate => 'recurring.start_date'.tr();
+  static String get startDateHelper => 'recurring.start_helper'.tr();
+  static String get recurringActive => 'recurring.active'.tr();
+  static String get recurringActiveHelper => 'recurring.active_helper'.tr();
+  static String get saveRecurring => 'recurring.save'.tr();
+  static String deleteRecurringTitle(String title) => 'recurring.delete_title'.tr(args: [title]);
+  static String get deleteRecurringBody => 'recurring.delete_body'.tr();
+
+  /// Switch label for screen readers, e.g. "Active: Rent".
+  static String recurringActiveToggle(String title) => 'recurring.active_toggle'.tr(args: [title]);
 
   // ── Analytics ──
   static String get analyticsTitle => 'analytics.title'.tr();

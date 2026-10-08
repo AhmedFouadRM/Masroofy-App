@@ -15,6 +15,7 @@ import 'package:masroofy/shared/categories/category_display.dart';
 import 'package:masroofy/shared/formatting/display_format.dart';
 import 'package:masroofy/shared/widgets/aura_background.dart';
 import 'package:masroofy/shared/widgets/glass_app_bar.dart';
+import 'package:masroofy/shared/widgets/glowing_fab.dart';
 import 'package:masroofy/shared/widgets/grouped_list.dart';
 import 'package:material_symbols_icons/symbols.dart';
 
@@ -35,7 +36,7 @@ class CategoryListScreen extends StatelessWidget {
           backgroundColor: Colors.transparent,
           extendBodyBehindAppBar: true,
           appBar: GlassAppBar(title: Text(StringManager.categoriesTitle)),
-          floatingActionButton: _GlowingFab(
+          floatingActionButton: GlowingFab(
             tooltip: StringManager.addCategory,
             onPressed: () => context.push(RoutePaths.newCategory),
           ),
@@ -135,27 +136,6 @@ class _DismissibleCategoryRow extends StatelessWidget {
         return true;
       },
       child: _CategoryRow(summary: summary, onTap: () => context.push(RoutePaths.editCategory(id))),
-    );
-  }
-}
-
-class _GlowingFab extends StatelessWidget {
-  const _GlowingFab({required this.tooltip, required this.onPressed});
-
-  final String tooltip;
-  final VoidCallback onPressed;
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = MasroofyColors.of(context);
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        boxShadow: [
-          BoxShadow(color: colors.primary.withValues(alpha: 0.32), blurRadius: 24, offset: const Offset(0, 10)),
-        ],
-      ),
-      child: FloatingActionButton(tooltip: tooltip, onPressed: onPressed, child: const Icon(Symbols.add_rounded)),
     );
   }
 }

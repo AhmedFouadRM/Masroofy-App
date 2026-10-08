@@ -6,6 +6,8 @@ abstract final class RoutePaths {
   static const newExpense = '/expenses/new';
   static String editExpense(int id) => '/expenses/$id';
   static const recurring = '/expenses/recurring';
+  static const newRecurring = '/expenses/recurring/new';
+  static String editRecurring(int id) => '/expenses/recurring/$id';
   static const lock = '/lock';
 
   static const categories = '/settings/categories';

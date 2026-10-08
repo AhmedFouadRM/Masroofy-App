@@ -13,6 +13,10 @@ import 'package:masroofy/features/expenses/presentation/cubits/expense_form_cubi
 import 'package:masroofy/features/expenses/presentation/cubits/expense_list_cubit.dart';
 import 'package:masroofy/features/expenses/presentation/screens/expense_form_screen.dart';
 import 'package:masroofy/features/expenses/presentation/screens/expense_list_screen.dart';
+import 'package:masroofy/features/recurring_expenses/presentation/cubits/recurring_form_cubit.dart';
+import 'package:masroofy/features/recurring_expenses/presentation/cubits/recurring_list_cubit.dart';
+import 'package:masroofy/features/recurring_expenses/presentation/screens/recurring_form_screen.dart';
+import 'package:masroofy/features/recurring_expenses/presentation/screens/recurring_list_screen.dart';
 import 'package:masroofy/features/settings/presentation/screens/settings_screen.dart';
 import 'package:masroofy/shared/settings/settings_cubit.dart';
 import 'package:masroofy/shared/widgets/app_shell.dart';
@@ -65,7 +69,28 @@ final appRouter = GoRouter(
             GoRoute(
               path: 'recurring',
               parentNavigatorKey: _rootNavigatorKey,
-              builder: (context, state) => const DummyScreen(title: 'Recurring'),
+              builder: (context, state) => BlocProvider(
+                create: (_) => getIt<RecurringListCubit>()..load(),
+                child: const RecurringListScreen(),
+              ),
+              routes: [
+                GoRoute(
+                  path: 'new',
+                  parentNavigatorKey: _rootNavigatorKey,
+                  builder: (context, state) => BlocProvider(
+                    create: (context) => _recurringForm(context, null),
+                    child: const RecurringFormScreen(),
+                  ),
+                ),
+                GoRoute(
+                  path: ':id',
+                  parentNavigatorKey: _rootNavigatorKey,
+                  builder: (context, state) => BlocProvider(
+                    create: (context) => _recurringForm(context, int.parse(state.pathParameters['id']!)),
+                    child: const RecurringFormScreen(),
+                  ),
+                ),
+              ],
             ),
             GoRoute(
               path: ':id',
@@ -136,6 +161,15 @@ ExpenseListCubit _expenseList(int firstWeekday) {
 
 ExpenseFormCubit _expenseForm(BuildContext context, int? id) {
   final cubit = getIt<ExpenseFormCubit>(
+    param1: context.read<SettingsCubit>().state.currency.fractionDigits,
+    param2: id,
+  );
+  unawaited(cubit.load());
+  return cubit;
+}
+
+RecurringFormCubit _recurringForm(BuildContext context, int? id) {
+  final cubit = getIt<RecurringFormCubit>(
     param1: context.read<SettingsCubit>().state.currency.fractionDigits,
     param2: id,
   );

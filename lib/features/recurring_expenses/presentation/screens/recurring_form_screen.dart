@@ -8,60 +8,59 @@ import 'package:masroofy/core/error/failures.dart';
 import 'package:masroofy/core/strings/string_manager.dart';
 import 'package:masroofy/core/theme/app_dimensions.dart';
 import 'package:masroofy/core/theme/masroofy_colors.dart';
-import 'package:masroofy/features/expenses/presentation/cubits/expense_form_cubit.dart';
+import 'package:masroofy/features/recurring_expenses/domain/entities/recurring_frequency.dart';
+import 'package:masroofy/features/recurring_expenses/presentation/cubits/recurring_form_cubit.dart';
 import 'package:masroofy/shared/categories/category_display.dart';
 import 'package:masroofy/shared/categories/category_icon_registry.dart';
 import 'package:masroofy/shared/categories/category_picker_sheet.dart';
 import 'package:masroofy/shared/formatting/display_format.dart';
 import 'package:masroofy/shared/widgets/aura_background.dart';
 import 'package:masroofy/shared/widgets/glass_app_bar.dart';
+import 'package:masroofy/shared/widgets/segmented_pills.dart';
 import 'package:masroofy/shared/widgets/select_field.dart';
 import 'package:material_symbols_icons/symbols.dart';
 
-/// Add / Edit Expense. Expects an [ExpenseFormCubit] above it.
-class ExpenseFormScreen extends StatefulWidget {
-  const ExpenseFormScreen({super.key});
+/// Add / Edit Recurring Expense. Expects a [RecurringFormCubit] above it.
+class RecurringFormScreen extends StatefulWidget {
+  const RecurringFormScreen({super.key});
 
   @override
-  State<ExpenseFormScreen> createState() => _ExpenseFormScreenState();
+  State<RecurringFormScreen> createState() => _RecurringFormScreenState();
 }
 
-class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
+class _RecurringFormScreenState extends State<RecurringFormScreen> {
   final _amount = TextEditingController();
   final _title = TextEditingController();
-  final _note = TextEditingController();
 
   @override
   void dispose() {
     _amount.dispose();
     _title.dispose();
-    _note.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    final cubit = context.read<ExpenseFormCubit>();
+    final cubit = context.read<RecurringFormCubit>();
     return MultiBlocListener(
       listeners: [
-        BlocListener<ExpenseFormCubit, ExpenseFormState>(
+        BlocListener<RecurringFormCubit, RecurringFormState>(
           listenWhen: (previous, current) =>
-              previous.status != ExpenseFormStatus.saved && current.status == ExpenseFormStatus.saved,
+              previous.status != RecurringFormStatus.saved && current.status == RecurringFormStatus.saved,
           listener: (context, _) => context.pop(),
         ),
-        // Fill the fields once the edited expense has loaded.
-        BlocListener<ExpenseFormCubit, ExpenseFormState>(
+        // Fill the fields once the edited template has loaded.
+        BlocListener<RecurringFormCubit, RecurringFormState>(
           listenWhen: (previous, current) =>
-              previous.status == ExpenseFormStatus.loading && current.status == ExpenseFormStatus.ready,
+              previous.status == RecurringFormStatus.loading && current.status == RecurringFormStatus.ready,
           listener: (context, state) {
             _amount.text = context.digits(state.amountText);
             _title.text = state.title;
-            _note.text = state.note;
           },
         ),
-        BlocListener<ExpenseFormCubit, ExpenseFormState>(
+        BlocListener<RecurringFormCubit, RecurringFormState>(
           listenWhen: (previous, current) =>
-              current.status != ExpenseFormStatus.loadFailure &&
+              current.status != RecurringFormStatus.loadFailure &&
               current.failure != null &&
               current.failure != previous.failure,
           listener: (context, state) => ScaffoldMessenger.of(context)
@@ -69,7 +68,7 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
             ..showSnackBar(SnackBar(content: Text(StringManager.failure(state.failure!)))),
         ),
       ],
-      child: BlocBuilder<ExpenseFormCubit, ExpenseFormState>(
+      child: BlocBuilder<RecurringFormCubit, RecurringFormState>(
         builder: (context, state) => AuraBackground(
           child: Scaffold(
             backgroundColor: Colors.transparent,
@@ -80,21 +79,21 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
                 tooltip: MaterialLocalizations.of(context).closeButtonTooltip,
                 onPressed: () => context.pop(),
               ),
-              title: Text(state.isEditing ? StringManager.editExpense : StringManager.addExpense),
+              title: Text(state.isEditing ? StringManager.editRecurring : StringManager.addRecurring),
             ),
             body: switch (state.status) {
-              ExpenseFormStatus.loading => const Center(child: CircularProgressIndicator.adaptive()),
-              ExpenseFormStatus.loadFailure => Center(child: Text(StringManager.failure(state.failure!))),
-              _ => _Fields(state: state, amount: _amount, title: _title, note: _note),
+              RecurringFormStatus.loading => const Center(child: CircularProgressIndicator.adaptive()),
+              RecurringFormStatus.loadFailure => Center(child: Text(StringManager.failure(state.failure!))),
+              _ => _Fields(state: state, amount: _amount, title: _title),
             },
             bottomNavigationBar:
-                state.status == ExpenseFormStatus.loading || state.status == ExpenseFormStatus.loadFailure
+                state.status == RecurringFormStatus.loading || state.status == RecurringFormStatus.loadFailure
                 ? null
                 : SafeArea(
                     minimum: const EdgeInsets.all(AppSpacing.lg),
                     child: FilledButton(
                       onPressed: state.canSave ? cubit.save : null,
-                      child: state.status == ExpenseFormStatus.saving
+                      child: state.status == RecurringFormStatus.saving
                           ? SizedBox.square(
                               dimension: 20,
                               child: CircularProgressIndicator(
@@ -102,7 +101,7 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
                                 color: MasroofyColors.of(context).onPrimary,
                               ),
                             )
-                          : Text(StringManager.saveExpense),
+                          : Text(StringManager.saveRecurring),
                     ),
                   ),
           ),
@@ -113,47 +112,47 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
 }
 
 class _Fields extends StatelessWidget {
-  const _Fields({required this.state, required this.amount, required this.title, required this.note});
+  const _Fields({required this.state, required this.amount, required this.title});
 
-  final ExpenseFormState state;
+  final RecurringFormState state;
   final TextEditingController amount;
   final TextEditingController title;
-  final TextEditingController note;
 
   String? _error(String field) => switch (state.errors[field]) {
     final ValidationReason reason => StringManager.validation(reason),
     null => null,
   };
 
-  Future<void> _pickDate(BuildContext context) async {
-    final cubit = context.read<ExpenseFormCubit>();
+  Future<void> _pickStartDate(BuildContext context) async {
+    final cubit = context.read<RecurringFormCubit>();
     final today = LocalDate.today();
+    // Past dates back-fill (within the cap); future ones wait until then.
     final picked = await showDatePicker(
       context: context,
-      initialDate: state.date.toDateTime(),
+      initialDate: state.startDate.toDateTime(),
       firstDate: DateTime(2000),
-      lastDate: today.toDateTime(),
+      lastDate: DateTime(today.year + 5, 12, 31),
     );
-    if (picked != null) cubit.dateSelected(LocalDate.fromDateTime(picked));
+    if (picked != null) cubit.startDateSelected(LocalDate.fromDateTime(picked));
   }
 
   Future<void> _pickCategory(BuildContext context) async {
-    final cubit = context.read<ExpenseFormCubit>();
+    final cubit = context.read<RecurringFormCubit>();
     final id = await showCategoryPickerSheet(context, categories: state.categories, selectedId: state.categoryId);
     if (id != null) cubit.categorySelected(id);
   }
 
-  String _dateLabel(BuildContext context) {
+  String _startLabel(BuildContext context) {
     final today = LocalDate.today();
-    final date = context.shortDate(state.date);
-    if (state.date == today) return StringManager.todayWithDate(date);
-    if (state.date == today.addDays(-1)) return StringManager.yesterdayWithDate(date);
-    return context.longDate(state.date);
+    final date = context.shortDate(state.startDate);
+    if (state.startDate == today) return StringManager.todayWithDate(date);
+    if (state.startDate == today.addDays(-1)) return StringManager.yesterdayWithDate(date);
+    return context.longDate(state.startDate);
   }
 
   @override
   Widget build(BuildContext context) {
-    final cubit = context.read<ExpenseFormCubit>();
+    final cubit = context.read<RecurringFormCubit>();
     final colors = MasroofyColors.of(context);
     final text = Theme.of(context).textTheme;
     final category = state.category;
@@ -199,39 +198,45 @@ class _Fields extends StatelessWidget {
         TextField(
           controller: title,
           textCapitalization: TextCapitalization.sentences,
-          textInputAction: TextInputAction.next,
+          textInputAction: TextInputAction.done,
           inputFormatters: [LengthLimitingTextInputFormatter(AppConstants.maxTitleLength)],
           onChanged: cubit.titleChanged,
           decoration: InputDecoration(
-            labelText: StringManager.titleLabel,
-            hintText: category?.displayName,
-            helperText: StringManager.titleHelper,
+            labelText: StringManager.recurringTitleLabel,
+            hintText: StringManager.recurringTitleHint,
             errorText: _error('title'),
           ),
         ),
-        gap,
+        const SizedBox(height: AppSpacing.xl),
+        Padding(
+          padding: const EdgeInsetsDirectional.only(start: AppSpacing.xs, bottom: AppSpacing.sm),
+          child: Text(StringManager.repeats, style: text.labelLarge!.copyWith(color: colors.textSecondary)),
+        ),
+        SegmentedPills(
+          labels: [for (final f in RecurringFrequency.values) StringManager.frequency(f.name)],
+          selected: state.frequency.index,
+          onSelected: (i) => cubit.frequencySelected(RecurringFrequency.values[i]),
+        ),
+        const SizedBox(height: AppSpacing.xl),
         SelectField(
-          label: StringManager.dateLabel,
-          value: _dateLabel(context),
+          label: StringManager.startDate,
+          value: _startLabel(context),
           leading: Icon(Symbols.calendar_today_rounded, color: colors.textSecondary),
-          errorText: _error('date'),
-          onTap: () => _pickDate(context),
+          helperText: StringManager.startDateHelper,
+          onTap: () => _pickStartDate(context),
         ),
-        gap,
-        TextField(
-          controller: note,
-          minLines: 2,
-          maxLines: 4,
-          textCapitalization: TextCapitalization.sentences,
-          inputFormatters: [LengthLimitingTextInputFormatter(AppConstants.maxNoteLength)],
-          onChanged: cubit.noteChanged,
-          decoration: InputDecoration(
-            labelText: StringManager.noteLabel,
-            hintText: StringManager.noteHint,
-            alignLabelWithHint: true,
-            errorText: _error('note'),
+        if (state.isEditing) ...[
+          gap,
+          Card(
+            clipBehavior: Clip.antiAlias,
+            child: SwitchListTile(
+              title: Text(StringManager.recurringActive),
+              subtitle: Text(StringManager.recurringActiveHelper),
+              value: state.isActive,
+              onChanged: (active) => cubit.activeChanged(active: active),
+            ),
           ),
-        ),
+        ],
       ],
     );
   }

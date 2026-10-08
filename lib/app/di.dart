@@ -16,6 +16,15 @@ import 'package:masroofy/features/expenses/domain/usecases/delete_expense.dart';
 import 'package:masroofy/features/expenses/domain/usecases/save_expense.dart';
 import 'package:masroofy/features/expenses/presentation/cubits/expense_form_cubit.dart';
 import 'package:masroofy/features/expenses/presentation/cubits/expense_list_cubit.dart';
+import 'package:masroofy/features/recurring_expenses/data/datasources/recurring_expense_local_datasource.dart';
+import 'package:masroofy/features/recurring_expenses/data/repositories/recurring_expense_repository_impl.dart';
+import 'package:masroofy/features/recurring_expenses/domain/repositories/i_recurring_expense_repository.dart';
+import 'package:masroofy/features/recurring_expenses/domain/usecases/delete_recurring.dart';
+import 'package:masroofy/features/recurring_expenses/domain/usecases/process_due_recurring.dart';
+import 'package:masroofy/features/recurring_expenses/domain/usecases/save_recurring.dart';
+import 'package:masroofy/features/recurring_expenses/domain/usecases/set_recurring_active.dart';
+import 'package:masroofy/features/recurring_expenses/presentation/cubits/recurring_form_cubit.dart';
+import 'package:masroofy/features/recurring_expenses/presentation/cubits/recurring_list_cubit.dart';
 import 'package:masroofy/shared/settings/settings_cubit.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -44,6 +53,7 @@ Future<void> configureDependencies({AppDatabase Function() openDatabase = AppDat
 
   _registerCategories();
   _registerExpenses();
+  _registerRecurring();
 }
 
 void _registerCategories() {
@@ -74,5 +84,21 @@ void _registerExpenses() {
     ..registerFactoryParam<ExpenseFormCubit, int, int?>(
       (fractionDigits, expenseId) =>
           ExpenseFormCubit(getIt(), getIt(), getIt(), fractionDigits: fractionDigits, expenseId: expenseId),
+    );
+}
+
+void _registerRecurring() {
+  getIt
+    ..registerLazySingleton(() => RecurringExpenseLocalDatasource(getIt()))
+    ..registerLazySingleton<IRecurringExpenseRepository>(() => RecurringExpenseRepositoryImpl(getIt()))
+    ..registerLazySingleton(() => ProcessDueRecurring(getIt()))
+    ..registerLazySingleton(() => SaveRecurring(getIt(), getIt()))
+    ..registerLazySingleton(() => SetRecurringActive(getIt(), getIt()))
+    ..registerLazySingleton(() => DeleteRecurring(getIt()))
+    ..registerFactory(() => RecurringListCubit(getIt(), getIt(), getIt(), getIt()))
+    // param1: the currency's fraction digits; param2: the id to edit, or null.
+    ..registerFactoryParam<RecurringFormCubit, int, int?>(
+      (fractionDigits, recurringId) =>
+          RecurringFormCubit(getIt(), getIt(), getIt(), fractionDigits: fractionDigits, recurringId: recurringId),
     );
 }

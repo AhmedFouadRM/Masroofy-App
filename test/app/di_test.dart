@@ -5,6 +5,8 @@ import 'package:masroofy/app/di.dart';
 import 'package:masroofy/core/database/app_database.dart';
 import 'package:masroofy/features/categories/presentation/cubits/categories_cubit.dart';
 import 'package:masroofy/features/categories/presentation/cubits/category_form_cubit.dart';
+import 'package:masroofy/features/recurring_expenses/presentation/cubits/recurring_form_cubit.dart';
+import 'package:masroofy/features/recurring_expenses/presentation/cubits/recurring_list_cubit.dart';
 import 'package:masroofy/shared/settings/settings_cubit.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -27,5 +29,9 @@ void main() {
     expect(getIt<CategoryFormCubit>(param1: 3).state.id, 3);
     expect(getIt<CategoryFormCubit>().state.isEditing, isFalse);
     await categories.close();
+
+    final recurring = getIt<RecurringListCubit>();
+    expect(getIt<RecurringFormCubit>(param1: 2, param2: 5).state.id, 5);
+    await recurring.close();
   });
 }
