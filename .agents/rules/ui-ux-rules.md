@@ -18,7 +18,7 @@ These rules apply to the presentation layer of the Masroofy app.
 - Include a clear call-to-action (e.g., "Tap + to add your first expense").
 
 ## 3. Loading States
-- When fetching data via `AsyncValue`, always handle the `loading` and `error` states gracefully.
+- When a cubit loads data, always render its `loading` and `failure` states gracefully.
 - Use the shared `LoadingIndicator` from `lib/shared/widgets/loading_indicator.dart`.
 
 ## 4. Destructive Actions

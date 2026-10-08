@@ -1,6 +1,6 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import '../shared/widgets/app_bottom_nav_bar.dart';
+import 'package:masroofy/shared/widgets/app_bottom_nav_bar.dart';
 
 // Temporary dummy screens for the router
 class DummyScreen extends StatelessWidget {

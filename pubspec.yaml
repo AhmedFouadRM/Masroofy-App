@@ -12,9 +12,8 @@ dependencies:
   flutter_localizations:
     sdk: flutter
 
-  # State Management & DI
-  flutter_riverpod: ^3.3.2
-  riverpod_annotation: ^4.0.3
+  # State Management & DI (Cubit by default; Bloc only where event transformers help)
+  flutter_bloc: ^9.1.1
 
   # Navigation
   go_router: ^17.5.0
@@ -65,7 +64,6 @@ dev_dependencies:
 
   # Code Generation
   build_runner: ^2.4.15
-  riverpod_generator: ^4.0.4
   freezed: ^3.2.6-dev.1
   json_serializable: ^6.9.4
   drift_dev: ^2.25.0
@@ -75,6 +73,7 @@ dev_dependencies:
 
   # Testing
   mocktail: ^1.0.4
+  bloc_test: ^10.0.0
 
 flutter:
   uses-material-design: true

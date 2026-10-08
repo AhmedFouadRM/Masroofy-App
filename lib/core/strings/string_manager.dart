@@ -4,7 +4,7 @@ import 'package:masroofy/core/error/failures.dart';
 /// Single access point for every user-facing string.
 ///
 /// Getters read the *current* locale when called, so call them inside `build`
-/// and never cache the result in a field, constant, or long-lived provider.
+/// and never cache the result in a field, constant, or long-lived cubit state.
 class StringManager {
   StringManager._();
 

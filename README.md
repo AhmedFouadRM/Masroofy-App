@@ -22,7 +22,7 @@ Masroofy is built on a robust, modern Flutter stack:
 
 - **Framework:** Flutter 3.47 (Dart 3.x)
 - **Architecture:** Clean Architecture (Feature-First vertical slices: Domain → Data → Presentation)
-- **State Management:** Riverpod 3.x (`@riverpod` / `AsyncNotifier`)
+- **State Management:** `flutter_bloc` (Cubit), DI via `RepositoryProvider`
 - **Database:** Drift (SQLite) for reactive, type-safe SQL and relational data
 - **Data Models:** `freezed` + `json_serializable` for immutable entities and DTOs
 - **Routing:** `go_router` for declarative navigation and auth guarding
@@ -35,7 +35,7 @@ Masroofy is built on a robust, modern Flutter stack:
 Masroofy follows a strict **Clean Architecture** approach. The app is divided into features (`lib/features/`), where each feature contains:
 - `domain/`: Pure Dart interfaces and entities.
 - `data/`: Drift DAOs, repositories, and DTOs.
-- `presentation/`: Riverpod notifiers, screens, and widgets.
+- `presentation/`: Cubits, screens, and widgets.
 
 For detailed product requirements, architecture decisions, and feature specifications, please explore the [`Product-Architecture/`](./Product-Architecture/) directory in this repository. 
 - Start with [`INDEX.md`](./Product-Architecture/INDEX.md) and [`MEMORY.md`](./Product-Architecture/MEMORY.md).
@@ -55,7 +55,7 @@ To run Masroofy locally, you need [Flutter](https://docs.flutter.dev/get-started
    flutter pub get
    ```
 
-3. **Run code generation (for Riverpod, Freezed, and Drift):**
+3. **Run code generation (for Freezed and Drift):**
    ```bash
    dart run build_runner build -d
    ```

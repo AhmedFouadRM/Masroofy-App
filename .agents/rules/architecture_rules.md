@@ -11,10 +11,12 @@ These rules apply to all code generated for the Masroofy expense tracker project
 - Each feature must be split into `domain`, `data`, and `presentation` layers.
 - Cross-feature dependencies must be minimized (e.g., Analytics can read from Expenses, but Expenses should not depend on Analytics).
 
-## 2. State Management (Riverpod)
-- Use `riverpod_annotation` (`@Riverpod` / `@riverpod`).
-- Do not use the legacy `StateNotifier` or `StateNotifierProvider`.
-- Use `Notifier` or `AsyncNotifier` (generated via `@Riverpod` classes).
+## 2. State Management (flutter_bloc)
+- Use `Cubit` by default; use a full `Bloc` only when event transformers are needed (e.g. search debounce).
+- One cubit per screen or flow in `presentation/cubits/<name>_cubit.dart` + `<name>_state.dart`; states are `freezed` classes.
+- App-wide cubits (`SettingsCubit`, `AuthCubit`) are provided in `main()`; feature cubits are provided by their route.
+- Dependencies come in through the constructor; register repositories with `RepositoryProvider<IRepository>` in `main()`. No service locator, no `BuildContext` inside cubits, and cubits never depend on other cubits.
+- Every cubit has `bloc_test` tests.
 
 ## 3. Data Models (Freezed)
 - All domain entities must use the `freezed` package.
