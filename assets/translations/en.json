@@ -134,10 +134,16 @@
     "title": "Analytics",
     "this_week": "This week",
     "this_month": "This month",
-    "last_month": "Last Month",
+    "last_month": "Last month",
     "custom": "Custom",
-    "vs_last": "vs Last Period",
-    "no_data": "Not enough data for analytics"
+    "spent_last_month": "Spent last month",
+    "vs_month_before": "vs the month before",
+    "by_category": "By category",
+    "over_time": "Spending over time",
+    "smaller_categories": "Smaller categories",
+    "no_data": "No spending data for this period",
+    "no_data_hint": "Expenses you add in this period will show up here.",
+    "of_total": "{}% of total"
   },
   "budgets": {
     "title": "Budgets",

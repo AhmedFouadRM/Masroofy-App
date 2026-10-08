@@ -5,6 +5,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:masroofy/app/di.dart';
 import 'package:masroofy/app/routes.dart';
+import 'package:masroofy/features/analytics/presentation/cubits/analytics_cubit.dart';
+import 'package:masroofy/features/analytics/presentation/screens/analytics_screen.dart';
 import 'package:masroofy/features/categories/presentation/cubits/categories_cubit.dart';
 import 'package:masroofy/features/categories/presentation/cubits/category_form_cubit.dart';
 import 'package:masroofy/features/categories/presentation/screens/category_form_screen.dart';
@@ -104,7 +106,11 @@ final appRouter = GoRouter(
         ),
         GoRoute(
           path: RoutePaths.analytics,
-          builder: (context, state) => const DummyScreen(title: 'Analytics'),
+          builder: (context, state) => BlocProvider(
+            create: (context) =>
+                getIt<AnalyticsCubit>(param1: context.read<SettingsCubit>().state.firstWeekday)..load(),
+            child: const AnalyticsScreen(),
+          ),
         ),
         GoRoute(
           path: RoutePaths.settings,

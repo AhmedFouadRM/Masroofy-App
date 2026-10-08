@@ -12,7 +12,7 @@ import 'package:masroofy/core/theme/masroofy_colors.dart';
 import 'package:masroofy/features/expenses/domain/entities/expense.dart';
 import 'package:masroofy/features/expenses/presentation/cubits/expense_list_cubit.dart';
 import 'package:masroofy/features/expenses/presentation/widgets/expense_row.dart';
-import 'package:masroofy/features/expenses/presentation/widgets/summary_card.dart';
+import 'package:masroofy/shared/widgets/summary_card.dart';
 import 'package:masroofy/shared/categories/category_chip.dart';
 import 'package:masroofy/shared/categories/category_display.dart';
 import 'package:masroofy/shared/categories/category_icon_registry.dart';

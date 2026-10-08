@@ -15,6 +15,9 @@ final class DateRange {
   /// This month from the 1st through [today].
   factory DateRange.monthToDate(LocalDate today) => DateRange(today.startOfMonth, today);
 
+  /// The whole calendar month containing [day].
+  factory DateRange.fullMonth(LocalDate day) => DateRange(day.startOfMonth, day.endOfMonth);
+
   final LocalDate start;
   final LocalDate end;
 
@@ -49,6 +52,9 @@ abstract final class ComparisonPeriod {
       previousEnd.isAfter(previousStart.endOfMonth) ? previousStart.endOfMonth : previousEnd,
     );
   }
+
+  /// A whole month (e.g. Last Month) → the whole month before it.
+  static DateRange forFullMonth(DateRange range) => DateRange.fullMonth(range.start.addMonths(-1));
 
   /// Any other range of N days → the N days right before it.
   static DateRange forCustom(DateRange range) => range.shift(-range.lengthInDays);

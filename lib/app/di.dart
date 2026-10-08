@@ -1,6 +1,10 @@
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:get_it/get_it.dart';
 import 'package:masroofy/core/database/app_database.dart';
+import 'package:masroofy/features/analytics/data/datasources/analytics_local_datasource.dart';
+import 'package:masroofy/features/analytics/data/repositories/analytics_repository_impl.dart';
+import 'package:masroofy/features/analytics/domain/repositories/i_analytics_repository.dart';
+import 'package:masroofy/features/analytics/presentation/cubits/analytics_cubit.dart';
 import 'package:masroofy/features/categories/data/datasources/category_local_datasource.dart';
 import 'package:masroofy/features/categories/data/datasources/reserved_category_names_asset.dart';
 import 'package:masroofy/features/categories/data/repositories/category_repository_impl.dart';
@@ -54,6 +58,7 @@ Future<void> configureDependencies({AppDatabase Function() openDatabase = AppDat
   _registerCategories();
   _registerExpenses();
   _registerRecurring();
+  _registerAnalytics();
 }
 
 void _registerCategories() {
@@ -100,5 +105,15 @@ void _registerRecurring() {
     ..registerFactoryParam<RecurringFormCubit, int, int?>(
       (fractionDigits, recurringId) =>
           RecurringFormCubit(getIt(), getIt(), getIt(), fractionDigits: fractionDigits, recurringId: recurringId),
+    );
+}
+
+void _registerAnalytics() {
+  getIt
+    ..registerLazySingleton(() => AnalyticsLocalDatasource(getIt()))
+    ..registerLazySingleton<IAnalyticsRepository>(() => AnalyticsRepositoryImpl(getIt()))
+    // param1: the device's first weekday (from SettingsCubit).
+    ..registerFactoryParam<AnalyticsCubit, int, void>(
+      (firstWeekday, _) => AnalyticsCubit(getIt(), getIt(), firstWeekday: firstWeekday),
     );
 }

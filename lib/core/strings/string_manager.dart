@@ -136,8 +136,16 @@ class StringManager {
   static String get thisMonth => 'analytics.this_month'.tr();
   static String get lastMonth => 'analytics.last_month'.tr();
   static String get customRange => 'analytics.custom'.tr();
-  static String get vsLast => 'analytics.vs_last'.tr();
+  static String get spentLastMonth => 'analytics.spent_last_month'.tr();
+  static String get vsMonthBefore => 'analytics.vs_month_before'.tr();
+  static String get byCategory => 'analytics.by_category'.tr();
+  static String get spendingOverTime => 'analytics.over_time'.tr();
+  static String get smallerCategories => 'analytics.smaller_categories'.tr();
   static String get noAnalyticsData => 'analytics.no_data'.tr();
+  static String get noAnalyticsDataHint => 'analytics.no_data_hint'.tr();
+
+  /// [percent] is already shaped for the locale.
+  static String percentOfTotal(String percent) => 'analytics.of_total'.tr(args: [percent]);
 
   // ── Budgets ──
   static String get budgetsTitle => 'budgets.title'.tr();
