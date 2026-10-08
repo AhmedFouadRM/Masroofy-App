@@ -142,6 +142,17 @@ void main() {
       expect(find.text('Spending over time'), findsOneWidget);
     });
 
+    testWidgets('tapping a slice shows its share in the centre', (tester) async {
+      await pump(tester, loaded);
+
+      // Food is 75%, starting at 12 o'clock and running clockwise: its
+      // middle is at about 4:30, so tap the ring on the right.
+      final centre = tester.getCenter(find.text('Total'));
+      await tester.tapAt(centre + const Offset(84, 0));
+      await tester.pumpAndSettle();
+      expect(find.text('75% of total'), findsOneWidget);
+    });
+
     testWidgets('picking Last month asks the cubit', (tester) async {
       await pump(tester, loaded);
 
