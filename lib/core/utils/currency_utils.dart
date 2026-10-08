@@ -69,13 +69,19 @@ class CurrencyUtils {
   /// English: `EGP 1,234.56`, `$1,234.56`. Arabic: `١٬٢٣٤٫٥٦ ج.م.`, or
   /// `1,234.56 ج.م.` when [westernDigits] is set. Digits are produced here
   /// rather than by `intl` so the output is identical on every device.
+  ///
+  /// Whole amounts drop their zero fraction (`EGP 520`, not `EGP 520.00`);
+  /// any other amount keeps all of the currency's digits (`EGP 12.50`).
   static String format(
     Money amount,
     Currency currency, {
     required String languageCode,
     bool westernDigits = false,
   }) {
-    final number = formatNumber(amount, currency);
+    final full = formatNumber(amount, currency);
+    final dot = full.indexOf('.');
+    final isWhole = dot != -1 && full.substring(dot + 1).split('').every((digit) => digit == '0');
+    final number = isWhole ? full.substring(0, dot) : full;
     if (languageCode == 'ar') {
       final shaped = westernDigits ? number : toEasternArabicNumber(number);
       return '$shaped ${currency.symbolAr}';
@@ -84,7 +90,9 @@ class CurrencyUtils {
     return '${currency.symbolEn}$separator$number';
   }
 
-  /// Grouped number with Western digits and no symbol, e.g. `-1,234.50`.
+  /// Grouped number with Western digits, every fraction digit and no
+  /// symbol, e.g. `-1,234.50`. For exports and form pre-fill; on screen use
+  /// [format].
   static String formatNumber(Money amount, Currency currency) {
     final plain = amount.toDecimalString(currency.fractionDigits);
     final negative = plain.startsWith('-');

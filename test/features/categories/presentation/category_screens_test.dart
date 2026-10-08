@@ -76,7 +76,7 @@ void main() {
       expect(find.text('Default'), findsOneWidget);
       expect(find.text('Custom'), findsOneWidget);
       expect(find.text('Food'), findsOneWidget);
-      expect(find.text('42 expenses · budget EGP 2,000.00'), findsOneWidget);
+      expect(find.text('42 expenses · budget EGP 2,000'), findsOneWidget);
       expect(find.text('No expenses yet'), findsOneWidget);
       expect(find.text('12 expenses · 1 recurring'), findsOneWidget);
     });
@@ -86,7 +86,7 @@ void main() {
 
       expect(find.text('الافتراضية'), findsOneWidget);
       expect(find.text('طعام'), findsOneWidget);
-      expect(find.text('٤٢ مصروفًا · الميزانية ٢٬٠٠٠٫٠٠ ج.م.'), findsOneWidget);
+      expect(find.text('٤٢ مصروفًا · الميزانية ٢٬٠٠٠ ج.م.'), findsOneWidget);
       expect(find.text('١٢ مصروفًا · متكرر واحد'), findsOneWidget);
       expect(Directionality.of(tester.element(find.text('طعام'))), TextDirection.rtl);
     });
