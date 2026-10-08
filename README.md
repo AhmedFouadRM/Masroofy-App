@@ -22,7 +22,8 @@ Masroofy is built on a robust, modern Flutter stack:
 
 - **Framework:** Flutter 3.47 (Dart 3.x)
 - **Architecture:** Clean Architecture (Feature-First vertical slices: Domain → Data → Presentation)
-- **State Management:** `flutter_bloc` (Cubit), DI via `RepositoryProvider`
+- **State Management:** `flutter_bloc` (Cubit)
+- **Dependency Injection:** `get_it` (manual registration in `lib/app/di.dart`)
 - **Database:** Drift (SQLite) for reactive, type-safe SQL and relational data
 - **Data Models:** `freezed` + `json_serializable` for immutable entities and DTOs
 - **Routing:** `go_router` for declarative navigation and auth guarding

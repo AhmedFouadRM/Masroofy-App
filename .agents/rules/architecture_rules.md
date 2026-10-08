@@ -14,8 +14,14 @@ These rules apply to all code generated for the Masroofy expense tracker project
 ## 2. State Management (flutter_bloc)
 - Use `Cubit` by default; use a full `Bloc` only when event transformers are needed (e.g. search debounce).
 - One cubit per screen or flow in `presentation/cubits/<name>_cubit.dart` + `<name>_state.dart`; states are `freezed` classes.
-- App-wide cubits (`SettingsCubit`, `AuthCubit`) are provided in `main()`; feature cubits are provided by their route.
-- Dependencies come in through the constructor; register repositories with `RepositoryProvider<IRepository>` in `main()`. No service locator, no `BuildContext` inside cubits, and cubits never depend on other cubits.
+- App-wide cubits (`SettingsCubit`, `AuthCubit`) are get_it lazy singletons provided with `BlocProvider.value`; screen cubits are get_it factories provided by their route with `BlocProvider(create: (_) => getIt<XCubit>())`.
+- No `BuildContext` inside cubits, and cubits never depend on other cubits.
+
+## 2a. Dependency Injection (get_it)
+- Register everything by hand in `lib/app/di.dart` (`configureDependencies()`); no `injectable`.
+- Register repositories under their domain interface: `registerLazySingleton<ICategoryRepository>(() => CategoryRepositoryImpl(getIt()))`.
+- Constructor injection only. Call `getIt<T>()` only in `di.dart`, `main()`, the router and `BlocProvider(create: ...)` callbacks, never inside cubits, repositories or widget bodies.
+- Tests construct classes directly with mocktail fakes; never resolve from get_it in unit tests.
 - Every cubit has `bloc_test` tests.
 
 ## 3. Data Models (Freezed)
