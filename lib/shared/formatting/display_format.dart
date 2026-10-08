@@ -2,26 +2,51 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:masroofy/core/domain/digits.dart';
+import 'package:masroofy/core/domain/local_date.dart';
 import 'package:masroofy/core/domain/money.dart';
+import 'package:masroofy/core/strings/string_manager.dart';
 import 'package:masroofy/core/utils/currency_utils.dart';
+import 'package:masroofy/core/utils/date_utils.dart';
 import 'package:masroofy/shared/settings/settings_cubit.dart';
 
 /// Locale- and settings-aware formatting for widgets: Eastern Arabic digits
 /// in Arabic unless the user chose Western digits, and the app currency.
-/// Rebuilds the caller when the language, digits or currency change.
+/// Rebuilds the caller when the language, digits or currency change, so call
+/// these inside `build`.
 extension DisplayFormat on BuildContext {
   bool get _arabic => locale.languageCode == 'ar';
 
   bool get _westernDigits => select<SettingsCubit, bool>((cubit) => cubit.state.westernDigits);
 
+  /// The app currency.
+  Currency get currency => select<SettingsCubit, Currency>((cubit) => cubit.state.currency);
+
+  /// The currency as shown next to amounts: `EGP` / `ج.م.`.
+  String get currencyLabel => _arabic ? currency.symbolAr : currency.code;
+
   /// A plain count: `12` / `١٢`.
-  String count(int value) => _arabic && !_westernDigits ? toEasternArabicNumber('$value') : '$value';
+  String count(int value) => digits('$value');
+
+  /// Shapes the digits of already-formatted text for the locale.
+  String digits(String text) => _arabic && !_westernDigits ? toEasternArabicNumber(text) : text;
 
   /// An amount in the app currency: `EGP 2,000.00` / `٢٬٠٠٠٫٠٠ ج.م.`.
-  String money(Money amount) => CurrencyUtils.format(
-    amount,
-    select<SettingsCubit, Currency>((cubit) => cubit.state.currency),
-    languageCode: locale.languageCode,
-    westernDigits: _westernDigits,
-  );
+  String money(Money amount) =>
+      CurrencyUtils.format(amount, currency, languageCode: locale.languageCode, westernDigits: _westernDigits);
+
+  /// `Oct 8` / `٨ أكتوبر`.
+  String shortDate(LocalDate date) =>
+      DateUtilsHelper.formatShortDate(date, languageCode: locale.languageCode, westernDigits: _westernDigits);
+
+  /// `Oct 8, 2026` / `٨ أكتوبر ٢٠٢٦`.
+  String longDate(LocalDate date) =>
+      DateUtilsHelper.formatDate(date, languageCode: locale.languageCode, westernDigits: _westernDigits);
+
+  /// List header: Today, Yesterday, then the date (with the year when it
+  /// isn't this year's).
+  String dayLabel(LocalDate day, {required LocalDate today}) {
+    if (day == today) return StringManager.today;
+    if (day == today.addDays(-1)) return StringManager.yesterday;
+    return day.year == today.year ? shortDate(day) : longDate(day);
+  }
 }

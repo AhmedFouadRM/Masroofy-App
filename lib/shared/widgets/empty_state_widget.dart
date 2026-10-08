@@ -1,50 +1,61 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
+import 'package:masroofy/core/theme/app_dimensions.dart';
+import 'package:masroofy/core/theme/masroofy_colors.dart';
 
+/// Figma "Empty State": a glyph in a soft circle, a title, a hint and an
+/// optional action.
 class EmptyStateWidget extends StatelessWidget {
-  final IconData icon;
-  final String title;
-  final String? subtitle;
-
   const EmptyStateWidget({
-    super.key,
     required this.icon,
     required this.title,
-    this.subtitle,
+    this.message,
+    this.actionLabel,
+    this.actionIcon,
+    this.onAction,
+    super.key,
   });
+
+  final IconData icon;
+  final String title;
+  final String? message;
+  final String? actionLabel;
+  final IconData? actionIcon;
+  final VoidCallback? onAction;
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(32.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              icon,
-              size: 80,
-              color: Theme.of(context).colorScheme.outline.withOpacity(0.5),
-            ),
-            const SizedBox(height: 16),
+    final colors = MasroofyColors.of(context);
+    final text = Theme.of(context).textTheme;
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xxl, vertical: AppSpacing.xxxl),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 96,
+            height: 96,
+            decoration: BoxDecoration(shape: BoxShape.circle, color: colors.primarySubtle),
+            child: Icon(icon, size: 44, color: colors.textAccent),
+          ),
+          const SizedBox(height: AppSpacing.xl),
+          Text(title, style: text.titleMedium, textAlign: TextAlign.center),
+          if (message != null) ...[
+            const SizedBox(height: AppSpacing.sm),
             Text(
-              title,
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
+              message!,
+              style: text.bodyMedium!.copyWith(color: colors.textSecondary),
               textAlign: TextAlign.center,
             ),
-            if (subtitle != null) ...[
-              const SizedBox(height: 8),
-              Text(
-                subtitle!,
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,
-                    ),
-                textAlign: TextAlign.center,
-              ),
-            ],
           ],
-        ),
+          if (actionLabel != null && onAction != null) ...[
+            const SizedBox(height: AppSpacing.lg),
+            FilledButton.icon(
+              onPressed: onAction,
+              icon: actionIcon == null ? null : Icon(actionIcon),
+              label: Text(actionLabel!),
+            ),
+          ],
+        ],
       ),
     );
   }

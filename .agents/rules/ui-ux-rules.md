@@ -22,7 +22,7 @@ These rules apply to the presentation layer of the Masroofy app.
 - Use the shared `LoadingIndicator` from `lib/shared/widgets/loading_indicator.dart`.
 
 ## 4. Destructive Actions
-- Any action that deletes data (e.g., deleting an expense, clearing all data) MUST prompt for confirmation.
+- Deleting an expense uses swipe + an Undo snackbar (5s), with no confirmation dialog (Expenses PRD). Every other action that deletes data (categories, templates, budgets, clearing all data) MUST prompt for confirmation.
 - Use the shared `ConfirmDialog` from `lib/shared/widgets/confirm_dialog.dart`.
 - Destructive buttons should use the `AppColors.error` or `AppColors.negative` styling.
 

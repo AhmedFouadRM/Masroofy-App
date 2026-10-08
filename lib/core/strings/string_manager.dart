@@ -31,6 +31,31 @@ class StringManager {
   static String get emptyExpensesHint => 'expenses.empty_hint'.tr();
   static String get total => 'expenses.total'.tr();
   static String get filter => 'expenses.filter'.tr();
+  static String get spentThisWeek => 'expenses.spent_week'.tr();
+  static String get spentThisMonth => 'expenses.spent_month'.tr();
+  static String spentInRange(String range) => 'expenses.spent_range'.tr(args: [range]);
+  static String get vsLastWeek => 'expenses.vs_last_week'.tr();
+  static String get vsLastMonth => 'expenses.vs_last_month'.tr();
+  static String get vsPreviousPeriod => 'expenses.vs_previous'.tr();
+  static String get allCategories => 'expenses.all'.tr();
+  static String get recurringBadge => 'expenses.recurring'.tr();
+  static String get searchExpensesHint => 'expenses.search_hint'.tr();
+  static String get closeSearch => 'expenses.close_search'.tr();
+  static String get noMatchingExpenses => 'expenses.no_match'.tr();
+  static String get clearFilters => 'expenses.clear_filters'.tr();
+  static String get addFirstExpense => 'expenses.add_first'.tr();
+  static String get amountLabel => 'expenses.amount'.tr();
+  static String amountHelper(String digits, String currency) => 'expenses.amount_helper'.tr(args: [digits, currency]);
+  static String get categoryLabel => 'expenses.category'.tr();
+  static String get chooseCategory => 'expenses.choose_category'.tr();
+  static String get titleLabel => 'expenses.title_label'.tr();
+  static String get titleHelper => 'expenses.title_helper'.tr();
+  static String get dateLabel => 'expenses.date'.tr();
+  static String todayWithDate(String date) => 'expenses.today_date'.tr(args: [date]);
+  static String yesterdayWithDate(String date) => 'expenses.yesterday_date'.tr(args: [date]);
+  static String get noteLabel => 'expenses.note'.tr();
+  static String get noteHint => 'expenses.note_hint'.tr();
+  static String get saveExpense => 'expenses.save'.tr();
 
   // ── Categories ──
   static String get categoriesTitle => 'categories.title'.tr();

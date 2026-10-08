@@ -131,7 +131,8 @@ abstract final class AppTheme {
         contentTextStyle: textTheme.bodyMedium!.copyWith(color: c.textSecondary),
       ),
       bottomSheetTheme: BottomSheetThemeData(
-        backgroundColor: c.glassFillStrong,
+        // Solid by default; glass sheets use `showGlassSheet`.
+        backgroundColor: c.surface,
         surfaceTintColor: Colors.transparent,
         modalBarrierColor: c.inverseSurface.withValues(alpha: 0.32),
         showDragHandle: true,

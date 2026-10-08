@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:masroofy/core/theme/app_colors.dart';
-import 'package:masroofy/features/categories/presentation/category_icon_registry.dart';
+import 'package:masroofy/shared/categories/category_icon_registry.dart';
 
 /// The category glyph on a 16% tint of its colour (Figma "Category Avatar").
 class CategoryAvatar extends StatelessWidget {

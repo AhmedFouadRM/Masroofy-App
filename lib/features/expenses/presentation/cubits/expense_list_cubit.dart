@@ -158,11 +158,13 @@ class ExpenseListCubit extends Cubit<ExpenseListState> {
   /// Swipe: hides the row at once; [commitDelete] or [undoDelete] follows.
   void hide(int id) => emit(state.copyWith(pendingDelete: {...state.pendingDelete, id}, actionFailure: null));
 
-  void undoDelete(int id) => emit(state.copyWith(pendingDelete: {...state.pendingDelete}..remove(id)));
+  void undoDelete(int id) {
+    if (!isClosed) emit(state.copyWith(pendingDelete: {...state.pendingDelete}..remove(id)));
+  }
 
   /// Called when the undo window closes without Undo.
   Future<void> commitDelete(int id) async {
-    if (!state.pendingDelete.contains(id) || !_committed.add(id)) return;
+    if (isClosed || !state.pendingDelete.contains(id) || !_committed.add(id)) return;
     final result = await _deleteExpense(id);
     if (isClosed) return;
     result.match((failure) {

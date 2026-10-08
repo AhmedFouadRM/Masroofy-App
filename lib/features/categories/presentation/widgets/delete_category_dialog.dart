@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:masroofy/core/strings/string_manager.dart';
 import 'package:masroofy/core/theme/masroofy_colors.dart';
 import 'package:masroofy/features/categories/domain/entities/category_summary.dart';
-import 'package:masroofy/features/categories/presentation/category_display.dart';
+import 'package:masroofy/shared/categories/category_display.dart';
 import 'package:masroofy/shared/formatting/display_format.dart';
 
 /// Asks before deleting a custom category, saying what moves to Other.

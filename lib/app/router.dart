@@ -9,8 +9,13 @@ import 'package:masroofy/features/categories/presentation/cubits/categories_cubi
 import 'package:masroofy/features/categories/presentation/cubits/category_form_cubit.dart';
 import 'package:masroofy/features/categories/presentation/screens/category_form_screen.dart';
 import 'package:masroofy/features/categories/presentation/screens/category_list_screen.dart';
+import 'package:masroofy/features/expenses/presentation/cubits/expense_form_cubit.dart';
+import 'package:masroofy/features/expenses/presentation/cubits/expense_list_cubit.dart';
+import 'package:masroofy/features/expenses/presentation/screens/expense_form_screen.dart';
+import 'package:masroofy/features/expenses/presentation/screens/expense_list_screen.dart';
 import 'package:masroofy/features/settings/presentation/screens/settings_screen.dart';
-import 'package:masroofy/shared/widgets/app_bottom_nav_bar.dart';
+import 'package:masroofy/shared/settings/settings_cubit.dart';
+import 'package:masroofy/shared/widgets/app_shell.dart';
 
 export 'package:masroofy/app/routes.dart';
 
@@ -37,20 +42,38 @@ final appRouter = GoRouter(
     ShellRoute(
       navigatorKey: _shellNavigatorKey,
       builder: (context, state, child) {
-        return AppBottomNavBar(child: child);
+        return AppShell(child: child);
       },
       routes: [
         GoRoute(
           path: RoutePaths.expenses,
-          builder: (context, state) => const DummyScreen(title: 'Expenses'),
+          builder: (context, state) => BlocProvider(
+            create: (context) => _expenseList(context.read<SettingsCubit>().state.firstWeekday),
+            child: const ExpenseListScreen(),
+          ),
           routes: [
+            // Full-screen pages above the tab bar (root navigator). `new` and
+            // `recurring` are listed before `:id` so they match first.
             GoRoute(
-              path: RoutePaths.addExpense,
-              builder: (context, state) => const DummyScreen(title: 'Add Expense'),
+              path: 'new',
+              parentNavigatorKey: _rootNavigatorKey,
+              builder: (context, state) => BlocProvider(
+                create: (context) => _expenseForm(context, null),
+                child: const ExpenseFormScreen(),
+              ),
             ),
             GoRoute(
-              path: '${RoutePaths.editExpense}/:id',
-              builder: (context, state) => const DummyScreen(title: 'Edit Expense'),
+              path: 'recurring',
+              parentNavigatorKey: _rootNavigatorKey,
+              builder: (context, state) => const DummyScreen(title: 'Recurring'),
+            ),
+            GoRoute(
+              path: ':id',
+              parentNavigatorKey: _rootNavigatorKey,
+              builder: (context, state) => BlocProvider(
+                create: (context) => _expenseForm(context, int.parse(state.pathParameters['id']!)),
+                child: const ExpenseFormScreen(),
+              ),
             ),
           ],
         ),
@@ -103,6 +126,19 @@ final appRouter = GoRouter(
 /// A screen cubit whose `load()` starts as the route opens.
 CategoryFormCubit _categoryForm(int? id) {
   final cubit = getIt<CategoryFormCubit>(param1: id);
+  unawaited(cubit.load());
+  return cubit;
+}
+
+ExpenseListCubit _expenseList(int firstWeekday) {
+  return getIt<ExpenseListCubit>(param1: firstWeekday)..load();
+}
+
+ExpenseFormCubit _expenseForm(BuildContext context, int? id) {
+  final cubit = getIt<ExpenseFormCubit>(
+    param1: context.read<SettingsCubit>().state.currency.fractionDigits,
+    param2: id,
+  );
   unawaited(cubit.load());
   return cubit;
 }
