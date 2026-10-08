@@ -12,12 +12,13 @@ class MasroofyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final themeMode = context.select<SettingsCubit, ThemeMode>((cubit) => cubit.state.themeMode);
+    final arabic = context.locale.languageCode == 'ar';
 
     return MaterialApp.router(
       title: AppConstants.appName,
       debugShowCheckedModeBanner: false,
-      theme: AppTheme.light,
-      darkTheme: AppTheme.dark,
+      theme: AppTheme.light(arabic: arabic),
+      darkTheme: AppTheme.dark(arabic: arabic),
       themeMode: themeMode,
       localizationsDelegates: context.localizationDelegates,
       supportedLocales: context.supportedLocales,

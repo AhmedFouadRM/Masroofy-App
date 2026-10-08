@@ -36,8 +36,9 @@ class CategoryLocalDatasource extends DatabaseAccessor<AppDatabase> with _$Categ
     return query.watch();
   }
 
-  Selectable<CategorySummaryRow> _summaries({int? id}) => customSelect(
-    '''
+  Selectable<CategorySummaryRow> _summaries({int? id}) =>
+      customSelect(
+        '''
     SELECT c.*,
       (SELECT COUNT(*) FROM expenses e WHERE e.category_id = c.id) AS expense_count,
       (SELECT COUNT(*) FROM recurring_expenses r WHERE r.category_id = c.id) AS recurring_count,
@@ -48,17 +49,17 @@ class CategoryLocalDatasource extends DatabaseAccessor<AppDatabase> with _$Categ
     ${id == null ? '' : 'WHERE c.id = ?'}
     ORDER BY $_orderBy
     ''',
-    variables: [if (id != null) Variable.withInt(id)],
-    readsFrom: {categoriesTable, expensesTable, recurringExpensesTable, budgetsTable},
-  ).map(
-    (row) => (
-      category: categoriesTable.map(row.data),
-      expenseCount: row.read<int>('expense_count'),
-      recurringCount: row.read<int>('recurring_count'),
-      budgetLimitMinor: row.readNullable<int>('budget_limit_minor'),
-      budgetPeriod: row.readNullable<String>('budget_period'),
-    ),
-  );
+        variables: [if (id != null) Variable.withInt(id)],
+        readsFrom: {categoriesTable, expensesTable, recurringExpensesTable, budgetsTable},
+      ).map(
+        (row) => (
+          category: categoriesTable.map(row.data),
+          expenseCount: row.read<int>('expense_count'),
+          recurringCount: row.read<int>('recurring_count'),
+          budgetLimitMinor: row.readNullable<int>('budget_limit_minor'),
+          budgetPeriod: row.readNullable<String>('budget_period'),
+        ),
+      );
 
   Stream<List<CategorySummaryRow>> watchSummaries() => _summaries().watch();
 
@@ -76,19 +77,18 @@ class CategoryLocalDatasource extends DatabaseAccessor<AppDatabase> with _$Categ
     return [for (final row in rows) row.read(categoriesTable.name)!];
   }
 
-  Future<int> insertCategory({required String name, required String icon, required int color}) =>
-      transaction(() async {
-        final maxOrder = categoriesTable.sortOrder.max();
-        final last = await (selectOnly(categoriesTable)..addColumns([maxOrder])).getSingle();
-        return into(categoriesTable).insert(
-          CategoriesTableCompanion.insert(
-            name: Value(name),
-            icon: icon,
-            color: color,
-            sortOrder: (last.read(maxOrder) ?? -1) + 1,
-          ),
-        );
-      });
+  Future<int> insertCategory({required String name, required String icon, required int color}) => transaction(() async {
+    final maxOrder = categoriesTable.sortOrder.max();
+    final last = await (selectOnly(categoriesTable)..addColumns([maxOrder])).getSingle();
+    return into(categoriesTable).insert(
+      CategoriesTableCompanion.insert(
+        name: Value(name),
+        icon: icon,
+        color: color,
+        sortOrder: (last.read(maxOrder) ?? -1) + 1,
+      ),
+    );
+  });
 
   /// Updates a custom category. Returns the number of rows changed.
   Future<int> updateCategory(int id, {required String name, required String icon, required int color}) =>

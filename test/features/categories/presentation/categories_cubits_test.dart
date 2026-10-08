@@ -120,7 +120,7 @@ void main() {
             .having((s) => s.id, 'id', 10),
       ],
       verify: (_) => verify(
-        () => save(const CategoryDraft(name: 'Gym', icon: 'fitness_center', color: 0xFFFF7043)),
+        () => save(const CategoryDraft(name: 'Gym', icon: 'fitness_center', color: 0xFFF97316)),
       ).called(1),
     );
 
@@ -144,7 +144,8 @@ void main() {
 
     blocTest<CategoryFormCubit, CategoryFormState>(
       'editing loads the category and its usage',
-      setUp: () => when(() => repository.getSummary(9)).thenAnswer((_) async => Right(_summary(9, name: 'Gym', expenses: 12))),
+      setUp: () =>
+          when(() => repository.getSummary(9)).thenAnswer((_) async => Right(_summary(9, name: 'Gym', expenses: 12))),
       build: () => build(id: 9),
       act: (cubit) => cubit.load(),
       expect: () => [

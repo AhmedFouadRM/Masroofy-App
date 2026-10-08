@@ -44,3 +44,7 @@ app.*.map.json
 /android/app/profile
 /android/app/release
 /Product-Architecture/
+# Thmanyah Sans: the licence forbids redistributing the font files, so they
+# are never committed. Install locally with `dart run tool/install_thmanyah.dart <dir>`.
+/assets/fonts/thmanyah/*
+!/assets/fonts/thmanyah/.gitkeep

@@ -1,43 +1,30 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 
-class AppColors {
-  AppColors._();
+/// Colours that are the same in light and dark mode. Everything else is a
+/// semantic token in `MasroofyColors`.
+abstract final class AppColors {
+  // Category colours (Design_System.md → Category colours). Seeded into the
+  // categories table and offered by the colour picker.
+  static const Color categoryFood = Color(0xFFF97316);
+  static const Color categoryTransport = Color(0xFF3B82F6);
+  static const Color categoryShopping = Color(0xFFA855F7);
+  static const Color categoryBills = Color(0xFFF59E0B);
+  static const Color categoryHealth = Color(0xFFEF4444);
+  static const Color categoryEntertainment = Color(0xFF06B6D4);
+  static const Color categoryEducation = Color(0xFF6366F1);
+  static const Color categoryOther = Color(0xFF64748B);
 
-  // Primary
-  static const Color primary = Color(0xFF2E7D32);
-  static const Color primaryLight = Color(0xFF66BB6A);
-  
-  // Surface
-  static const Color surfaceLight = Color(0xFFFAFAFA);
-  static const Color surfaceDark = Color(0xFF121212);
-  
-  // Text
-  static const Color textPrimaryLight = Color(0xFF1C1C1E);
-  static const Color textPrimaryDark = Color(0xFFE5E5E5);
-  
-  // Status
-  static const Color error = Color(0xFFD32F2F);
-  static const Color warning = Color(0xFFF9A825);
-  static const Color positive = Color(0xFF2E7D32);
-  static const Color negative = Color(0xFFD32F2F);
-  
-  // Budget status
-  static const Color budgetSafe = Color(0xFF2E7D32);
-  static const Color budgetWarning = Color(0xFFF9A825);
-  static const Color budgetExceeded = Color(0xFFD32F2F);
-
-  // Category colors
-  static const Color categoryFood = Color(0xFFFF7043);
-  static const Color categoryTransport = Color(0xFF42A5F5);
-  static const Color categoryShopping = Color(0xFFAB47BC);
-  static const Color categoryBills = Color(0xFFFFA726);
-  static const Color categoryHealth = Color(0xFFEF5350);
-  static const Color categoryEntertainment = Color(0xFF26C6DA);
-  static const Color categoryEducation = Color(0xFF5C6BC0);
-  static const Color categoryOther = Color(0xFF78909C);
-  
   static const List<Color> categoryPalette = [
-    categoryFood, categoryTransport, categoryShopping, categoryBills,
-    categoryHealth, categoryEntertainment, categoryEducation, categoryOther,
+    categoryFood,
+    categoryTransport,
+    categoryShopping,
+    categoryBills,
+    categoryHealth,
+    categoryEntertainment,
+    categoryEducation,
+    categoryOther,
   ];
+
+  /// Category avatars show their colour at 16% behind the glyph.
+  static const double categoryTintOpacity = 0.16;
 }

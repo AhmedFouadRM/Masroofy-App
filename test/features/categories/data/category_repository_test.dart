@@ -73,15 +73,26 @@ void main() {
 
     test('rejects names taken by custom or default categories', () async {
       right(await save(draft('Gym')));
-      expect(left(await save(draft('GYM'))), const Failure.validation(field: 'name', reason: ValidationReason.duplicate));
-      expect(left(await save(draft('طعام'))), const Failure.validation(field: 'name', reason: ValidationReason.duplicate));
+      expect(
+        left(await save(draft('GYM'))),
+        const Failure.validation(field: 'name', reason: ValidationReason.duplicate),
+      );
+      expect(
+        left(await save(draft('طعام'))),
+        const Failure.validation(field: 'name', reason: ValidationReason.duplicate),
+      );
     });
   });
 
   group('update', () {
     test('may keep its own name and changes icon and colour', () async {
       final id = right(await save(draft('Gym')));
-      right(await save(const CategoryDraft(name: 'gym', icon: 'fitness_center', color: 1), id: id));
+      right(
+        await save(
+          const CategoryDraft(name: 'gym', icon: 'fitness_center', color: 1),
+          id: id,
+        ),
+      );
 
       final category = right(await repository.getById(id));
       expect((category.name, category.icon, category.color), ('gym', 'fitness_center', 1));

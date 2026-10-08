@@ -56,12 +56,18 @@ To run Masroofy locally, you need [Flutter](https://docs.flutter.dev/get-started
    flutter pub get
    ```
 
-3. **Run code generation (for Freezed and Drift):**
+3. **(Optional) Install Thmanyah Sans.** Arabic text uses Thmanyah Sans, whose licence forbids redistributing the files, so they are not in this repository. With a licensed copy:
+   ```bash
+   dart run tool/install_thmanyah.dart "<folder with thmanyahsans-*.otf>"
+   ```
+   Without it the app runs normally and Arabic falls back to the system font.
+
+4. **Run code generation (for Freezed and Drift):**
    ```bash
    dart run build_runner build -d
    ```
 
-4. **Run the app:**
+5. **Run the app:**
    ```bash
    flutter run
    ```

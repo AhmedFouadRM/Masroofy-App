@@ -52,6 +52,7 @@ dependencies:
 
   # UI Utilities
   gap: ^3.0.1
+  material_symbols_icons: ^4.2960.0
   flutter_animate: ^4.5.2
 
   # Export
@@ -81,3 +82,16 @@ flutter:
 
   assets:
     - assets/translations/
+    - assets/fonts/sora/OFL.txt
+    # Thmanyah Sans is loaded at runtime when present (see ThmanyahFontLoader);
+    # it is gitignored, and the app falls back to the system Arabic font.
+    - assets/fonts/thmanyah/
+
+  fonts:
+    - family: Sora
+      fonts:
+        - asset: assets/fonts/sora/Sora-Regular.ttf
+        - asset: assets/fonts/sora/Sora-SemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/sora/Sora-Bold.ttf
+          weight: 700

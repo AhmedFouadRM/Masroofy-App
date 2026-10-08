@@ -24,8 +24,14 @@ class CategoriesCubit extends Cubit<CategoriesState> {
         (summaries) => emit(
           state.copyWith(
             status: CategoriesStatus.loaded,
-            defaults: [for (final s in summaries) if (s.category.isDefault) s],
-            custom: [for (final s in summaries) if (!s.category.isDefault) s],
+            defaults: [
+              for (final s in summaries)
+                if (s.category.isDefault) s,
+            ],
+            custom: [
+              for (final s in summaries)
+                if (!s.category.isDefault) s,
+            ],
             loadFailure: null,
           ),
         ),

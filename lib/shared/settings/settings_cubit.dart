@@ -36,8 +36,7 @@ class SettingsCubit extends Cubit<SettingsState> {
                  preferences.getString(PreferenceKeys.currencyCode) ?? '',
                ) ??
                CurrencyUtils.defaultCurrency,
-           westernDigits:
-               preferences.getBool(PreferenceKeys.westernDigits) ?? false,
+           westernDigits: preferences.getBool(PreferenceKeys.westernDigits) ?? false,
            firstWeekday: firstWeekday ?? _deviceFirstWeekday(),
          ),
        );

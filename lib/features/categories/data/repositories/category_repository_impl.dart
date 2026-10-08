@@ -24,10 +24,9 @@ class CategoryRepositoryImpl implements ICategoryRepository {
       _datasource.watchSummaries().map((rows) => rows.map(_toSummary).toList()).guarded();
 
   @override
-  Future<Either<Failure, Category>> getById(int id) async =>
-      (await guardDb(() => _datasource.getById(id))).flatMap(
-        (row) => row == null ? const Left(Failure.notFound()) : Right(_toCategory(row)),
-      );
+  Future<Either<Failure, Category>> getById(int id) async => (await guardDb(() => _datasource.getById(id))).flatMap(
+    (row) => row == null ? const Left(Failure.notFound()) : Right(_toCategory(row)),
+  );
 
   @override
   Future<Either<Failure, CategorySummary>> getSummary(int id) async =>
@@ -44,16 +43,16 @@ class CategoryRepositoryImpl implements ICategoryRepository {
       guardDb(() => _datasource.insertCategory(name: draft.name, icon: draft.icon, color: draft.color));
 
   @override
-  Future<Either<Failure, Unit>> update(int id, CategoryDraft draft) async =>
-      (await guardDb(
-        () => _datasource.updateCategory(id, name: draft.name, icon: draft.icon, color: draft.color),
-      )).flatMap(_oneRowChanged);
+  Future<Either<Failure, Unit>> update(int id, CategoryDraft draft) async => (await guardDb(
+    () => _datasource.updateCategory(id, name: draft.name, icon: draft.icon, color: draft.color),
+  )).flatMap(_oneRowChanged);
 
   @override
   Future<Either<Failure, Unit>> delete(int id) async =>
       (await guardDb(() => _datasource.deleteCategory(id))).flatMap(_oneRowChanged);
 
-  static Either<Failure, Unit> _oneRowChanged(int rows) => rows == 1 ? const Right(unit) : const Left(Failure.notFound());
+  static Either<Failure, Unit> _oneRowChanged(int rows) =>
+      rows == 1 ? const Right(unit) : const Left(Failure.notFound());
 
   static Category _toCategory(CategoriesTableData row) => Category(
     id: row.id,

@@ -11,3 +11,7 @@ analyzer:
     - "**/*.g.dart"
     - "**/*.freezed.dart"
     - "lib/generated_plugin_registrant.dart"
+
+# The codebase is written at 120 columns; keeps `dart format` from rewrapping it.
+formatter:
+  page_width: 120
