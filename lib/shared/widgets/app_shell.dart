@@ -25,21 +25,57 @@ class AppShell extends StatelessWidget {
     final location = GoRouterState.of(context).uri.path;
     final index = _tabs.indexWhere(location.startsWith).clamp(0, _tabs.length - 1);
 
+    final showAdd = index == 0;
+
     return Scaffold(
       extendBody: true,
       body: child,
       bottomNavigationBar: SafeArea(
         minimum: const EdgeInsets.fromLTRB(AppSpacing.lg, 0, AppSpacing.lg, AppSpacing.lg),
-        child: Row(
-          children: [
-            _TabBar(selected: index, onSelected: (i) => context.go(_tabs[i])),
-            const Spacer(),
-            if (index == 0) _AddButton(onPressed: () => context.push(RoutePaths.newExpense)),
-          ],
+        child: SizedBox(
+          height: _barHeight,
+          child: Stack(
+            children: [
+              // With the add button the bar sits at the start (iOS 26 tab bar +
+              // action); without it, the bar glides to the centre.
+              AnimatedAlign(
+                alignment: showAdd ? AlignmentDirectional.centerStart : AlignmentDirectional.center,
+                duration: _motion,
+                curve: Curves.easeOutCubic,
+                child: _TabBar(selected: index, onSelected: (i) => context.go(_tabs[i])),
+              ),
+              PositionedDirectional(
+                end: 0,
+                top: 0,
+                bottom: 0,
+                child: IgnorePointer(
+                  ignoring: !showAdd,
+                  child: AnimatedScale(
+                    scale: showAdd ? 1 : 0.6,
+                    duration: _motion,
+                    curve: showAdd ? Curves.easeOutBack : Curves.easeInCubic,
+                    child: AnimatedOpacity(
+                      opacity: showAdd ? 1 : 0,
+                      duration: _motion,
+                      curve: Curves.easeOut,
+                      child: ExcludeSemantics(
+                        excluding: !showAdd,
+                        child: _AddButton(onPressed: () => context.push(RoutePaths.newExpense)),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
+
+  /// The glass tab bar's height; the add button matches it.
+  static const _barHeight = 64.0;
+  static const _motion = Duration(milliseconds: 380);
 }
 
 /// Figma "Navigation Bar" as an iOS 26 liquid glass tab bar: the selected
@@ -84,6 +120,7 @@ class _TabBar extends StatelessWidget {
   }
 }
 
+/// The emerald add button, a circle as tall as the tab bar, with its glow.
 class _AddButton extends StatelessWidget {
   const _AddButton({required this.onPressed});
 
@@ -92,18 +129,27 @@ class _AddButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = MasroofyColors.of(context);
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        boxShadow: [
-          BoxShadow(color: colors.primary.withValues(alpha: 0.32), blurRadius: 24, offset: const Offset(0, 10)),
-        ],
-      ),
-      child: FloatingActionButton(
-        heroTag: null,
-        tooltip: StringManager.addExpense,
-        onPressed: onPressed,
-        child: const Icon(Symbols.add_rounded),
+    return Tooltip(
+      message: StringManager.addExpense,
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          boxShadow: [
+            BoxShadow(color: colors.primary.withValues(alpha: 0.32), blurRadius: 24, offset: const Offset(0, 10)),
+          ],
+        ),
+        child: Material(
+          color: colors.primary,
+          shape: const CircleBorder(),
+          clipBehavior: Clip.antiAlias,
+          child: InkWell(
+            onTap: onPressed,
+            child: SizedBox.square(
+              dimension: AppShell._barHeight,
+              child: Icon(Symbols.add_rounded, size: 28, color: colors.onPrimary),
+            ),
+          ),
+        ),
       ),
     );
   }
