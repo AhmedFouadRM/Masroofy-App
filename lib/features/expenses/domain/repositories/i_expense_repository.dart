@@ -3,39 +3,27 @@ import 'package:masroofy/core/domain/local_date.dart';
 import 'package:masroofy/core/domain/money.dart';
 import 'package:masroofy/core/error/failures.dart';
 import 'package:masroofy/features/expenses/domain/entities/expense.dart';
+import 'package:masroofy/features/expenses/domain/entities/expense_draft.dart';
+import 'package:masroofy/features/expenses/domain/entities/expense_filter.dart';
 
-/// All date ranges are inclusive calendar dates.
-abstract class IExpenseRepository {
-  /// Watch all expenses within a date range, ordered by date descending
-  Stream<Either<Failure, List<Expense>>> watchExpensesByDateRange(
-    LocalDate start,
-    LocalDate end,
-  );
+abstract interface class IExpenseRepository {
+  /// The newest [limit] expenses matching [filter], by date then id,
+  /// descending. Grow [limit] to load the next page.
+  Stream<Either<Failure, List<Expense>>> watchExpenses(ExpenseFilter filter, {required int limit});
 
-  /// Watch total spending for a date range
-  Stream<Either<Failure, Money>> watchTotalForDateRange(
-    LocalDate start,
-    LocalDate end,
-  );
+  /// Sum of every expense matching [filter].
+  Stream<Either<Failure, Money>> watchTotal(ExpenseFilter filter);
 
-  /// Watch total spending grouped by category id for a date range
-  Stream<Either<Failure, Map<int, Money>>> watchTotalByCategory(
-    LocalDate start,
-    LocalDate end,
-  );
+  /// Per-day sums of every expense matching [filter] (days without expenses
+  /// are absent). Used for day headers, so they are right across pages.
+  Stream<Either<Failure, Map<LocalDate, Money>>> watchDailyTotals(ExpenseFilter filter);
 
-  /// Watch daily totals for a date range
-  Stream<Either<Failure, Map<LocalDate, Money>>> watchDailyTotals(
-    LocalDate start,
-    LocalDate end,
-  );
+  Future<Either<Failure, Expense>> getById(int id);
 
-  /// Insert a new expense
-  Future<Either<Failure, int>> insertExpense(Expense expense);
+  /// Returns the new id.
+  Future<Either<Failure, int>> create(ExpenseDraft draft);
 
-  /// Update an existing expense
-  Future<Either<Failure, bool>> updateExpense(Expense expense);
+  Future<Either<Failure, Unit>> update(int id, ExpenseDraft draft);
 
-  /// Delete an expense by ID
-  Future<Either<Failure, bool>> deleteExpense(int id);
+  Future<Either<Failure, Unit>> delete(int id);
 }

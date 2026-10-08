@@ -2,23 +2,16 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:masroofy/core/domain/local_date.dart';
 import 'package:masroofy/core/domain/money.dart';
 import 'package:masroofy/core/error/failures.dart';
-import 'package:masroofy/features/expenses/domain/entities/expense.dart';
+import 'package:masroofy/features/expenses/domain/entities/expense_draft.dart';
 import 'package:masroofy/features/expenses/domain/validation/expense_validator.dart';
 
 void main() {
   final today = LocalDate(2026, 10, 8);
-  final valid = Expense(
-    id: 0,
-    amount: const Money(1250),
-    categoryId: 1,
-    date: today,
-    createdAt: DateTime.utc(2026, 10, 8),
-    updatedAt: DateTime.utc(2026, 10, 8),
-  );
+  final valid = ExpenseDraft(amount: const Money(1250), categoryId: 1, date: today);
 
-  ValidationFailure? validate(Expense expense) => ExpenseValidator.validate(expense, today: today);
+  ValidationFailure? validate(ExpenseDraft expense) => ExpenseValidator.validate(expense, today: today);
 
-  void expectFailure(Expense expense, String field, ValidationReason reason) {
+  void expectFailure(ExpenseDraft expense, String field, ValidationReason reason) {
     final failure = validate(expense);
     expect(failure?.field, field);
     expect(failure?.reason, reason);

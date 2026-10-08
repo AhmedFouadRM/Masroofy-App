@@ -9,6 +9,11 @@ import 'package:masroofy/features/categories/domain/usecases/delete_category.dar
 import 'package:masroofy/features/categories/domain/usecases/save_category.dart';
 import 'package:masroofy/features/categories/presentation/cubits/categories_cubit.dart';
 import 'package:masroofy/features/categories/presentation/cubits/category_form_cubit.dart';
+import 'package:masroofy/features/expenses/data/datasources/expense_local_datasource.dart';
+import 'package:masroofy/features/expenses/data/repositories/expense_repository_impl.dart';
+import 'package:masroofy/features/expenses/domain/repositories/i_expense_repository.dart';
+import 'package:masroofy/features/expenses/domain/usecases/delete_expense.dart';
+import 'package:masroofy/features/expenses/domain/usecases/save_expense.dart';
 import 'package:masroofy/shared/settings/settings_cubit.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -36,6 +41,7 @@ Future<void> configureDependencies({AppDatabase Function() openDatabase = AppDat
     );
 
   _registerCategories();
+  _registerExpenses();
 }
 
 void _registerCategories() {
@@ -50,4 +56,12 @@ void _registerCategories() {
     ..registerFactoryParam<CategoryFormCubit, int?, void>(
       (categoryId, _) => CategoryFormCubit(getIt(), getIt(), getIt(), categoryId: categoryId),
     );
+}
+
+void _registerExpenses() {
+  getIt
+    ..registerLazySingleton(() => ExpenseLocalDatasource(getIt()))
+    ..registerLazySingleton<IExpenseRepository>(() => ExpenseRepositoryImpl(getIt()))
+    ..registerLazySingleton(() => SaveExpense(getIt()))
+    ..registerLazySingleton(() => DeleteExpense(getIt()));
 }
