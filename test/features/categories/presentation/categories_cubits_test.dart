@@ -80,11 +80,20 @@ void main() {
     );
 
     blocTest<CategoriesCubit, CategoriesState>(
-      'surfaces a failed delete as an action failure',
+      'removes the row at once and restores it if the delete fails',
       setUp: () => when(() => delete(9)).thenAnswer((_) async => const Left(Failure.notFound())),
       build: () => CategoriesCubit(repository, delete),
+      seed: () => CategoriesState(status: CategoriesStatus.loaded, defaults: [food], custom: [gym]),
       act: (cubit) => cubit.delete(9),
-      expect: () => [const CategoriesState(actionFailure: Failure.notFound())],
+      expect: () => [
+        CategoriesState(status: CategoriesStatus.loaded, defaults: [food]),
+        CategoriesState(
+          status: CategoriesStatus.loaded,
+          defaults: [food],
+          custom: [gym],
+          actionFailure: const Failure.notFound(),
+        ),
+      ],
     );
 
     test('cancels the subscription on close', () async {

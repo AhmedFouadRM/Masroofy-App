@@ -39,14 +39,24 @@ class CategoriesCubit extends Cubit<CategoriesState> {
     );
   }
 
-  /// Deletes a custom category after the user confirmed. The watched list
-  /// drops it on success; a failure is surfaced through `actionFailure`.
+  /// Deletes a custom category after the user confirmed. The row is removed
+  /// right away (so a swipe can finish its animation) and restored if the
+  /// delete fails, with the failure surfaced through `actionFailure`.
   Future<void> delete(int id) async {
-    // Reset first so the same failure twice still reaches the listener.
-    if (state.actionFailure != null) emit(state.copyWith(actionFailure: null));
+    final previous = state.custom;
+    emit(
+      state.copyWith(
+        custom: [
+          for (final s in previous)
+            if (s.category.id != id) s,
+        ],
+        // Reset so the same failure twice still reaches the listener.
+        actionFailure: null,
+      ),
+    );
     final result = await _deleteCategory(id);
     if (isClosed) return;
-    result.match((failure) => emit(state.copyWith(actionFailure: failure)), (_) {});
+    result.match((failure) => emit(state.copyWith(custom: previous, actionFailure: failure)), (_) {});
   }
 
   @override

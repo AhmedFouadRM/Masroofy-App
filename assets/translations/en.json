@@ -29,7 +29,54 @@
     "health": "Health",
     "entertainment": "Entertainment",
     "education": "Education",
-    "other": "Other"
+    "other": "Other",
+    "section_default": "Default",
+    "section_custom": "Custom",
+    "new": "New category",
+    "edit": "Edit category",
+    "name": "Name",
+    "name_helper": "Up to {} characters",
+    "icon": "Icon",
+    "colour": "Colour",
+    "delete": "Delete category",
+    "delete_title": "Delete “{}”?",
+    "delete_moves": "{} will move to Other.",
+    "delete_budget": "Its budget will be removed.",
+    "delete_unused": "This category isn't used yet.",
+    "and": " and ",
+    "budget": "budget {}",
+    "expense_count": {
+      "zero": "No expenses yet",
+      "one": "{} expense",
+      "two": "{} expenses",
+      "few": "{} expenses",
+      "many": "{} expenses",
+      "other": "{} expenses"
+    },
+    "recurring_count": {
+      "zero": "",
+      "one": "{} recurring",
+      "two": "{} recurring",
+      "few": "{} recurring",
+      "many": "{} recurring",
+      "other": "{} recurring"
+    },
+    "expenses_to_move": {
+      "zero": "",
+      "one": "{} expense",
+      "two": "{} expenses",
+      "few": "{} expenses",
+      "many": "{} expenses",
+      "other": "{} expenses"
+    },
+    "templates_to_move": {
+      "zero": "",
+      "one": "{} recurring template",
+      "two": "{} recurring templates",
+      "few": "{} recurring templates",
+      "many": "{} recurring templates",
+      "other": "{} recurring templates"
+    }
   },
   "recurring": {
     "title": "Recurring Expenses",

@@ -29,6 +29,8 @@ Future<void> main() async {
         path: 'assets/translations',
         fallbackLocale: const Locale('en'),
         useOnlyLangCode: true,
+        // Use CLDR plural rules, so Arabic gets its few / many forms.
+        ignorePluralRules: false,
         child: const MasroofyApp(),
       ),
     ),

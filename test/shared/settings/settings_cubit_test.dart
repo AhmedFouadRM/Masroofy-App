@@ -70,8 +70,7 @@ void main() {
                 date: LocalDate(2026, 10, 8),
               ),
             );
-        Future<int> storedAmount() async =>
-            (await db.select(db.expensesTable).getSingle()).amountMinor;
+        Future<int> storedAmount() async => (await db.select(db.expensesTable).getSingle()).amountMinor;
 
         await cubit.setCurrency(CurrencyUtils.byCode('KWD')!);
         expect(cubit.state.currency.code, 'KWD');

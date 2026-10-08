@@ -20,6 +20,6 @@ abstract final class CategoryIcons {
     // Money & work
     'work', 'savings', 'credit_card', 'account_balance', 'volunteer_activism',
     // Leisure
-    'sports_esports', 'music_note', 'menu_book', 'subscriptions',
+    'sports_esports', 'music_note', 'menu_book',
   ];
 }

@@ -38,6 +38,44 @@ class StringManager {
 
   /// Display name of a pre-seeded category, by its `seed_key` (e.g. `food`).
   static String categoryName(String seedKey) => 'categories.$seedKey'.tr();
+  static String get categoriesDefaultSection => 'categories.section_default'.tr();
+  static String get categoriesCustomSection => 'categories.section_custom'.tr();
+  static String get newCategory => 'categories.new'.tr();
+  static String get editCategory => 'categories.edit'.tr();
+  static String get categoryNameLabel => 'categories.name'.tr();
+  static String categoryNameHelper(String max) => 'categories.name_helper'.tr(args: [max]);
+  static String get categoryIcon => 'categories.icon'.tr();
+  static String get categoryColour => 'categories.colour'.tr();
+  static String get deleteCategory => 'categories.delete'.tr();
+  static String deleteCategoryTitle(String name) => 'categories.delete_title'.tr(args: [name]);
+  static String categoryBudget(String amount) => 'categories.budget'.tr(args: [amount]);
+
+  /// Counts take the number already shaped for the locale ([number]); `0`
+  /// is handled here because English plural rules have no zero form.
+  static String categoryExpenseCount(int count, String number) =>
+      count == 0 ? 'categories.expense_count.zero'.tr() : 'categories.expense_count'.plural(count, args: [number]);
+  static String categoryRecurringCount(int count, String number) =>
+      count == 0 ? '' : 'categories.recurring_count'.plural(count, args: [number]);
+
+  /// Body of the delete confirmation, e.g. "12 expenses and 1 recurring
+  /// template will move to Other. Its budget will be removed."
+  static String deleteCategoryBody({
+    required int expenses,
+    required String expensesNumber,
+    required int templates,
+    required String templatesNumber,
+    required bool hasBudget,
+  }) {
+    final moving = [
+      if (expenses > 0) 'categories.expenses_to_move'.plural(expenses, args: [expensesNumber]),
+      if (templates > 0) 'categories.templates_to_move'.plural(templates, args: [templatesNumber]),
+    ];
+    return [
+      if (moving.isNotEmpty) 'categories.delete_moves'.tr(args: [moving.join('categories.and'.tr())]),
+      if (hasBudget) 'categories.delete_budget'.tr(),
+      if (moving.isEmpty && !hasBudget) 'categories.delete_unused'.tr(),
+    ].join(' ');
+  }
 
   // ── Recurring ──
   static String get recurringTitle => 'recurring.title'.tr();
@@ -93,21 +131,21 @@ class StringManager {
   // ── Errors ──
   /// Localized message for any [Failure]. Raw exception text never reaches the UI.
   static String failure(Failure failure) => switch (failure) {
-        ValidationFailure(:final reason) => validation(reason),
-        NotFoundFailure() => 'errors.not_found'.tr(),
-        ConstraintFailure() => 'errors.constraint'.tr(),
-        StorageFailure() => 'errors.storage'.tr(),
-        SecureStorageFailure() => 'errors.secure_storage'.tr(),
-        ExportFailure() => 'errors.export'.tr(),
-        UnexpectedFailure() => 'errors.unexpected'.tr(),
-      };
+    ValidationFailure(:final reason) => validation(reason),
+    NotFoundFailure() => 'errors.not_found'.tr(),
+    ConstraintFailure() => 'errors.constraint'.tr(),
+    StorageFailure() => 'errors.storage'.tr(),
+    SecureStorageFailure() => 'errors.secure_storage'.tr(),
+    ExportFailure() => 'errors.export'.tr(),
+    UnexpectedFailure() => 'errors.unexpected'.tr(),
+  };
 
   static String validation(ValidationReason reason) => switch (reason) {
-        ValidationReason.required => 'validation.required'.tr(),
-        ValidationReason.tooLong => 'validation.too_long'.tr(),
-        ValidationReason.mustBePositive => 'validation.must_be_positive'.tr(),
-        ValidationReason.inFuture => 'validation.in_future'.tr(),
-        ValidationReason.invalidFormat => 'validation.invalid_format'.tr(),
-        ValidationReason.duplicate => 'validation.duplicate'.tr(),
-      };
+    ValidationReason.required => 'validation.required'.tr(),
+    ValidationReason.tooLong => 'validation.too_long'.tr(),
+    ValidationReason.mustBePositive => 'validation.must_be_positive'.tr(),
+    ValidationReason.inFuture => 'validation.in_future'.tr(),
+    ValidationReason.invalidFormat => 'validation.invalid_format'.tr(),
+    ValidationReason.duplicate => 'validation.duplicate'.tr(),
+  };
 }

@@ -1,4 +1,6 @@
 ﻿import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import 'package:masroofy/app/routes.dart';
 import 'package:masroofy/core/strings/string_manager.dart';
 
 class SettingsScreen extends StatelessWidget {
@@ -37,10 +39,8 @@ class SettingsScreen extends StatelessWidget {
             },
           ),
           ListTile(
-            title: const Text('Categories'),
-            onTap: () {
-              // TODO: Navigate to category list
-            },
+            title: Text(StringManager.manageCategories),
+            onTap: () => context.push(RoutePaths.categories),
           ),
           ListTile(
             title: const Text('Budgets'),
