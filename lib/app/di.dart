@@ -14,6 +14,8 @@ import 'package:masroofy/features/expenses/data/repositories/expense_repository_
 import 'package:masroofy/features/expenses/domain/repositories/i_expense_repository.dart';
 import 'package:masroofy/features/expenses/domain/usecases/delete_expense.dart';
 import 'package:masroofy/features/expenses/domain/usecases/save_expense.dart';
+import 'package:masroofy/features/expenses/presentation/cubits/expense_form_cubit.dart';
+import 'package:masroofy/features/expenses/presentation/cubits/expense_list_cubit.dart';
 import 'package:masroofy/shared/settings/settings_cubit.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -63,5 +65,14 @@ void _registerExpenses() {
     ..registerLazySingleton(() => ExpenseLocalDatasource(getIt()))
     ..registerLazySingleton<IExpenseRepository>(() => ExpenseRepositoryImpl(getIt()))
     ..registerLazySingleton(() => SaveExpense(getIt()))
-    ..registerLazySingleton(() => DeleteExpense(getIt()));
+    ..registerLazySingleton(() => DeleteExpense(getIt()))
+    // param1: the device's first weekday (from SettingsCubit).
+    ..registerFactoryParam<ExpenseListCubit, int, void>(
+      (firstWeekday, _) => ExpenseListCubit(getIt(), getIt(), getIt(), firstWeekday: firstWeekday),
+    )
+    // param1: the currency's fraction digits; param2: the id to edit, or null.
+    ..registerFactoryParam<ExpenseFormCubit, int, int?>(
+      (fractionDigits, expenseId) =>
+          ExpenseFormCubit(getIt(), getIt(), getIt(), fractionDigits: fractionDigits, expenseId: expenseId),
+    );
 }
