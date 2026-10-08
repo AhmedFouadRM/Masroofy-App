@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:liquid_glass_widgets/liquid_glass_widgets.dart';
 import 'package:masroofy/app/routes.dart';
 import 'package:masroofy/core/strings/string_manager.dart';
 import 'package:masroofy/core/theme/app_dimensions.dart';
@@ -41,6 +42,8 @@ class AppShell extends StatelessWidget {
   }
 }
 
+/// Figma "Navigation Bar" as an iOS 26 liquid glass tab bar: the selected
+/// tab sits under a glass lens that slides (and can be dragged) between tabs.
 class _TabBar extends StatelessWidget {
   const _TabBar({required this.selected, required this.onSelected});
 
@@ -49,68 +52,33 @@ class _TabBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final items = [
-      (Symbols.receipt_long_rounded, StringManager.expensesTitle),
-      (Symbols.bar_chart_rounded, StringManager.analyticsTitle),
-      (Symbols.settings_rounded, StringManager.settingsTitle),
-    ];
-    return GlassSurface(
-      strong: true,
-      radius: 32,
-      child: Padding(
-        padding: const EdgeInsets.all(6),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            for (final (i, (icon, label)) in items.indexed)
-              _Tab(icon: icon, label: label, selected: i == selected, onTap: () => onSelected(i)),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _Tab extends StatelessWidget {
-  const _Tab({required this.icon, required this.label, required this.selected, required this.onTap});
-
-  final IconData icon;
-  final String label;
-  final bool selected;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
     final colors = MasroofyColors.of(context);
-    final color = selected ? colors.textAccent : colors.textSecondary;
-    return Semantics(
-      selected: selected,
-      button: true,
-      label: label,
-      excludeSemantics: true,
-      child: Material(
-        color: selected ? colors.primarySubtle : Colors.transparent,
-        shape: const StadiumBorder(),
-        clipBehavior: Clip.antiAlias,
-        child: InkWell(
-          onTap: onTap,
-          child: SizedBox(
-            width: 80,
-            height: 52,
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(icon, color: color, size: 22, fill: selected ? 1 : 0),
-                Text(
-                  label,
-                  style: Theme.of(context).textTheme.labelSmall!.copyWith(color: color),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ],
-            ),
-          ),
-        ),
+    final label = Theme.of(context).textTheme.labelSmall!;
+    GlassTab tab(IconData icon, String text) => GlassTab(
+      icon: Icon(icon),
+      activeIcon: Icon(icon, fill: 1),
+      label: text,
+      semanticLabel: text,
+    );
+    return SizedBox(
+      width: 268,
+      child: GlassTabBar.bottom(
+        tabs: [
+          tab(Symbols.receipt_long_rounded, StringManager.expensesTitle),
+          tab(Symbols.bar_chart_rounded, StringManager.analyticsTitle),
+          tab(Symbols.settings_rounded, StringManager.settingsTitle),
+        ],
+        selectedIndex: selected,
+        onTabSelected: onSelected,
+        horizontalPadding: 0,
+        verticalPadding: 0,
+        settings: glassSettings(context, strong: true),
+        indicatorColor: colors.primarySubtle.withValues(alpha: 0.7),
+        selectedIconColor: colors.textAccent,
+        unselectedIconColor: colors.textSecondary,
+        selectedLabelStyle: label.copyWith(color: colors.textAccent),
+        unselectedLabelStyle: label.copyWith(color: colors.textSecondary),
+        iconSize: 22,
       ),
     );
   }

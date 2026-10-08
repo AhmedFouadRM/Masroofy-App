@@ -32,21 +32,28 @@ class GlassSurface extends StatelessWidget {
         child: child,
       );
     }
-    final dark = Theme.of(context).brightness == Brightness.dark;
     return GlassContainer(
       useOwnLayer: true,
       shape: LiquidRoundedSuperellipse(borderRadius: radius),
-      settings: LiquidGlassSettings(
-        // A light tint keeps the text readable while the content behind
-        // still shows through, bent at the rim.
-        glassColor: (dark ? colors.surface : Colors.white).withValues(alpha: strong ? 0.55 : 0.35),
-        thickness: 24,
-        blur: strong ? 10 : 6,
-        refractiveIndex: 1.25,
-        lightIntensity: dark ? 0.35 : 0.6,
-        saturation: 1.4,
-      ),
+      settings: glassSettings(context, strong: strong),
       child: child,
     );
   }
+}
+
+/// Masroofy's liquid glass, mapped from the design tokens. Shared by every
+/// glass surface (and the tab bar) so the material is tuned in one place.
+LiquidGlassSettings glassSettings(BuildContext context, {bool strong = false}) {
+  final colors = MasroofyColors.of(context);
+  final dark = Theme.of(context).brightness == Brightness.dark;
+  return LiquidGlassSettings(
+    // A light tint keeps text readable while the content behind still shows
+    // through, bent at the rim.
+    glassColor: (dark ? colors.surface : Colors.white).withValues(alpha: strong ? 0.55 : 0.35),
+    thickness: 24,
+    blur: strong ? 10 : 6,
+    refractiveIndex: 1.25,
+    lightIntensity: dark ? 0.35 : 0.6,
+    saturation: 1.4,
+  );
 }
