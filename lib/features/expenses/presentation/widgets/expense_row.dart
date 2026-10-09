@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:masroofy/core/domain/transaction_kind.dart';
 import 'package:masroofy/core/strings/string_manager.dart';
 import 'package:masroofy/core/theme/app_dimensions.dart';
 import 'package:masroofy/core/theme/masroofy_colors.dart';
@@ -10,7 +11,8 @@ import 'package:masroofy/shared/formatting/display_format.dart';
 import 'package:material_symbols_icons/symbols.dart';
 
 /// Figma "Expense Row": category avatar, title (or the category name),
-/// category · note, and the amount with an optional recurring badge.
+/// category · note, and the amount with an optional recurring badge. Income
+/// shows a `+` and `text/positive`.
 class ExpenseRow extends StatelessWidget {
   const ExpenseRow({required this.expense, required this.category, this.onTap, super.key});
 
@@ -31,6 +33,9 @@ class ExpenseRow extends StatelessWidget {
       if (expense.title != null) categoryName,
       ?expense.note,
     ].join(' · ');
+
+    final income = expense.kind == TransactionKind.income;
+    final amount = income ? context.signedMoney(expense.amount) : context.money(expense.amount);
 
     return InkWell(
       onTap: onTap,
@@ -64,7 +69,14 @@ class ExpenseRow extends StatelessWidget {
             Column(
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
-                Text(context.money(expense.amount), style: text.titleMedium),
+                Semantics(
+                  label: income ? StringManager.incomeRowSemantics(categoryName, context.money(expense.amount)) : null,
+                  excludeSemantics: income,
+                  child: Text(
+                    amount,
+                    style: income ? text.titleMedium!.copyWith(color: colors.textPositive) : text.titleMedium,
+                  ),
+                ),
                 if (expense.isRecurringGenerated)
                   Row(
                     mainAxisSize: MainAxisSize.min,

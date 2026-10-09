@@ -5,6 +5,7 @@ import 'package:fpdart/fpdart.dart';
 import 'package:masroofy/core/database/app_database.dart';
 import 'package:masroofy/core/domain/local_date.dart';
 import 'package:masroofy/core/domain/money.dart';
+import 'package:masroofy/core/domain/transaction_kind.dart';
 import 'package:masroofy/core/error/failures.dart';
 import 'package:masroofy/features/budgets/domain/entities/budget_period.dart';
 import 'package:masroofy/features/categories/data/datasources/category_local_datasource.dart';
@@ -65,10 +66,10 @@ void main() {
       final pets = right(await save(draft('Pets')));
 
       final all = right(await repository.watchAll().first);
-      expect(all.take(8).every((c) => c.isDefault), isTrue);
-      expect(all.skip(8).map((c) => c.id), [gym, pets]);
-      expect(all[8].name, 'My Gym');
-      expect(all[9].sortOrder, all[8].sortOrder + 1);
+      expect(all.take(14).every((c) => c.isDefault), isTrue);
+      expect(all.skip(14).map((c) => c.id), [gym, pets]);
+      expect(all[14].name, 'My Gym');
+      expect(all[15].sortOrder, all[14].sortOrder + 1);
     });
 
     test('rejects names taken by custom or default categories', () async {
@@ -80,6 +81,58 @@ void main() {
       expect(
         left(await save(draft('طعام'))),
         const Failure.validation(field: 'name', reason: ValidationReason.duplicate),
+      );
+    });
+  });
+
+  group('kind', () {
+    test('a new category is an expense category unless it says income', () async {
+      final gym = right(await save(draft('Gym')));
+      final tips = right(await save(draft('Tips').copyWith(kind: TransactionKind.income)));
+
+      expect(right(await repository.getById(gym)).kind, TransactionKind.expense);
+      expect(right(await repository.getById(tips)).kind, TransactionKind.income);
+    });
+
+    test('the default income categories are income categories', () async {
+      final all = right(await repository.watchAll().first);
+      expect(all.where((c) => c.kind == TransactionKind.income).map((c) => c.seedKey), [
+        'salary',
+        'freelance',
+        'gifts',
+        'refunds',
+        'investments',
+        'other_income',
+      ]);
+    });
+
+    test('an unused category can change kind', () async {
+      final id = right(await save(draft('Gym')));
+      right(await save(draft('Gym').copyWith(kind: TransactionKind.income), id: id));
+
+      expect(right(await repository.getById(id)).kind, TransactionKind.income);
+    });
+
+    test('the kind is locked while an expense uses the category', () async {
+      final id = right(await save(draft('Gym')));
+      await addExpense(id);
+
+      expect(
+        left(await save(draft('Gym').copyWith(kind: TransactionKind.income), id: id)),
+        const Failure.validation(field: 'kind', reason: ValidationReason.inUse),
+      );
+      expect(right(await repository.getById(id)).kind, TransactionKind.expense);
+      // Saving the same kind is fine.
+      right(await save(draft('Gym 2'), id: id));
+    });
+
+    test('the kind is locked while a recurring template uses the category', () async {
+      final id = right(await save(draft('Gym')));
+      await addTemplate(id);
+
+      expect(
+        left(await save(draft('Gym').copyWith(kind: TransactionKind.income), id: id)),
+        const Failure.validation(field: 'kind', reason: ValidationReason.inUse),
       );
     });
   });
@@ -130,7 +183,7 @@ void main() {
     right(await save(draft('Gym')));
     await pumpEventQueue();
     await sub.cancel();
-    expect(counts, [8, 9]);
+    expect(counts, [14, 15]);
   });
 
   group('delete', () {
@@ -149,6 +202,22 @@ void main() {
       expect((await db.select(db.recurringExpensesTable).getSingle()).categoryId, other);
       expect(await db.select(db.budgetsTable).get(), isEmpty);
       expect(left(await repository.getById(gym)), const Failure.notFound());
+    });
+
+    test('an income category moves its rows and templates to Other income', () async {
+      final tips = right(await save(draft('Tips').copyWith(kind: TransactionKind.income)));
+      await addExpense(tips);
+      await addTemplate(tips);
+
+      right(await deleteCategory(tips));
+
+      final otherIncome = await seedId('other_income');
+      expect((await db.select(db.expensesTable).getSingle()).categoryId, otherIncome);
+      expect((await db.select(db.recurringExpensesTable).getSingle()).categoryId, otherIncome);
+    });
+
+    test('Other income cannot be deleted', () async {
+      expect(left(await deleteCategory(await seedId('other_income'))), isA<ConstraintFailure>());
     });
 
     test('refuses default categories', () async {

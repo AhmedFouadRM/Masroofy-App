@@ -3,6 +3,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:masroofy/core/domain/date_range.dart';
 import 'package:masroofy/core/domain/local_date.dart';
 import 'package:masroofy/core/domain/money.dart';
+import 'package:masroofy/core/domain/period_totals.dart';
+import 'package:masroofy/core/domain/transaction_kind.dart';
 import 'package:masroofy/core/strings/string_manager.dart';
 import 'package:masroofy/core/theme/app_dimensions.dart';
 import 'package:masroofy/core/theme/masroofy_colors.dart';
@@ -69,6 +71,8 @@ class AnalyticsScreen extends StatelessWidget {
                   ..._budgetSection(state),
                 ],
                 AnalyticsStatus.loaded => [
+                  SectionHeader(title: StringManager.incomeVsSpending),
+                  _IncomeVsSpending(totals: state.totals),
                   SectionHeader(title: StringManager.byCategory),
                   _CategoryBreakdown(state: state),
                   SectionHeader(title: StringManager.spendingOverTime),
@@ -180,6 +184,78 @@ class _PeriodPills extends StatelessWidget {
   }
 }
 
+/// Income, spending, the balance and the savings rate for the selected period.
+class _IncomeVsSpending extends StatelessWidget {
+  const _IncomeVsSpending({required this.totals});
+
+  final PeriodTotals totals;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = MasroofyColors.of(context);
+    final text = Theme.of(context).textTheme;
+    final balance = totals.balance;
+    final rate = totals.savingsRate;
+
+    Widget stat(String label, Widget value) => Expanded(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(label, style: text.labelMedium!.copyWith(color: colors.textSecondary)),
+          const SizedBox(height: AppSpacing.xs),
+          FittedBox(fit: BoxFit.scaleDown, alignment: AlignmentDirectional.centerStart, child: value),
+        ],
+      ),
+    );
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(AppSpacing.lg),
+        child: Column(
+          children: [
+            Row(
+              children: [
+                stat(
+                  StringManager.analyticsIncome,
+                  Text(
+                    context.money(totals.income),
+                    style: text.titleLarge!.copyWith(color: colors.textPositive),
+                  ),
+                ),
+                stat(StringManager.analyticsSpent, Text(context.money(totals.spent), style: text.titleLarge)),
+              ],
+            ),
+            const SizedBox(height: AppSpacing.lg),
+            Row(
+              children: [
+                stat(
+                  StringManager.analyticsBalance,
+                  Text(
+                    context.signedMoney(balance, plus: false),
+                    style: text.titleLarge!.copyWith(color: balance.isNegative ? colors.textNegative : null),
+                  ),
+                ),
+                // Hidden when nothing came in: there is nothing to save from.
+                if (rate != null)
+                  stat(
+                    StringManager.savingsRate,
+                    Text(
+                      '${rate < 0 ? '−' : ''}${context.count((rate.abs() * 100).round())}%',
+                      textDirection: TextDirection.ltr,
+                      style: text.titleLarge,
+                    ),
+                  )
+                else
+                  const Spacer(),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 /// The donut, then every category with its share, largest first.
 class _CategoryBreakdown extends StatelessWidget {
   const _CategoryBreakdown({required this.state});
@@ -188,17 +264,42 @@ class _CategoryBreakdown extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cubit = context.read<AnalyticsCubit>();
+    final total = state.breakdownTotal;
     return Card(
       clipBehavior: Clip.antiAlias,
       child: Column(
         children: [
           Padding(
-            padding: const EdgeInsets.symmetric(vertical: AppSpacing.lg),
-            child: SpendingPieChart(slices: state.slices, categories: state.categories, total: state.total),
+            padding: const EdgeInsets.fromLTRB(AppSpacing.lg, AppSpacing.lg, AppSpacing.lg, 0),
+            child: SegmentedPills(
+              labels: [StringManager.analyticsSpending, StringManager.analyticsIncome],
+              selected: state.breakdownKind.index,
+              onSelected: (i) => cubit.selectBreakdown(TransactionKind.values[i]),
+            ),
           ),
-          for (final (category, amount) in state.legend) ...[
-            const Divider(indent: 72),
-            _LegendRow(category: category, amount: amount, total: state.total),
+          if (state.byCategory.isEmpty)
+            Padding(
+              padding: const EdgeInsets.all(AppSpacing.xxl),
+              child: Text(
+                state.breakdownKind == TransactionKind.income
+                    ? StringManager.noIncomeData
+                    : StringManager.noAnalyticsData,
+                textAlign: TextAlign.center,
+                style: Theme.of(
+                  context,
+                ).textTheme.bodyMedium!.copyWith(color: MasroofyColors.of(context).textSecondary),
+              ),
+            )
+          else ...[
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: AppSpacing.lg),
+              child: SpendingPieChart(slices: state.slices, categories: state.categories, total: total),
+            ),
+            for (final (category, amount) in state.legend) ...[
+              const Divider(indent: 72),
+              _LegendRow(category: category, amount: amount, total: total),
+            ],
           ],
         ],
       ),

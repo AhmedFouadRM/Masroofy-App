@@ -21,6 +21,7 @@ Future<bool> showDeleteCategoryDialog(BuildContext context, CategorySummary summ
             templates: summary.recurringCount,
             templatesNumber: context.count(summary.recurringCount),
             hasBudget: summary.budgetLimit != null,
+            kind: summary.category.kind,
           ),
         ),
         actions: [

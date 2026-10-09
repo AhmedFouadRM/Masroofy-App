@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:masroofy/core/domain/local_date.dart';
 import 'package:masroofy/core/domain/money.dart';
+import 'package:masroofy/core/domain/transaction_kind.dart';
 import 'package:masroofy/core/error/failures.dart';
 import 'package:masroofy/features/budgets/domain/entities/budget_draft.dart';
 import 'package:masroofy/features/budgets/domain/entities/budget_period.dart';
@@ -27,7 +28,18 @@ class BudgetFormCubit extends Cubit<BudgetFormState> {
     _subscriptions
       ..add(
         _categories.watchAll().listen(
-          (result) => result.match(_onLoadFailure, (categories) => emit(state.copyWith(categories: categories))),
+          (result) => result.match(
+            _onLoadFailure,
+            // Budgets limit spending, so income categories are never offered.
+            (categories) => emit(
+              state.copyWith(
+                categories: [
+                  for (final c in categories)
+                    if (c.kind == TransactionKind.expense) c,
+                ],
+              ),
+            ),
+          ),
         ),
       )
       ..add(

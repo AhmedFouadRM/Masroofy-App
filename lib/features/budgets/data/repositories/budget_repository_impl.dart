@@ -5,6 +5,7 @@ import 'package:masroofy/core/database/db_guard.dart';
 import 'package:masroofy/core/domain/date_range.dart';
 import 'package:masroofy/core/domain/local_date.dart';
 import 'package:masroofy/core/domain/money.dart';
+import 'package:masroofy/core/domain/transaction_kind.dart';
 import 'package:masroofy/core/error/failures.dart';
 import 'package:masroofy/features/budgets/data/datasources/budget_local_datasource.dart';
 import 'package:masroofy/features/budgets/domain/entities/budget.dart';
@@ -40,15 +41,22 @@ class BudgetRepositoryImpl implements IBudgetRepository {
   )).flatMap((row) => row == null ? const Left(Failure.notFound()) : Right(_toBudget(row)));
 
   @override
-  Future<Either<Failure, int>> create(BudgetDraft draft) => guardDb(
-    () => _datasource.insertBudget(
-      BudgetsTableCompanion.insert(
-        categoryId: draft.categoryId,
-        limitMinor: draft.limit.minor,
-        period: draft.period.name,
+  Future<Either<Failure, int>> create(BudgetDraft draft) async {
+    // Budgets are spending limits: income categories can't have one.
+    final kind = (await guardDb(() => _datasource.categoryKind(draft.categoryId))).getOrElse((_) => null);
+    if (kind == TransactionKind.income.name) {
+      return const Left(ValidationFailure(field: 'categoryId', reason: ValidationReason.invalidFormat));
+    }
+    return guardDb(
+      () => _datasource.insertBudget(
+        BudgetsTableCompanion.insert(
+          categoryId: draft.categoryId,
+          limitMinor: draft.limit.minor,
+          period: draft.period.name,
+        ),
       ),
-    ),
-  );
+    );
+  }
 
   @override
   Future<Either<Failure, Unit>> update(int id, BudgetDraft draft) async => (await guardDb(

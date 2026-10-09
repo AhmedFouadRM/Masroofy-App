@@ -1,6 +1,7 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:masroofy/core/domain/local_date.dart';
 import 'package:masroofy/core/domain/money.dart';
+import 'package:masroofy/core/domain/transaction_kind.dart';
 
 part 'expense.freezed.dart';
 
@@ -21,6 +22,9 @@ abstract class Expense with _$Expense {
 
     /// Template due date this entry was generated for (recurring only).
     LocalDate? occurrenceDate,
+
+    /// The category's kind: income rows show a `+` and the positive colour.
+    @Default(TransactionKind.expense) TransactionKind kind,
   }) = _Expense;
 
   const Expense._();

@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:masroofy/core/domain/local_date.dart';
 import 'package:masroofy/core/domain/money.dart';
+import 'package:masroofy/core/domain/transaction_kind.dart';
 import 'package:masroofy/features/budgets/domain/entities/budget.dart';
 import 'package:masroofy/features/budgets/domain/entities/budget_draft.dart';
 import 'package:masroofy/features/budgets/domain/entities/budget_period.dart';
@@ -38,8 +39,9 @@ class _MockAuth extends MockCubit<AuthState> implements AuthCubit {}
 final _epoch = DateTime.utc(2026);
 final _monthStart = LocalDate(2026, 10, 1);
 
-Category _category(int id, String seedKey) => Category(
+Category _category(int id, String seedKey, {TransactionKind kind = TransactionKind.expense}) => Category(
   id: id,
+  kind: kind,
   seedKey: seedKey,
   icon: 'restaurant',
   color: 0xFFF97316,
@@ -99,6 +101,22 @@ void main() {
       build: build,
       act: (cubit) => cubit.load(),
       verify: (cubit) => expect(cubit.state.available, [_transport]),
+    );
+
+    blocTest<BudgetFormCubit, BudgetFormState>(
+      'income categories are never offered',
+      build: build,
+      setUp: () =>
+          when(
+            () => categories.watchAll(includeHidden: any(named: 'includeHidden')),
+          ).thenAnswer(
+            (_) => Stream.value(Right([_food, _transport, _category(3, 'salary', kind: TransactionKind.income)])),
+          ),
+      act: (cubit) => cubit.load(),
+      verify: (cubit) {
+        expect(cubit.state.categories, [_food, _transport]);
+        expect(cubit.state.available, [_transport]);
+      },
     );
 
     blocTest<BudgetFormCubit, BudgetFormState>(

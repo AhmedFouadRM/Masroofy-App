@@ -1,4 +1,5 @@
 import 'package:easy_localization/easy_localization.dart';
+import 'package:masroofy/core/domain/transaction_kind.dart';
 import 'package:masroofy/core/error/failures.dart';
 
 /// Single access point for every user-facing string.
@@ -59,6 +60,32 @@ class StringManager {
   static String get noteHint => 'expenses.note_hint'.tr();
   static String get saveExpense => 'expenses.save'.tr();
 
+  // ── Income ──
+  static String get addIncome => 'income.add'.tr();
+  static String get editIncome => 'income.edit'.tr();
+  static String get saveIncome => 'income.save'.tr();
+
+  /// The Expense | Income switch on the forms.
+  static String kindLabel(TransactionKind kind) => 'income.kind_${kind.name}'.tr();
+  static String get filterIncome => 'income.filter_income'.tr();
+  static String get filterExpenses => 'income.filter_expenses'.tr();
+  static String get emptyIncome => 'income.empty_title'.tr();
+  static String get emptyIncomeHint => 'income.empty_body'.tr();
+  static String get leftThisWeek => 'income.left_week'.tr();
+  static String get leftThisMonth => 'income.left_month'.tr();
+  static String leftInRange(String range) => 'income.left_range'.tr(args: [range]);
+  static String get incomeIn => 'income.in'.tr();
+  static String get incomeOut => 'income.out'.tr();
+  static String get earnedThisWeek => 'income.earned_week'.tr();
+  static String get earnedThisMonth => 'income.earned_month'.tr();
+  static String earnedInRange(String range) => 'income.earned_range'.tr(args: [range]);
+
+  /// Screen-reader label of an income row: "Income, Salary, plus EGP 5,000".
+  static String incomeRowSemantics(String name, String amount) => 'income.row_semantics'.tr(args: [name, amount]);
+
+  /// "Pick an income category" / "Pick an expense category".
+  static String wrongKind(TransactionKind kind) => 'validation.category_wrong_kind.${kind.name}'.tr();
+
   // ── Categories ──
   static String get categoriesTitle => 'categories.title'.tr();
   static String get addCategory => 'categories.add'.tr();
@@ -67,6 +94,10 @@ class StringManager {
   static String categoryName(String seedKey) => 'categories.$seedKey'.tr();
   static String get categoriesDefaultSection => 'categories.section_default'.tr();
   static String get categoriesCustomSection => 'categories.section_custom'.tr();
+  static String get categoriesExpenseSection => 'categories.section_expense'.tr();
+  static String get categoriesIncomeSection => 'categories.section_income'.tr();
+  static String get categoryKindLabel => 'categories.kind_label'.tr();
+  static String get categoryKindInUse => 'categories.kind_in_use'.tr();
   static String get newCategory => 'categories.new'.tr();
   static String get editCategory => 'categories.edit'.tr();
   static String get categoryNameLabel => 'categories.name'.tr();
@@ -81,6 +112,8 @@ class StringManager {
   /// is handled here because English plural rules have no zero form.
   static String categoryExpenseCount(int count, String number) =>
       count == 0 ? 'categories.expense_count.zero'.tr() : 'categories.expense_count'.plural(count, args: [number]);
+  static String categoryIncomeCount(int count, String number) =>
+      count == 0 ? 'categories.income_count.zero'.tr() : 'categories.income_count'.plural(count, args: [number]);
   static String categoryRecurringCount(int count, String number) =>
       count == 0 ? '' : 'categories.recurring_count'.plural(count, args: [number]);
 
@@ -92,13 +125,19 @@ class StringManager {
     required int templates,
     required String templatesNumber,
     required bool hasBudget,
+    TransactionKind kind = TransactionKind.expense,
   }) {
+    final income = kind == TransactionKind.income;
     final moving = [
-      if (expenses > 0) 'categories.expenses_to_move'.plural(expenses, args: [expensesNumber]),
+      if (expenses > 0)
+        (income ? 'categories.income_to_move' : 'categories.expenses_to_move').plural(expenses, args: [expensesNumber]),
       if (templates > 0) 'categories.templates_to_move'.plural(templates, args: [templatesNumber]),
     ];
     return [
-      if (moving.isNotEmpty) 'categories.delete_moves'.tr(args: [moving.join('categories.and'.tr())]),
+      if (moving.isNotEmpty)
+        (income ? 'categories.delete_moves_income' : 'categories.delete_moves').tr(
+          args: [moving.join('categories.and'.tr())],
+        ),
       if (hasBudget) 'categories.delete_budget'.tr(),
       if (moving.isEmpty && !hasBudget) 'categories.delete_unused'.tr(),
     ].join(' ');
@@ -143,6 +182,16 @@ class StringManager {
   static String get byCategory => 'analytics.by_category'.tr();
   static String get spendingOverTime => 'analytics.over_time'.tr();
   static String get smallerCategories => 'analytics.smaller_categories'.tr();
+  static String get incomeVsSpending => 'analytics.income_vs_spending'.tr();
+  static String get analyticsIncome => 'analytics.income'.tr();
+  static String get analyticsSpent => 'analytics.spent'.tr();
+  static String get analyticsBalance => 'analytics.balance'.tr();
+  static String get savingsRate => 'analytics.savings_rate'.tr();
+  static String get analyticsSpending => 'analytics.spending'.tr();
+  static String get noIncomeData => 'analytics.no_income'.tr();
+
+  /// Bar tooltip; both amounts are already formatted.
+  static String incomeAndSpent(String income, String spent) => 'analytics.tooltip'.tr(args: [income, spent]);
   static String get noAnalyticsData => 'analytics.no_data'.tr();
   static String get noAnalyticsDataHint => 'analytics.no_data_hint'.tr();
 
@@ -295,5 +344,8 @@ class StringManager {
     ValidationReason.inFuture => 'validation.in_future'.tr(),
     ValidationReason.invalidFormat => 'validation.invalid_format'.tr(),
     ValidationReason.duplicate => 'validation.duplicate'.tr(),
+    // Forms pick the wording for their kind with [wrongKind].
+    ValidationReason.wrongKind => 'validation.invalid_format'.tr(),
+    ValidationReason.inUse => 'categories.kind_in_use'.tr(),
   };
 }

@@ -14,7 +14,8 @@ abstract interface class IRecurringExpenseRepository {
   /// The latest occurrence date generated for template [id], or null.
   Future<Either<Failure, LocalDate?>> lastOccurrence(int id);
 
-  /// Returns the new id.
+  /// Returns the new id. Fails with `ValidationFailure(categoryId, wrongKind)`
+  /// when the category isn't of the draft's kind.
   Future<Either<Failure, int>> create(RecurringDraft draft, {required LocalDate nextDue});
 
   Future<Either<Failure, Unit>> update(int id, RecurringDraft draft, {required LocalDate nextDue});

@@ -47,6 +47,17 @@ class $CategoriesTableTable extends CategoriesTable
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _kindMeta = const VerificationMeta('kind');
+  @override
+  late final GeneratedColumn<String> kind = GeneratedColumn<String>(
+    'kind',
+    aliasedName,
+    false,
+    check: () => kind.isIn(const ['expense', 'income']),
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('expense'),
+  );
   static const VerificationMeta _iconMeta = const VerificationMeta('icon');
   @override
   late final GeneratedColumn<String> icon = GeneratedColumn<String>(
@@ -120,6 +131,7 @@ class $CategoriesTableTable extends CategoriesTable
     id,
     seedKey,
     name,
+    kind,
     icon,
     color,
     sortOrder,
@@ -152,6 +164,12 @@ class $CategoriesTableTable extends CategoriesTable
       context.handle(
         _nameMeta,
         name.isAcceptableOrUnknown(data['name']!, _nameMeta),
+      );
+    }
+    if (data.containsKey('kind')) {
+      context.handle(
+        _kindMeta,
+        kind.isAcceptableOrUnknown(data['kind']!, _kindMeta),
       );
     }
     if (data.containsKey('icon')) {
@@ -217,6 +235,10 @@ class $CategoriesTableTable extends CategoriesTable
         DriftSqlType.string,
         data['${effectivePrefix}name'],
       ),
+      kind: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}kind'],
+      )!,
       icon: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}icon'],
@@ -256,6 +278,10 @@ class CategoriesTableData extends DataClass
   final String? seedKey;
   final String? name;
 
+  /// `expense` or `income`: every transaction in the category is of this kind.
+  /// It can't change while an expense or template references the category.
+  final String kind;
+
   /// Key into the curated icon registry, not a raw Material icon name.
   final String icon;
 
@@ -269,6 +295,7 @@ class CategoriesTableData extends DataClass
     required this.id,
     this.seedKey,
     this.name,
+    required this.kind,
     required this.icon,
     required this.color,
     required this.sortOrder,
@@ -286,6 +313,7 @@ class CategoriesTableData extends DataClass
     if (!nullToAbsent || name != null) {
       map['name'] = Variable<String>(name);
     }
+    map['kind'] = Variable<String>(kind);
     map['icon'] = Variable<String>(icon);
     map['color'] = Variable<int>(color);
     map['sort_order'] = Variable<int>(sortOrder);
@@ -302,6 +330,7 @@ class CategoriesTableData extends DataClass
           ? const Value.absent()
           : Value(seedKey),
       name: name == null && nullToAbsent ? const Value.absent() : Value(name),
+      kind: Value(kind),
       icon: Value(icon),
       color: Value(color),
       sortOrder: Value(sortOrder),
@@ -320,6 +349,7 @@ class CategoriesTableData extends DataClass
       id: serializer.fromJson<int>(json['id']),
       seedKey: serializer.fromJson<String?>(json['seedKey']),
       name: serializer.fromJson<String?>(json['name']),
+      kind: serializer.fromJson<String>(json['kind']),
       icon: serializer.fromJson<String>(json['icon']),
       color: serializer.fromJson<int>(json['color']),
       sortOrder: serializer.fromJson<int>(json['sortOrder']),
@@ -335,6 +365,7 @@ class CategoriesTableData extends DataClass
       'id': serializer.toJson<int>(id),
       'seedKey': serializer.toJson<String?>(seedKey),
       'name': serializer.toJson<String?>(name),
+      'kind': serializer.toJson<String>(kind),
       'icon': serializer.toJson<String>(icon),
       'color': serializer.toJson<int>(color),
       'sortOrder': serializer.toJson<int>(sortOrder),
@@ -348,6 +379,7 @@ class CategoriesTableData extends DataClass
     int? id,
     Value<String?> seedKey = const Value.absent(),
     Value<String?> name = const Value.absent(),
+    String? kind,
     String? icon,
     int? color,
     int? sortOrder,
@@ -358,6 +390,7 @@ class CategoriesTableData extends DataClass
     id: id ?? this.id,
     seedKey: seedKey.present ? seedKey.value : this.seedKey,
     name: name.present ? name.value : this.name,
+    kind: kind ?? this.kind,
     icon: icon ?? this.icon,
     color: color ?? this.color,
     sortOrder: sortOrder ?? this.sortOrder,
@@ -370,6 +403,7 @@ class CategoriesTableData extends DataClass
       id: data.id.present ? data.id.value : this.id,
       seedKey: data.seedKey.present ? data.seedKey.value : this.seedKey,
       name: data.name.present ? data.name.value : this.name,
+      kind: data.kind.present ? data.kind.value : this.kind,
       icon: data.icon.present ? data.icon.value : this.icon,
       color: data.color.present ? data.color.value : this.color,
       sortOrder: data.sortOrder.present ? data.sortOrder.value : this.sortOrder,
@@ -385,6 +419,7 @@ class CategoriesTableData extends DataClass
           ..write('id: $id, ')
           ..write('seedKey: $seedKey, ')
           ..write('name: $name, ')
+          ..write('kind: $kind, ')
           ..write('icon: $icon, ')
           ..write('color: $color, ')
           ..write('sortOrder: $sortOrder, ')
@@ -400,6 +435,7 @@ class CategoriesTableData extends DataClass
     id,
     seedKey,
     name,
+    kind,
     icon,
     color,
     sortOrder,
@@ -414,6 +450,7 @@ class CategoriesTableData extends DataClass
           other.id == this.id &&
           other.seedKey == this.seedKey &&
           other.name == this.name &&
+          other.kind == this.kind &&
           other.icon == this.icon &&
           other.color == this.color &&
           other.sortOrder == this.sortOrder &&
@@ -426,6 +463,7 @@ class CategoriesTableCompanion extends UpdateCompanion<CategoriesTableData> {
   final Value<int> id;
   final Value<String?> seedKey;
   final Value<String?> name;
+  final Value<String> kind;
   final Value<String> icon;
   final Value<int> color;
   final Value<int> sortOrder;
@@ -436,6 +474,7 @@ class CategoriesTableCompanion extends UpdateCompanion<CategoriesTableData> {
     this.id = const Value.absent(),
     this.seedKey = const Value.absent(),
     this.name = const Value.absent(),
+    this.kind = const Value.absent(),
     this.icon = const Value.absent(),
     this.color = const Value.absent(),
     this.sortOrder = const Value.absent(),
@@ -447,6 +486,7 @@ class CategoriesTableCompanion extends UpdateCompanion<CategoriesTableData> {
     this.id = const Value.absent(),
     this.seedKey = const Value.absent(),
     this.name = const Value.absent(),
+    this.kind = const Value.absent(),
     required String icon,
     required int color,
     required int sortOrder,
@@ -460,6 +500,7 @@ class CategoriesTableCompanion extends UpdateCompanion<CategoriesTableData> {
     Expression<int>? id,
     Expression<String>? seedKey,
     Expression<String>? name,
+    Expression<String>? kind,
     Expression<String>? icon,
     Expression<int>? color,
     Expression<int>? sortOrder,
@@ -471,6 +512,7 @@ class CategoriesTableCompanion extends UpdateCompanion<CategoriesTableData> {
       if (id != null) 'id': id,
       if (seedKey != null) 'seed_key': seedKey,
       if (name != null) 'name': name,
+      if (kind != null) 'kind': kind,
       if (icon != null) 'icon': icon,
       if (color != null) 'color': color,
       if (sortOrder != null) 'sort_order': sortOrder,
@@ -484,6 +526,7 @@ class CategoriesTableCompanion extends UpdateCompanion<CategoriesTableData> {
     Value<int>? id,
     Value<String?>? seedKey,
     Value<String?>? name,
+    Value<String>? kind,
     Value<String>? icon,
     Value<int>? color,
     Value<int>? sortOrder,
@@ -495,6 +538,7 @@ class CategoriesTableCompanion extends UpdateCompanion<CategoriesTableData> {
       id: id ?? this.id,
       seedKey: seedKey ?? this.seedKey,
       name: name ?? this.name,
+      kind: kind ?? this.kind,
       icon: icon ?? this.icon,
       color: color ?? this.color,
       sortOrder: sortOrder ?? this.sortOrder,
@@ -515,6 +559,9 @@ class CategoriesTableCompanion extends UpdateCompanion<CategoriesTableData> {
     }
     if (name.present) {
       map['name'] = Variable<String>(name.value);
+    }
+    if (kind.present) {
+      map['kind'] = Variable<String>(kind.value);
     }
     if (icon.present) {
       map['icon'] = Variable<String>(icon.value);
@@ -543,6 +590,7 @@ class CategoriesTableCompanion extends UpdateCompanion<CategoriesTableData> {
           ..write('id: $id, ')
           ..write('seedKey: $seedKey, ')
           ..write('name: $name, ')
+          ..write('kind: $kind, ')
           ..write('icon: $icon, ')
           ..write('color: $color, ')
           ..write('sortOrder: $sortOrder, ')
@@ -2317,6 +2365,10 @@ abstract class _$AppDatabase extends GeneratedDatabase {
       $RecurringExpensesTableTable(this);
   late final $ExpensesTableTable expensesTable = $ExpensesTableTable(this);
   late final $BudgetsTableTable budgetsTable = $BudgetsTableTable(this);
+  late final Index idxCategoriesKind = Index(
+    'idx_categories_kind',
+    'CREATE INDEX idx_categories_kind ON categories (kind)',
+  );
   late final Index idxExpensesDate = Index(
     'idx_expenses_date',
     'CREATE INDEX idx_expenses_date ON expenses (date)',
@@ -2338,6 +2390,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     recurringExpensesTable,
     expensesTable,
     budgetsTable,
+    idxCategoriesKind,
     idxExpensesDate,
     idxExpensesCategoryDate,
     idxRecurringActiveDue,
@@ -2366,6 +2419,7 @@ typedef $$CategoriesTableTableCreateCompanionBuilder =
       Value<int> id,
       Value<String?> seedKey,
       Value<String?> name,
+      Value<String> kind,
       required String icon,
       required int color,
       required int sortOrder,
@@ -2378,6 +2432,7 @@ typedef $$CategoriesTableTableUpdateCompanionBuilder =
       Value<int> id,
       Value<String?> seedKey,
       Value<String?> name,
+      Value<String> kind,
       Value<String> icon,
       Value<int> color,
       Value<int> sortOrder,
@@ -2482,6 +2537,11 @@ class $$CategoriesTableTableFilterComposer
 
   ColumnFilters<String> get name => $composableBuilder(
     column: $table.name,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get kind => $composableBuilder(
+    column: $table.kind,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -2616,6 +2676,11 @@ class $$CategoriesTableTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get kind => $composableBuilder(
+    column: $table.kind,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<String> get icon => $composableBuilder(
     column: $table.icon,
     builder: (column) => ColumnOrderings(column),
@@ -2664,6 +2729,9 @@ class $$CategoriesTableTableAnnotationComposer
 
   GeneratedColumn<String> get name =>
       $composableBuilder(column: $table.name, builder: (column) => column);
+
+  GeneratedColumn<String> get kind =>
+      $composableBuilder(column: $table.kind, builder: (column) => column);
 
   GeneratedColumn<String> get icon =>
       $composableBuilder(column: $table.icon, builder: (column) => column);
@@ -2797,6 +2865,7 @@ class $$CategoriesTableTableTableManager
                 Value<int> id = const Value.absent(),
                 Value<String?> seedKey = const Value.absent(),
                 Value<String?> name = const Value.absent(),
+                Value<String> kind = const Value.absent(),
                 Value<String> icon = const Value.absent(),
                 Value<int> color = const Value.absent(),
                 Value<int> sortOrder = const Value.absent(),
@@ -2807,6 +2876,7 @@ class $$CategoriesTableTableTableManager
                 id: id,
                 seedKey: seedKey,
                 name: name,
+                kind: kind,
                 icon: icon,
                 color: color,
                 sortOrder: sortOrder,
@@ -2819,6 +2889,7 @@ class $$CategoriesTableTableTableManager
                 Value<int> id = const Value.absent(),
                 Value<String?> seedKey = const Value.absent(),
                 Value<String?> name = const Value.absent(),
+                Value<String> kind = const Value.absent(),
                 required String icon,
                 required int color,
                 required int sortOrder,
@@ -2829,6 +2900,7 @@ class $$CategoriesTableTableTableManager
                 id: id,
                 seedKey: seedKey,
                 name: name,
+                kind: kind,
                 icon: icon,
                 color: color,
                 sortOrder: sortOrder,

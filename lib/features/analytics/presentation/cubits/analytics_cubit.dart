@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:masroofy/core/domain/date_range.dart';
 import 'package:masroofy/core/domain/local_date.dart';
+import 'package:masroofy/core/domain/transaction_kind.dart';
 import 'package:masroofy/core/error/failures.dart';
 import 'package:masroofy/features/analytics/domain/repositories/i_analytics_repository.dart';
 import 'package:masroofy/features/analytics/presentation/cubits/analytics_state.dart';
@@ -35,6 +36,7 @@ class AnalyticsCubit extends Cubit<AnalyticsState> {
   final LocalDate Function() _today;
   StreamSubscription<void>? _categoriesSub;
   final List<StreamSubscription<void>> _rangeSubs = [];
+  StreamSubscription<void>? _breakdownSub;
 
   void load() {
     unawaited(_categoriesSub?.cancel());
@@ -68,6 +70,13 @@ class AnalyticsCubit extends Cubit<AnalyticsState> {
 
   void selectCustomRange(DateRange range) => _select(AnalyticsPeriod.custom, range);
 
+  /// Switches the breakdown card between spending and income by category.
+  void selectBreakdown(TransactionKind kind) {
+    if (kind == state.breakdownKind) return;
+    emit(state.copyWith(breakdownKind: kind, byCategory: const {}));
+    _subscribeBreakdown();
+  }
+
   void _select(AnalyticsPeriod period, DateRange range) {
     if (period == state.period && range == state.range) return;
     emit(state.copyWith(period: period, range: range, previousTotal: null));
@@ -90,26 +99,32 @@ class AnalyticsCubit extends Cubit<AnalyticsState> {
       ..clear()
       ..add(
         _analytics
-            .watchTotal(range)
+            .watchTotals(range)
             .listen(
-              (r) => r.match(_onFailure, (total) => emit(state.copyWith(status: AnalyticsStatus.loaded, total: total))),
+              (r) => r.match(
+                _onFailure,
+                (totals) => emit(state.copyWith(status: AnalyticsStatus.loaded, totals: totals)),
+              ),
             ),
       )
       ..add(
         _analytics
-            .watchTotal(_comparisonRange)
-            .listen((r) => r.match(_onFailure, (total) => emit(state.copyWith(previousTotal: total)))),
-      )
-      ..add(
-        _analytics
-            .watchTotalsByCategory(range)
-            .listen((r) => r.match(_onFailure, (totals) => emit(state.copyWith(byCategory: totals)))),
+            .watchTotals(_comparisonRange)
+            .listen((r) => r.match(_onFailure, (totals) => emit(state.copyWith(previousTotal: totals.spent)))),
       )
       ..add(
         _analytics
             .watchDailyTotals(range)
             .listen((r) => r.match(_onFailure, (totals) => emit(state.copyWith(daily: totals)))),
       );
+    _subscribeBreakdown();
+  }
+
+  void _subscribeBreakdown() {
+    unawaited(_breakdownSub?.cancel());
+    _breakdownSub = _analytics
+        .watchTotalsByCategory(state.range, state.breakdownKind)
+        .listen((r) => r.match(_onFailure, (totals) => emit(state.copyWith(byCategory: totals))));
   }
 
   void _onFailure(Failure failure) => emit(state.copyWith(status: AnalyticsStatus.failure, failure: failure));
@@ -118,6 +133,7 @@ class AnalyticsCubit extends Cubit<AnalyticsState> {
   Future<void> close() async {
     await _categoriesSub?.cancel();
     await _budgetsSub?.cancel();
+    await _breakdownSub?.cancel();
     await Future.wait(_rangeSubs.map((s) => s.cancel()));
     return super.close();
   }

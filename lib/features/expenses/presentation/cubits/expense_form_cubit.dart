@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:masroofy/core/domain/local_date.dart';
 import 'package:masroofy/core/domain/money.dart';
+import 'package:masroofy/core/domain/transaction_kind.dart';
 import 'package:masroofy/core/error/failures.dart';
 import 'package:masroofy/features/categories/domain/repositories/i_category_repository.dart';
 import 'package:masroofy/features/expenses/domain/entities/expense_draft.dart';
@@ -53,6 +54,7 @@ class ExpenseFormCubit extends Cubit<ExpenseFormState> {
       (expense) => emit(
         state.copyWith(
           status: ExpenseFormStatus.ready,
+          kind: expense.kind,
           amountText: expense.amount.toDecimalString(state.fractionDigits),
           categoryId: expense.categoryId,
           date: expense.date,
@@ -61,6 +63,14 @@ class ExpenseFormCubit extends Cubit<ExpenseFormState> {
         ),
       ),
     );
+  }
+
+  /// Switches Expense | Income. A category of the other kind is cleared, so
+  /// Save asks for a new one.
+  void kindSelected(TransactionKind kind) {
+    if (kind == state.kind) return;
+    final keep = state.category?.kind == kind;
+    emit(state.copyWith(kind: kind, categoryId: keep ? state.categoryId : null, errors: _without('categoryId')));
   }
 
   void amountChanged(String text) => emit(state.copyWith(amountText: text, errors: _without('amount')));
@@ -85,7 +95,11 @@ class ExpenseFormCubit extends Cubit<ExpenseFormState> {
       errors['amount'] = ValidationReason.invalidFormat;
     }
     final categoryId = state.categoryId;
-    if (categoryId == null) errors['categoryId'] = ValidationReason.required;
+    if (categoryId == null) {
+      errors['categoryId'] = ValidationReason.required;
+    } else if (state.category case final category? when category.kind != state.kind) {
+      errors['categoryId'] = ValidationReason.wrongKind;
+    }
     if (errors.isNotEmpty) {
       emit(state.copyWith(errors: errors));
       return;
@@ -93,7 +107,14 @@ class ExpenseFormCubit extends Cubit<ExpenseFormState> {
 
     emit(state.copyWith(status: ExpenseFormStatus.saving, errors: const {}, failure: null));
     final result = await _saveExpense(
-      ExpenseDraft(amount: amount!, categoryId: categoryId!, date: state.date, title: state.title, note: state.note),
+      ExpenseDraft(
+        amount: amount!,
+        categoryId: categoryId!,
+        date: state.date,
+        title: state.title,
+        note: state.note,
+        kind: state.kind,
+      ),
       id: state.id,
     );
     if (isClosed) return;

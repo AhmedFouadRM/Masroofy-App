@@ -8,22 +8,32 @@ import 'package:masroofy/shared/formatting/display_format.dart';
 import 'package:material_symbols_icons/symbols.dart';
 
 /// Figma "Summary Card": the period total on an emerald card, with the
-/// change against the comparison period (Analytics PRD comparison rules).
+/// change against the comparison period (Analytics PRD comparison rules), or
+/// as the balance card (Income PRD): a signed [total] with [details] (In and
+/// Out) below it.
 class SummaryCard extends StatelessWidget {
   const SummaryCard({
     required this.label,
     required this.total,
-    required this.previousTotal,
-    required this.comparisonLabel,
+    this.previousTotal,
+    this.comparisonLabel = '',
+    this.details = const [],
+    this.signed = false,
     super.key,
   });
 
   final String label;
   final Money total;
 
-  /// Null while loading.
+  /// Null while loading, and for a card without a comparison.
   final Money? previousTotal;
   final String comparisonLabel;
+
+  /// Labelled amounts under the total (the balance card's In and Out).
+  final List<({String label, Money amount})> details;
+
+  /// A balance: a negative [total] shows with a minus sign in `text/negative`.
+  final bool signed;
 
   @override
   Widget build(BuildContext context) {
@@ -65,8 +75,40 @@ class SummaryCard extends StatelessWidget {
                     FittedBox(
                       fit: BoxFit.scaleDown,
                       alignment: AlignmentDirectional.centerStart,
-                      child: Text(context.money(total), style: text.displayMedium!.copyWith(color: onCard)),
+                      child: Text(
+                        signed ? context.signedMoney(total, plus: false) : context.money(total),
+                        // The minus sign marks a negative balance; red would be
+                        // unreadable on the emerald card.
+                        style: text.displayMedium!.copyWith(color: onCard),
+                      ),
                     ),
+                    if (details.isNotEmpty) ...[
+                      const SizedBox(height: AppSpacing.md),
+                      Row(
+                        children: [
+                          for (final detail in details)
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    detail.label,
+                                    style: text.labelMedium!.copyWith(color: onCard.withValues(alpha: 0.85)),
+                                  ),
+                                  FittedBox(
+                                    fit: BoxFit.scaleDown,
+                                    alignment: AlignmentDirectional.centerStart,
+                                    child: Text(
+                                      context.money(detail.amount),
+                                      style: text.titleMedium!.copyWith(color: onCard),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                        ],
+                      ),
+                    ],
                     if (_comparison(context) case final comparison?) ...[
                       const SizedBox(height: AppSpacing.sm),
                       Container(

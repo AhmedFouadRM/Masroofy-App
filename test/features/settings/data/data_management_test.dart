@@ -6,6 +6,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:masroofy/core/database/app_database.dart';
 import 'package:masroofy/core/domain/local_date.dart';
+import 'package:masroofy/core/domain/transaction_kind.dart';
 import 'package:masroofy/core/error/failures.dart';
 import 'package:masroofy/features/settings/data/backup_codec.dart';
 import 'package:masroofy/features/settings/data/datasources/data_management_local_datasource.dart';
@@ -128,6 +129,30 @@ void main() {
       expect(rows[2].amount.minor, 1250);
     });
 
+    test('carries the kind of each row, with positive amounts', () async {
+      await fillWithData();
+      await db
+          .into(db.expensesTable)
+          .insert(
+            ExpensesTableCompanion.insert(
+              amountMinor: 500000,
+              categoryId: await seed('salary'),
+              date: LocalDate(2026, 10, 9),
+            ),
+          );
+
+      final rows = right(await repository.loadExpenseExport());
+
+      expect(rows.map((r) => r.kind), [
+        TransactionKind.expense,
+        TransactionKind.expense,
+        TransactionKind.expense,
+        TransactionKind.income,
+      ]);
+      expect(rows.last.categorySeedKey, 'salary');
+      expect(rows.last.amount.minor, 500000);
+    });
+
     test('is empty with no expenses', () async {
       expect(right(await repository.loadExpenseExport()), isEmpty);
     });
@@ -141,11 +166,15 @@ void main() {
       final map = jsonDecode(json) as Map<String, dynamic>;
 
       expect(map['format'], 'masroofy-backup');
-      expect(map['version'], 1);
+      expect(map['version'], 2);
       expect(map['exportedAt'], '2026-10-09T08:30:00.000Z');
       expect(map['preferences'], {'currency_code': 'KWD', 'theme_mode': 'dark', 'western_digits': true});
       expect(map['expenses'] as List, hasLength(3));
-      expect(map['categories'] as List, hasLength(9));
+      expect(map['categories'] as List, hasLength(15));
+      expect(
+        (map['categories'] as List).map((c) => (c as Map)['kind']),
+        [...List.filled(8, 'expense'), ...List.filled(6, 'income'), 'expense'],
+      );
       expect(map['budgets'] as List, hasLength(1));
       expect(map['recurringExpenses'] as List, hasLength(1));
       expect(json, isNot(contains('auth_enabled')));
@@ -207,6 +236,61 @@ void main() {
       expect(preferences.getBool(PreferenceKeys.authEnabled), isFalse);
     });
 
+    test('a version 2 backup round-trips the kinds', () async {
+      await fillWithData();
+      final tips = await db
+          .into(db.categoriesTable)
+          .insert(
+            CategoriesTableCompanion.insert(
+              name: const Value('Tips'),
+              kind: const Value('income'),
+              icon: 'savings',
+              color: 0xFF445566,
+              sortOrder: 21,
+            ),
+          );
+      final before = await db.select(db.categoriesTable).get();
+      final json = right(await repository.createBackup());
+      await repository.clearAllData();
+
+      right(await repository.restoreBackup(json));
+
+      final after = await db.select(db.categoriesTable).get();
+      expect(after.map((c) => (c.seedKey ?? c.name, c.kind)), before.map((c) => (c.seedKey ?? c.name, c.kind)));
+      expect(after.firstWhere((c) => c.id == tips).kind, 'income');
+    });
+
+    test('a version 1 backup restores with every category as an expense category', () async {
+      await fillWithData();
+      final json = right(await repository.createBackup());
+      final map = jsonDecode(json) as Map<String, dynamic>;
+      // What a version 1 file looked like: no kind, and no income categories.
+      map['version'] = 1;
+      map['categories'] = [
+        for (final c in (map['categories'] as List).cast<Map<String, dynamic>>())
+          if (c['kind'] == 'expense') {...c}..remove('kind'),
+      ];
+      final v1 = jsonEncode(map);
+      expect(right(repository.previewBackup(v1)).categories, 9);
+
+      right(await repository.restoreBackup(v1));
+
+      final categories = await db.select(db.categoriesTable).get();
+      expect(categories.where((c) => c.kind == 'expense'), hasLength(9));
+      expect(categories.where((c) => c.seedKey == 'food').single.kind, 'expense');
+      expect(categories.where((c) => c.name == 'Gym').single.kind, 'expense');
+      // The income defaults are added back, as income categories.
+      expect(categories.where((c) => c.kind == 'income').map((c) => c.seedKey), [
+        'salary',
+        'freelance',
+        'gifts',
+        'refunds',
+        'investments',
+        'other_income',
+      ]);
+      expect(await db.select(db.expensesTable).get(), hasLength(3));
+    });
+
     test('restoring a backup that lacks a default category re-seeds it', () async {
       final json = right(await repository.createBackup());
       final map = jsonDecode(json) as Map<String, dynamic>;
@@ -225,7 +309,7 @@ void main() {
 
       expect(preview.exportedAt, exportedAt);
       expect(preview.expenses, 3);
-      expect(preview.categories, 9);
+      expect(preview.categories, 15);
       expect(preview.budgets, 1);
       expect(preview.recurring, 1);
     });
@@ -262,7 +346,7 @@ void main() {
     test('an empty file', () => expectRejected((_) => null, raw: ''));
     test('JSON that is not an object', () => expectRejected((_) => null, raw: '[1, 2, 3]'));
     test('a file of another format', () => expectRejected((m) => m['format'] = 'something-else'));
-    test('a newer version', () => expectRejected((m) => m['version'] = 2));
+    test('a newer version', () => expectRejected((m) => m['version'] = 3));
     test('version 0', () => expectRejected((m) => m['version'] = 0));
     test('no version', () => expectRejected((m) => m.remove('version')));
     test('a missing table', () => expectRejected((m) => m.remove('expenses')));
@@ -309,6 +393,12 @@ void main() {
       return expectRejected(
         (m) => (m['budgets'] as List).add(Map<String, dynamic>.from((m['budgets'] as List)[0] as Map)..['id'] = 77),
       );
+    });
+    test('a category kind that is neither expense nor income', () {
+      return expectRejected((m) => ((m['categories'] as List).first as Map)['kind'] = 'transfer');
+    });
+    test('a version 2 category without a kind', () {
+      return expectRejected((m) => ((m['categories'] as List).first as Map).remove('kind'));
     });
     test('a category with both a seed key and a name', () {
       return expectRejected((m) => ((m['categories'] as List).first as Map)['name'] = 'Both');

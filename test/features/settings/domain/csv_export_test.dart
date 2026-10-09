@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:masroofy/core/domain/local_date.dart';
 import 'package:masroofy/core/domain/money.dart';
+import 'package:masroofy/core/domain/transaction_kind.dart';
 import 'package:masroofy/core/error/failures.dart';
 import 'package:masroofy/core/utils/currency_utils.dart';
 import 'package:masroofy/features/settings/domain/csv_export.dart';
@@ -85,18 +86,41 @@ void main() {
         categoryName: 'Gym',
         isRecurring: true,
       ),
+      ExpenseExportRow(
+        date: LocalDate(2026, 10, 10),
+        amount: const Money(500000),
+        categorySeedKey: 'salary',
+        isRecurring: false,
+        kind: TransactionKind.income,
+      ),
     ];
 
     test('starts with the header', () {
       expect(CsvExport.records([], CurrencyUtils.defaultCurrency, _label), [CsvExport.header]);
-      expect(CsvExport.header, ['Date', 'Title', 'Amount', 'Currency', 'Category', 'Note', 'Recurring']);
+      expect(CsvExport.header, ['Date', 'Type', 'Title', 'Amount', 'Currency', 'Category', 'Note', 'Recurring']);
     });
 
     test('writes ISO dates, plain amounts, the currency code, and Yes / No', () {
       final records = CsvExport.records(rows, CurrencyUtils.defaultCurrency, _label);
 
-      expect(records[1], ['2026-10-08', 'Lunch, with "friends"', '12.50', 'EGP', 'FOOD', 'two\nlines', 'No']);
-      expect(records[2], ['2026-10-09', '', '1200.00', 'EGP', 'Gym', '', 'Yes']);
+      expect(records[1], [
+        '2026-10-08',
+        'expense',
+        'Lunch, with "friends"',
+        '12.50',
+        'EGP',
+        'FOOD',
+        'two\nlines',
+        'No',
+      ]);
+      expect(records[2], ['2026-10-09', 'expense', '', '1200.00', 'EGP', 'Gym', '', 'Yes']);
+    });
+
+    test('the Type column says income or expense, and amounts stay positive', () {
+      final records = CsvExport.records(rows, CurrencyUtils.defaultCurrency, _label);
+
+      expect(records.skip(1).map((r) => r[1]), ['expense', 'expense', 'income']);
+      expect(records[3], ['2026-10-10', 'income', '', '5000.00', 'EGP', 'SALARY', '', 'No']);
     });
 
     test('amounts have the currency fraction digits, no grouping, whatever the language', () {
@@ -114,8 +138,8 @@ void main() {
         _label,
       );
 
-      expect(records[1][2], '1234.567');
-      expect(records[1][3], 'KWD');
+      expect(records[1][3], '1234.567');
+      expect(records[1][4], 'KWD');
     });
 
     test('encodes to a file Excel can open: quoted where needed', () {
@@ -123,9 +147,10 @@ void main() {
 
       expect(
         text,
-        'Date,Title,Amount,Currency,Category,Note,Recurring\r\n'
-        '2026-10-08,"Lunch, with ""friends""",12.50,EGP,FOOD,"two\nlines",No\r\n'
-        '2026-10-09,,1200.00,EGP,Gym,,Yes\r\n',
+        'Date,Type,Title,Amount,Currency,Category,Note,Recurring\r\n'
+        '2026-10-08,expense,"Lunch, with ""friends""",12.50,EGP,FOOD,"two\nlines",No\r\n'
+        '2026-10-09,expense,,1200.00,EGP,Gym,,Yes\r\n'
+        '2026-10-10,income,,5000.00,EGP,SALARY,,No\r\n',
       );
     });
   });
@@ -175,7 +200,7 @@ void main() {
       expect(captured[2], 'text/csv');
       final bytes = captured[1] as Uint8List;
       expect(bytes.take(3), CsvExport.bom);
-      expect(utf8.decode(bytes.skip(3).toList()), contains('2026-10-08,قهوة,12.50,EGP,FOOD,,No'));
+      expect(utf8.decode(bytes.skip(3).toList()), contains('2026-10-08,expense,قهوة,12.50,EGP,FOOD,,No'));
     });
 
     test('a failed read is returned and nothing is shared', () async {
@@ -236,7 +261,7 @@ void main() {
       expect(lines, hasLength(many.length + 1));
       expect(
         lines.last,
-        '2026-10-08,Item ${many.length - 1},${((100 + many.length - 1) / 100).toStringAsFixed(2)},EGP,FOOD,,No',
+        '2026-10-08,expense,Item ${many.length - 1},${((100 + many.length - 1) / 100).toStringAsFixed(2)},EGP,FOOD,,No',
       );
     });
   });

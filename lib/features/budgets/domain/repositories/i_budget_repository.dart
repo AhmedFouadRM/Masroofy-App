@@ -14,7 +14,8 @@ abstract interface class IBudgetRepository {
   Future<Either<Failure, Budget>> getById(int id);
 
   /// Returns the new id. Fails with a constraint failure if the category
-  /// already has a budget.
+  /// already has a budget, and with `ValidationFailure(categoryId,
+  /// invalidFormat)` if it is an income category.
   Future<Either<Failure, int>> create(BudgetDraft draft);
 
   /// Changes the limit and period (never the category).

@@ -15,7 +15,8 @@ T _$identity<T>(T value) => value;
 mixin _$ExpenseDraft {
 
  Money get amount; int get categoryId; LocalDate get date;/// Null when the user left it empty; the UI then shows the category name.
- String? get title; String? get note;
+ String? get title; String? get note;/// What the form is set to; the category must be of this kind.
+ TransactionKind get kind;
 /// Create a copy of ExpenseDraft
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -26,16 +27,16 @@ $ExpenseDraftCopyWith<ExpenseDraft> get copyWith => _$ExpenseDraftCopyWithImpl<E
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is ExpenseDraft&&(identical(other.amount, amount) || other.amount == amount)&&(identical(other.categoryId, categoryId) || other.categoryId == categoryId)&&(identical(other.date, date) || other.date == date)&&(identical(other.title, title) || other.title == title)&&(identical(other.note, note) || other.note == note));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ExpenseDraft&&(identical(other.amount, amount) || other.amount == amount)&&(identical(other.categoryId, categoryId) || other.categoryId == categoryId)&&(identical(other.date, date) || other.date == date)&&(identical(other.title, title) || other.title == title)&&(identical(other.note, note) || other.note == note)&&(identical(other.kind, kind) || other.kind == kind));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,amount,categoryId,date,title,note);
+int get hashCode => Object.hash(runtimeType,amount,categoryId,date,title,note,kind);
 
 @override
 String toString() {
-  return 'ExpenseDraft(amount: $amount, categoryId: $categoryId, date: $date, title: $title, note: $note)';
+  return 'ExpenseDraft(amount: $amount, categoryId: $categoryId, date: $date, title: $title, note: $note, kind: $kind)';
 }
 
 
@@ -46,7 +47,7 @@ abstract mixin class $ExpenseDraftCopyWith<$Res>  {
   factory $ExpenseDraftCopyWith(ExpenseDraft value, $Res Function(ExpenseDraft) _then) = _$ExpenseDraftCopyWithImpl;
 @useResult
 $Res call({
- Money amount, int categoryId, LocalDate date, String? title, String? note
+ Money amount, int categoryId, LocalDate date, String? title, String? note, TransactionKind kind
 });
 
 
@@ -63,14 +64,15 @@ class _$ExpenseDraftCopyWithImpl<$Res>
 
 /// Create a copy of ExpenseDraft
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? amount = null,Object? categoryId = null,Object? date = null,Object? title = freezed,Object? note = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? amount = null,Object? categoryId = null,Object? date = null,Object? title = freezed,Object? note = freezed,Object? kind = null,}) {
   return _then(_self.copyWith(
 amount: null == amount ? _self.amount : amount // ignore: cast_nullable_to_non_nullable
 as Money,categoryId: null == categoryId ? _self.categoryId : categoryId // ignore: cast_nullable_to_non_nullable
 as int,date: null == date ? _self.date : date // ignore: cast_nullable_to_non_nullable
 as LocalDate,title: freezed == title ? _self.title : title // ignore: cast_nullable_to_non_nullable
 as String?,note: freezed == note ? _self.note : note // ignore: cast_nullable_to_non_nullable
-as String?,
+as String?,kind: null == kind ? _self.kind : kind // ignore: cast_nullable_to_non_nullable
+as TransactionKind,
   ));
 }
 
@@ -155,10 +157,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( Money amount,  int categoryId,  LocalDate date,  String? title,  String? note)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( Money amount,  int categoryId,  LocalDate date,  String? title,  String? note,  TransactionKind kind)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _ExpenseDraft() when $default != null:
-return $default(_that.amount,_that.categoryId,_that.date,_that.title,_that.note);case _:
+return $default(_that.amount,_that.categoryId,_that.date,_that.title,_that.note,_that.kind);case _:
   return orElse();
 
 }
@@ -176,10 +178,10 @@ return $default(_that.amount,_that.categoryId,_that.date,_that.title,_that.note)
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( Money amount,  int categoryId,  LocalDate date,  String? title,  String? note)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( Money amount,  int categoryId,  LocalDate date,  String? title,  String? note,  TransactionKind kind)  $default,) {final _that = this;
 switch (_that) {
 case _ExpenseDraft():
-return $default(_that.amount,_that.categoryId,_that.date,_that.title,_that.note);case _:
+return $default(_that.amount,_that.categoryId,_that.date,_that.title,_that.note,_that.kind);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -196,10 +198,10 @@ return $default(_that.amount,_that.categoryId,_that.date,_that.title,_that.note)
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( Money amount,  int categoryId,  LocalDate date,  String? title,  String? note)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( Money amount,  int categoryId,  LocalDate date,  String? title,  String? note,  TransactionKind kind)?  $default,) {final _that = this;
 switch (_that) {
 case _ExpenseDraft() when $default != null:
-return $default(_that.amount,_that.categoryId,_that.date,_that.title,_that.note);case _:
+return $default(_that.amount,_that.categoryId,_that.date,_that.title,_that.note,_that.kind);case _:
   return null;
 
 }
@@ -211,7 +213,7 @@ return $default(_that.amount,_that.categoryId,_that.date,_that.title,_that.note)
 
 
 class _ExpenseDraft implements ExpenseDraft {
-  const _ExpenseDraft({required this.amount, required this.categoryId, required this.date, this.title, this.note});
+  const _ExpenseDraft({required this.amount, required this.categoryId, required this.date, this.title, this.note, this.kind = TransactionKind.expense});
   
 
 @override final  Money amount;
@@ -220,6 +222,8 @@ class _ExpenseDraft implements ExpenseDraft {
 /// Null when the user left it empty; the UI then shows the category name.
 @override final  String? title;
 @override final  String? note;
+/// What the form is set to; the category must be of this kind.
+@override@JsonKey() final  TransactionKind kind;
 
 /// Create a copy of ExpenseDraft
 /// with the given fields replaced by the non-null parameter values.
@@ -231,16 +235,16 @@ _$ExpenseDraftCopyWith<_ExpenseDraft> get copyWith => __$ExpenseDraftCopyWithImp
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _ExpenseDraft&&(identical(other.amount, amount) || other.amount == amount)&&(identical(other.categoryId, categoryId) || other.categoryId == categoryId)&&(identical(other.date, date) || other.date == date)&&(identical(other.title, title) || other.title == title)&&(identical(other.note, note) || other.note == note));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _ExpenseDraft&&(identical(other.amount, amount) || other.amount == amount)&&(identical(other.categoryId, categoryId) || other.categoryId == categoryId)&&(identical(other.date, date) || other.date == date)&&(identical(other.title, title) || other.title == title)&&(identical(other.note, note) || other.note == note)&&(identical(other.kind, kind) || other.kind == kind));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,amount,categoryId,date,title,note);
+int get hashCode => Object.hash(runtimeType,amount,categoryId,date,title,note,kind);
 
 @override
 String toString() {
-  return 'ExpenseDraft(amount: $amount, categoryId: $categoryId, date: $date, title: $title, note: $note)';
+  return 'ExpenseDraft(amount: $amount, categoryId: $categoryId, date: $date, title: $title, note: $note, kind: $kind)';
 }
 
 
@@ -251,7 +255,7 @@ abstract mixin class _$ExpenseDraftCopyWith<$Res> implements $ExpenseDraftCopyWi
   factory _$ExpenseDraftCopyWith(_ExpenseDraft value, $Res Function(_ExpenseDraft) _then) = __$ExpenseDraftCopyWithImpl;
 @override @useResult
 $Res call({
- Money amount, int categoryId, LocalDate date, String? title, String? note
+ Money amount, int categoryId, LocalDate date, String? title, String? note, TransactionKind kind
 });
 
 
@@ -268,14 +272,15 @@ class __$ExpenseDraftCopyWithImpl<$Res>
 
 /// Create a copy of ExpenseDraft
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? amount = null,Object? categoryId = null,Object? date = null,Object? title = freezed,Object? note = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? amount = null,Object? categoryId = null,Object? date = null,Object? title = freezed,Object? note = freezed,Object? kind = null,}) {
   return _then(_ExpenseDraft(
 amount: null == amount ? _self.amount : amount // ignore: cast_nullable_to_non_nullable
 as Money,categoryId: null == categoryId ? _self.categoryId : categoryId // ignore: cast_nullable_to_non_nullable
 as int,date: null == date ? _self.date : date // ignore: cast_nullable_to_non_nullable
 as LocalDate,title: freezed == title ? _self.title : title // ignore: cast_nullable_to_non_nullable
 as String?,note: freezed == note ? _self.note : note // ignore: cast_nullable_to_non_nullable
-as String?,
+as String?,kind: null == kind ? _self.kind : kind // ignore: cast_nullable_to_non_nullable
+as TransactionKind,
   ));
 }
 

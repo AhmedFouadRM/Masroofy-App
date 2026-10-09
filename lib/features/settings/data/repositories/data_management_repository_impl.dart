@@ -2,6 +2,7 @@ import 'package:flutter/material.dart' show ThemeMode;
 import 'package:fpdart/fpdart.dart';
 import 'package:masroofy/core/database/db_guard.dart';
 import 'package:masroofy/core/domain/money.dart';
+import 'package:masroofy/core/domain/transaction_kind.dart';
 import 'package:masroofy/core/error/failures.dart';
 import 'package:masroofy/core/utils/currency_utils.dart';
 import 'package:masroofy/features/settings/data/backup_codec.dart';
@@ -29,6 +30,7 @@ class DataManagementRepositoryImpl implements IDataManagementRepository {
         ExpenseExportRow(
           date: expense.date,
           amount: Money(expense.amountMinor),
+          kind: TransactionKind.values.byName(category.kind),
           title: expense.title,
           categorySeedKey: category.seedKey,
           categoryName: category.name,

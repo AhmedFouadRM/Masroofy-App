@@ -21,10 +21,12 @@ abstract interface class ICategoryRepository {
   /// Appends a custom category after the existing ones. Returns its id.
   Future<Either<Failure, int>> create(CategoryDraft draft);
 
+  /// Fails with `ValidationFailure(kind, inUse)` when [draft] changes the kind
+  /// of a category that transactions, templates or a budget use.
   Future<Either<Failure, Unit>> update(int id, CategoryDraft draft);
 
   /// In one transaction: moves the category's expenses and recurring
-  /// templates to **Other**, deletes its budget, then deletes it.
+  /// templates to **Other** (**Other income** for an income category), deletes its budget, then deletes it.
   Future<Either<Failure, Unit>> delete(int id);
 }
 

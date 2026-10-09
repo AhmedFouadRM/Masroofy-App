@@ -1,5 +1,6 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:masroofy/core/domain/local_date.dart';
+import 'package:masroofy/core/domain/transaction_kind.dart';
 import 'package:masroofy/core/error/failures.dart';
 import 'package:masroofy/features/categories/domain/entities/category.dart';
 import 'package:masroofy/features/recurring_expenses/domain/entities/recurring_frequency.dart';
@@ -17,6 +18,9 @@ abstract class RecurringFormState with _$RecurringFormState {
     required int fractionDigits,
     @Default(RecurringFormStatus.loading) RecurringFormStatus status,
 
+    /// The Expense | Income switch; the category must be of this kind.
+    @Default(TransactionKind.expense) TransactionKind kind,
+
     /// Null for a new template.
     int? id,
 
@@ -27,7 +31,7 @@ abstract class RecurringFormState with _$RecurringFormState {
     @Default(RecurringFrequency.monthly) RecurringFrequency frequency,
     @Default(true) bool isActive,
 
-    /// Categories offered by the picker (hidden ones left out).
+    /// Every visible category; the picker offers those of [kind].
     @Default(<Category>[]) List<Category> categories,
 
     /// Field errors, keyed by `amount`, `categoryId`, `title`.
@@ -40,6 +44,12 @@ abstract class RecurringFormState with _$RecurringFormState {
   const RecurringFormState._();
 
   bool get isEditing => id != null;
+
+  /// What the picker offers: the categories of the selected [kind].
+  List<Category> get pickerCategories => [
+    for (final c in categories)
+      if (c.kind == kind) c,
+  ];
 
   Category? get category => categories.where((c) => c.id == categoryId).firstOrNull;
 

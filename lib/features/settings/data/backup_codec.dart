@@ -36,20 +36,23 @@ typedef DecodedBackup = ({BackupSnapshot snapshot, BackupPreferences preferences
 /// The versioned backup file (Settings PRD → Export Backup).
 ///
 /// ```json
-/// {"format":"masroofy-backup","version":1,"exportedAt":"…Z",
+/// {"format":"masroofy-backup","version":2,"exportedAt":"…Z",
 ///  "preferences":{"currency_code":"EGP","theme_mode":"system","western_digits":false},
 ///  "categories":[…],"recurringExpenses":[…],"expenses":[…],"budgets":[…]}
 /// ```
 ///
-/// Amounts are integer minor units in the file's `currency_code`. [decode]
+/// Version 2 adds each category's `kind` (`expense` or `income`); a version 1
+/// file has none and every category is an expense category. Amounts are
+/// integer minor units in the file's `currency_code`. [decode]
 /// checks everything (types, ranges, references, uniqueness) and throws a
 /// [FormatException] on the first problem, so nothing is written from a bad file.
 abstract final class BackupCodec {
   static const format = 'masroofy-backup';
-  static const version = 1;
+  static const version = 2;
 
   static const _frequencies = ['daily', 'weekly', 'monthly', 'yearly'];
   static const _periods = ['weekly', 'monthly'];
+  static const _kinds = ['expense', 'income'];
 
   static String encode(BackupSnapshot snapshot, BackupPreferences preferences, {required DateTime exportedAt}) =>
       jsonEncode({
@@ -69,6 +72,7 @@ abstract final class BackupCodec {
               'name': c.name,
               'icon': c.icon,
               'color': c.color,
+              'kind': c.kind,
               'sortOrder': c.sortOrder,
               'isHidden': c.isHidden,
               'createdAt': _time(c.createdAt),
@@ -138,7 +142,7 @@ abstract final class BackupCodec {
     }
 
     final preferences = _preferences(_get<Map<String, dynamic>>(root, 'preferences'));
-    final categories = _list(root, 'categories').map(_category).toList();
+    final categories = _list(root, 'categories').map((m) => _category(m, fileVersion: fileVersion)).toList();
     final categoryIds = _uniqueIds(categories.map((c) => c.id), 'category');
     final seedKeys = categories.map((c) => c.seedKey).whereType<String>().toList();
     if (seedKeys.toSet().length != seedKeys.length) throw const FormatException('Duplicate seedKey');
@@ -249,17 +253,21 @@ abstract final class BackupCodec {
     );
   }
 
-  static CategoriesTableData _category(Map<String, dynamic> map) {
+  static CategoriesTableData _category(Map<String, dynamic> map, {required int fileVersion}) {
     final seedKey = _textOrNull(map, 'seedKey', max: 50);
     final name = _textOrNull(map, 'name', max: 50);
     // Exactly one of the two (the table's CHECK constraint).
     if ((seedKey == null) == (name == null)) throw const FormatException('A category needs a seedKey or a name');
+    // Version 1 predates income: every category is an expense category.
+    final kind = fileVersion < 2 ? 'expense' : _get<String>(map, 'kind');
+    if (!_kinds.contains(kind)) throw const FormatException('Unknown category kind');
     return CategoriesTableData(
       id: _get<int>(map, 'id'),
       seedKey: seedKey,
       name: name,
       icon: _text(map, 'icon', min: 1, max: 100),
       color: _get<int>(map, 'color'),
+      kind: kind,
       sortOrder: _get<int>(map, 'sortOrder'),
       isHidden: _get<bool>(map, 'isHidden'),
       createdAt: _timestamp(map, 'createdAt'),

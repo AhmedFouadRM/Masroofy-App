@@ -15,7 +15,8 @@ T _$identity<T>(T value) => value;
 mixin _$RecurringDraft {
 
  String get title; Money get amount; int get categoryId; RecurringFrequency get frequency;/// May be in the past (back-fills, within the cap) or the future.
- LocalDate get startDate; bool get isActive;
+ LocalDate get startDate; bool get isActive;/// What the form is set to; the category must be of this kind.
+ TransactionKind get kind;
 /// Create a copy of RecurringDraft
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -26,16 +27,16 @@ $RecurringDraftCopyWith<RecurringDraft> get copyWith => _$RecurringDraftCopyWith
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is RecurringDraft&&(identical(other.title, title) || other.title == title)&&(identical(other.amount, amount) || other.amount == amount)&&(identical(other.categoryId, categoryId) || other.categoryId == categoryId)&&(identical(other.frequency, frequency) || other.frequency == frequency)&&(identical(other.startDate, startDate) || other.startDate == startDate)&&(identical(other.isActive, isActive) || other.isActive == isActive));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is RecurringDraft&&(identical(other.title, title) || other.title == title)&&(identical(other.amount, amount) || other.amount == amount)&&(identical(other.categoryId, categoryId) || other.categoryId == categoryId)&&(identical(other.frequency, frequency) || other.frequency == frequency)&&(identical(other.startDate, startDate) || other.startDate == startDate)&&(identical(other.isActive, isActive) || other.isActive == isActive)&&(identical(other.kind, kind) || other.kind == kind));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,title,amount,categoryId,frequency,startDate,isActive);
+int get hashCode => Object.hash(runtimeType,title,amount,categoryId,frequency,startDate,isActive,kind);
 
 @override
 String toString() {
-  return 'RecurringDraft(title: $title, amount: $amount, categoryId: $categoryId, frequency: $frequency, startDate: $startDate, isActive: $isActive)';
+  return 'RecurringDraft(title: $title, amount: $amount, categoryId: $categoryId, frequency: $frequency, startDate: $startDate, isActive: $isActive, kind: $kind)';
 }
 
 
@@ -46,7 +47,7 @@ abstract mixin class $RecurringDraftCopyWith<$Res>  {
   factory $RecurringDraftCopyWith(RecurringDraft value, $Res Function(RecurringDraft) _then) = _$RecurringDraftCopyWithImpl;
 @useResult
 $Res call({
- String title, Money amount, int categoryId, RecurringFrequency frequency, LocalDate startDate, bool isActive
+ String title, Money amount, int categoryId, RecurringFrequency frequency, LocalDate startDate, bool isActive, TransactionKind kind
 });
 
 
@@ -63,7 +64,7 @@ class _$RecurringDraftCopyWithImpl<$Res>
 
 /// Create a copy of RecurringDraft
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? title = null,Object? amount = null,Object? categoryId = null,Object? frequency = null,Object? startDate = null,Object? isActive = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? title = null,Object? amount = null,Object? categoryId = null,Object? frequency = null,Object? startDate = null,Object? isActive = null,Object? kind = null,}) {
   return _then(_self.copyWith(
 title: null == title ? _self.title : title // ignore: cast_nullable_to_non_nullable
 as String,amount: null == amount ? _self.amount : amount // ignore: cast_nullable_to_non_nullable
@@ -71,7 +72,8 @@ as Money,categoryId: null == categoryId ? _self.categoryId : categoryId // ignor
 as int,frequency: null == frequency ? _self.frequency : frequency // ignore: cast_nullable_to_non_nullable
 as RecurringFrequency,startDate: null == startDate ? _self.startDate : startDate // ignore: cast_nullable_to_non_nullable
 as LocalDate,isActive: null == isActive ? _self.isActive : isActive // ignore: cast_nullable_to_non_nullable
-as bool,
+as bool,kind: null == kind ? _self.kind : kind // ignore: cast_nullable_to_non_nullable
+as TransactionKind,
   ));
 }
 
@@ -156,10 +158,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String title,  Money amount,  int categoryId,  RecurringFrequency frequency,  LocalDate startDate,  bool isActive)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String title,  Money amount,  int categoryId,  RecurringFrequency frequency,  LocalDate startDate,  bool isActive,  TransactionKind kind)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _RecurringDraft() when $default != null:
-return $default(_that.title,_that.amount,_that.categoryId,_that.frequency,_that.startDate,_that.isActive);case _:
+return $default(_that.title,_that.amount,_that.categoryId,_that.frequency,_that.startDate,_that.isActive,_that.kind);case _:
   return orElse();
 
 }
@@ -177,10 +179,10 @@ return $default(_that.title,_that.amount,_that.categoryId,_that.frequency,_that.
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String title,  Money amount,  int categoryId,  RecurringFrequency frequency,  LocalDate startDate,  bool isActive)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String title,  Money amount,  int categoryId,  RecurringFrequency frequency,  LocalDate startDate,  bool isActive,  TransactionKind kind)  $default,) {final _that = this;
 switch (_that) {
 case _RecurringDraft():
-return $default(_that.title,_that.amount,_that.categoryId,_that.frequency,_that.startDate,_that.isActive);case _:
+return $default(_that.title,_that.amount,_that.categoryId,_that.frequency,_that.startDate,_that.isActive,_that.kind);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -197,10 +199,10 @@ return $default(_that.title,_that.amount,_that.categoryId,_that.frequency,_that.
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String title,  Money amount,  int categoryId,  RecurringFrequency frequency,  LocalDate startDate,  bool isActive)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String title,  Money amount,  int categoryId,  RecurringFrequency frequency,  LocalDate startDate,  bool isActive,  TransactionKind kind)?  $default,) {final _that = this;
 switch (_that) {
 case _RecurringDraft() when $default != null:
-return $default(_that.title,_that.amount,_that.categoryId,_that.frequency,_that.startDate,_that.isActive);case _:
+return $default(_that.title,_that.amount,_that.categoryId,_that.frequency,_that.startDate,_that.isActive,_that.kind);case _:
   return null;
 
 }
@@ -212,7 +214,7 @@ return $default(_that.title,_that.amount,_that.categoryId,_that.frequency,_that.
 
 
 class _RecurringDraft implements RecurringDraft {
-  const _RecurringDraft({required this.title, required this.amount, required this.categoryId, required this.frequency, required this.startDate, this.isActive = true});
+  const _RecurringDraft({required this.title, required this.amount, required this.categoryId, required this.frequency, required this.startDate, this.isActive = true, this.kind = TransactionKind.expense});
   
 
 @override final  String title;
@@ -222,6 +224,8 @@ class _RecurringDraft implements RecurringDraft {
 /// May be in the past (back-fills, within the cap) or the future.
 @override final  LocalDate startDate;
 @override@JsonKey() final  bool isActive;
+/// What the form is set to; the category must be of this kind.
+@override@JsonKey() final  TransactionKind kind;
 
 /// Create a copy of RecurringDraft
 /// with the given fields replaced by the non-null parameter values.
@@ -233,16 +237,16 @@ _$RecurringDraftCopyWith<_RecurringDraft> get copyWith => __$RecurringDraftCopyW
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _RecurringDraft&&(identical(other.title, title) || other.title == title)&&(identical(other.amount, amount) || other.amount == amount)&&(identical(other.categoryId, categoryId) || other.categoryId == categoryId)&&(identical(other.frequency, frequency) || other.frequency == frequency)&&(identical(other.startDate, startDate) || other.startDate == startDate)&&(identical(other.isActive, isActive) || other.isActive == isActive));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _RecurringDraft&&(identical(other.title, title) || other.title == title)&&(identical(other.amount, amount) || other.amount == amount)&&(identical(other.categoryId, categoryId) || other.categoryId == categoryId)&&(identical(other.frequency, frequency) || other.frequency == frequency)&&(identical(other.startDate, startDate) || other.startDate == startDate)&&(identical(other.isActive, isActive) || other.isActive == isActive)&&(identical(other.kind, kind) || other.kind == kind));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,title,amount,categoryId,frequency,startDate,isActive);
+int get hashCode => Object.hash(runtimeType,title,amount,categoryId,frequency,startDate,isActive,kind);
 
 @override
 String toString() {
-  return 'RecurringDraft(title: $title, amount: $amount, categoryId: $categoryId, frequency: $frequency, startDate: $startDate, isActive: $isActive)';
+  return 'RecurringDraft(title: $title, amount: $amount, categoryId: $categoryId, frequency: $frequency, startDate: $startDate, isActive: $isActive, kind: $kind)';
 }
 
 
@@ -253,7 +257,7 @@ abstract mixin class _$RecurringDraftCopyWith<$Res> implements $RecurringDraftCo
   factory _$RecurringDraftCopyWith(_RecurringDraft value, $Res Function(_RecurringDraft) _then) = __$RecurringDraftCopyWithImpl;
 @override @useResult
 $Res call({
- String title, Money amount, int categoryId, RecurringFrequency frequency, LocalDate startDate, bool isActive
+ String title, Money amount, int categoryId, RecurringFrequency frequency, LocalDate startDate, bool isActive, TransactionKind kind
 });
 
 
@@ -270,7 +274,7 @@ class __$RecurringDraftCopyWithImpl<$Res>
 
 /// Create a copy of RecurringDraft
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? title = null,Object? amount = null,Object? categoryId = null,Object? frequency = null,Object? startDate = null,Object? isActive = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? title = null,Object? amount = null,Object? categoryId = null,Object? frequency = null,Object? startDate = null,Object? isActive = null,Object? kind = null,}) {
   return _then(_RecurringDraft(
 title: null == title ? _self.title : title // ignore: cast_nullable_to_non_nullable
 as String,amount: null == amount ? _self.amount : amount // ignore: cast_nullable_to_non_nullable
@@ -278,7 +282,8 @@ as Money,categoryId: null == categoryId ? _self.categoryId : categoryId // ignor
 as int,frequency: null == frequency ? _self.frequency : frequency // ignore: cast_nullable_to_non_nullable
 as RecurringFrequency,startDate: null == startDate ? _self.startDate : startDate // ignore: cast_nullable_to_non_nullable
 as LocalDate,isActive: null == isActive ? _self.isActive : isActive // ignore: cast_nullable_to_non_nullable
-as bool,
+as bool,kind: null == kind ? _self.kind : kind // ignore: cast_nullable_to_non_nullable
+as TransactionKind,
   ));
 }
 

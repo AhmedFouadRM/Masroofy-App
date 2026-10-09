@@ -2,8 +2,11 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 
 part 'failures.freezed.dart';
 
-/// Why a field failed domain validation. Mapped to `validation.*` strings.
-enum ValidationReason { required, tooLong, mustBePositive, inFuture, invalidFormat, duplicate }
+/// Why a field failed domain validation. [wrongKind]: the category is of the
+/// other kind (expense vs income); [inUse]: a category's kind can't change
+/// while transactions use it.
+/// Mapped to `validation.*` strings.
+enum ValidationReason { required, tooLong, mustBePositive, inFuture, invalidFormat, duplicate, wrongKind, inUse }
 
 /// Every error the data and domain layers return (see Technical Foundation §7).
 /// Each case maps to a localized message via `StringManager.failure`; raw

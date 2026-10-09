@@ -2,6 +2,7 @@ import 'package:drift/drift.dart';
 import 'package:masroofy/core/database/app_database.dart';
 import 'package:masroofy/core/database/converters.dart';
 import 'package:masroofy/core/database/tables/budgets_table.dart';
+import 'package:masroofy/core/database/tables/categories_table.dart';
 import 'package:masroofy/core/database/tables/expenses_table.dart';
 import 'package:masroofy/core/domain/date_range.dart';
 import 'package:masroofy/core/domain/local_date.dart';
@@ -13,7 +14,7 @@ typedef BudgetSpendRow = ({BudgetsTableData budget, int spent});
 
 /// Drift queries for budgets. Throws database errors; the repository maps
 /// them to failures.
-@DriftAccessor(tables: [BudgetsTable, ExpensesTable])
+@DriftAccessor(tables: [BudgetsTable, ExpensesTable, CategoriesTable])
 class BudgetLocalDatasource extends DatabaseAccessor<AppDatabase> with _$BudgetLocalDatasourceMixin {
   BudgetLocalDatasource(super.attachedDatabase);
 
@@ -47,6 +48,10 @@ class BudgetLocalDatasource extends DatabaseAccessor<AppDatabase> with _$BudgetL
           for (final row in rows) (budget: budgetsTable.map(row.data), spent: row.read<int>('spent')),
         ],
       );
+
+  /// The kind of category [id] (`expense` or `income`), or null when it is gone.
+  Future<String?> categoryKind(int id) async =>
+      (await (select(categoriesTable)..where((c) => c.id.equals(id))).getSingleOrNull())?.kind;
 
   Future<BudgetsTableData?> getById(int id) => (select(budgetsTable)..where((b) => b.id.equals(id))).getSingleOrNull();
 

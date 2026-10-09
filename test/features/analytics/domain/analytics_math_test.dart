@@ -2,10 +2,12 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:masroofy/core/domain/date_range.dart';
 import 'package:masroofy/core/domain/local_date.dart';
 import 'package:masroofy/core/domain/money.dart';
+import 'package:masroofy/core/domain/period_totals.dart';
 import 'package:masroofy/features/analytics/domain/analytics_math.dart';
 
 void main() {
   LocalDate d(int y, int m, int day) => LocalDate(y, m, day);
+  PeriodTotals spent(int minor) => PeriodTotals(income: Money.zero, spent: Money(minor));
 
   group('bucketFor', () {
     test('days up to 31, weeks up to 180, then months', () {
@@ -18,18 +20,18 @@ void main() {
   });
 
   group('bars', () {
-    test('one bar per day, zero-filled', () {
+    test('one pair of bars per day, zero-filled', () {
       final range = DateRange(d(2026, 10, 1), d(2026, 10, 3));
       final bars = AnalyticsMath.bars(
         range,
-        {d(2026, 10, 2): const Money(500)},
+        {d(2026, 10, 2): const PeriodTotals(income: Money(9000), spent: Money(500))},
         bucket: SpendingBucket.day,
         firstWeekday: DateTime.saturday,
       );
       expect(bars, [
-        (start: d(2026, 10, 1), total: Money.zero),
-        (start: d(2026, 10, 2), total: const Money(500)),
-        (start: d(2026, 10, 3), total: Money.zero),
+        (start: d(2026, 10, 1), spent: Money.zero, income: Money.zero),
+        (start: d(2026, 10, 2), spent: const Money(500), income: const Money(9000)),
+        (start: d(2026, 10, 3), spent: Money.zero, income: Money.zero),
       ]);
     });
 
@@ -38,14 +40,14 @@ void main() {
       final range = DateRange(d(2026, 10, 1), d(2026, 10, 12));
       final bars = AnalyticsMath.bars(
         range,
-        {d(2026, 10, 1): const Money(100), d(2026, 10, 3): const Money(200), d(2026, 10, 10): const Money(400)},
+        {d(2026, 10, 1): spent(100), d(2026, 10, 3): spent(200), d(2026, 10, 10): spent(400)},
         bucket: SpendingBucket.week,
         firstWeekday: DateTime.saturday,
       );
       expect(bars, [
-        (start: d(2026, 10, 1), total: const Money(100)),
-        (start: d(2026, 10, 3), total: const Money(200)),
-        (start: d(2026, 10, 10), total: const Money(400)),
+        (start: d(2026, 10, 1), spent: const Money(100), income: Money.zero),
+        (start: d(2026, 10, 3), spent: const Money(200), income: Money.zero),
+        (start: d(2026, 10, 10), spent: const Money(400), income: Money.zero),
       ]);
     });
 
@@ -53,11 +55,19 @@ void main() {
       final range = DateRange(d(2026, 1, 15), d(2026, 3, 2));
       final bars = AnalyticsMath.bars(
         range,
-        {d(2026, 1, 20): const Money(1), d(2026, 1, 31): const Money(2), d(2026, 3, 1): const Money(4)},
+        {
+          d(2026, 1, 20): const PeriodTotals(income: Money(10), spent: Money(1)),
+          d(2026, 1, 31): const PeriodTotals(income: Money(20), spent: Money(2)),
+          d(2026, 3, 1): spent(4),
+        },
         bucket: SpendingBucket.month,
         firstWeekday: DateTime.monday,
       );
-      expect(bars.map((b) => (b.start, b.total.minor)), [(d(2026, 1, 15), 3), (d(2026, 2, 1), 0), (d(2026, 3, 1), 4)]);
+      expect(bars.map((b) => (b.start, b.spent.minor, b.income.minor)), [
+        (d(2026, 1, 15), 3, 30),
+        (d(2026, 2, 1), 0, 0),
+        (d(2026, 3, 1), 4, 0),
+      ]);
     });
   });
 

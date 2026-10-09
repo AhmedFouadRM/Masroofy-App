@@ -4,11 +4,11 @@ import 'package:masroofy/features/settings/domain/entities/expense_export_row.da
 /// Names a row's category in the current UI language.
 typedef CategoryLabeler = String Function({String? seedKey, String? name});
 
-/// The expenses CSV (Settings PRD → CSV Export Format): RFC 4180, comma
-/// delimited, CRLF rows. Column names and `Yes`/`No` stay in English so the
-/// file reads the same whatever the UI language.
+/// The transactions CSV (Settings PRD → CSV Export Format): RFC 4180, comma
+/// delimited, CRLF rows. Column names, `expense`/`income` and `Yes`/`No` stay in
+/// English so the file reads the same whatever the UI language.
 abstract final class CsvExport {
-  static const header = ['Date', 'Title', 'Amount', 'Currency', 'Category', 'Note', 'Recurring'];
+  static const header = ['Date', 'Type', 'Title', 'Amount', 'Currency', 'Category', 'Note', 'Recurring'];
 
   /// Excel needs a UTF-8 byte order mark to read Arabic text correctly.
   static const bom = [0xEF, 0xBB, 0xBF];
@@ -31,9 +31,10 @@ abstract final class CsvExport {
     return buffer.toString();
   }
 
-  /// The header and one record per expense, in the order given. Amounts are
-  /// plain decimals with `.`, the currency's fraction digits and Western
-  /// digits; dates are ISO 8601.
+  /// The header and one record per transaction, in the order given. Amounts
+  /// are positive plain decimals with `.`, the currency's fraction digits and
+  /// Western digits (the Type column says which way the money went); dates are
+  /// ISO 8601.
   static List<List<String>> records(
     Iterable<ExpenseExportRow> expenses,
     Currency currency,
@@ -43,6 +44,7 @@ abstract final class CsvExport {
     for (final e in expenses)
       [
         e.date.toIso(),
+        e.kind.name,
         e.title ?? '',
         e.amount.toDecimalString(currency.fractionDigits),
         currency.code,

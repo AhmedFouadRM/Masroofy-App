@@ -1,12 +1,14 @@
 import 'package:masroofy/core/domain/date_range.dart';
 import 'package:masroofy/core/domain/local_date.dart';
 import 'package:masroofy/core/domain/money.dart';
+import 'package:masroofy/core/domain/period_totals.dart';
 
 /// How much time one bar covers (Analytics PRD → Bar Chart).
 enum SpendingBucket { day, week, month }
 
-/// One bar: the bucket's first day (clamped to the range) and its total.
-typedef SpendingBar = ({LocalDate start, Money total});
+/// One pair of bars: the bucket's first day (clamped to the range), what
+/// was spent and what came in.
+typedef SpendingBar = ({LocalDate start, Money spent, Money income});
 
 /// One pie slice. `categoryId` is null for the grouped "Smaller categories".
 typedef SpendingSlice = ({int? categoryId, Money total, List<int> members});
@@ -23,12 +25,12 @@ abstract final class AnalyticsMath {
     _ => SpendingBucket.month,
   };
 
-  /// Every bucket in [range], oldest first, with zero-spend ones included so
+  /// Every bucket in [range], oldest first, with empty ones included so
   /// the time axis has no gaps. Weeks start on [firstWeekday]; the first and
   /// last bucket may be partial.
   static List<SpendingBar> bars(
     DateRange range,
-    Map<LocalDate, Money> daily, {
+    Map<LocalDate, PeriodTotals> daily, {
     required SpendingBucket bucket,
     required int firstWeekday,
   }) {
@@ -41,12 +43,16 @@ abstract final class AnalyticsMath {
       return start.isBefore(range.start) ? range.start : start;
     }
 
-    final totals = <LocalDate, Money>{};
+    final totals = <LocalDate, PeriodTotals>{};
     for (var date = range.start; !date.isAfter(range.end); date = date.addDays(1)) {
       final key = startOf(date);
-      totals[key] = (totals[key] ?? Money.zero) + (daily[date] ?? Money.zero);
+      final day = daily[date] ?? PeriodTotals.zero;
+      final sofar = totals[key] ?? PeriodTotals.zero;
+      totals[key] = PeriodTotals(income: sofar.income + day.income, spent: sofar.spent + day.spent);
     }
-    return [for (final MapEntry(:key, :value) in totals.entries) (start: key, total: value)];
+    return [
+      for (final MapEntry(:key, :value) in totals.entries) (start: key, spent: value.spent, income: value.income),
+    ];
   }
 
   /// Pie slices, largest first. Categories under [smallSliceShare] of the

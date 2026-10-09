@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:bloc_test/bloc_test.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fpdart/fpdart.dart';
+import 'package:masroofy/core/domain/transaction_kind.dart';
 import 'package:masroofy/core/error/failures.dart';
 import 'package:masroofy/features/categories/domain/entities/category.dart';
 import 'package:masroofy/features/categories/domain/entities/category_draft.dart';
@@ -22,7 +23,13 @@ class _MockDelete extends Mock implements DeleteCategory {}
 
 final _epoch = DateTime.utc(2026, 10, 8);
 
-CategorySummary _summary(int id, {String? seedKey, String? name, int expenses = 0}) => CategorySummary(
+CategorySummary _summary(
+  int id, {
+  String? seedKey,
+  String? name,
+  int expenses = 0,
+  TransactionKind kind = TransactionKind.expense,
+}) => CategorySummary(
   category: Category(
     id: id,
     seedKey: seedKey,
@@ -32,6 +39,7 @@ CategorySummary _summary(int id, {String? seedKey, String? name, int expenses = 
     sortOrder: id,
     createdAt: _epoch,
     updatedAt: _epoch,
+    kind: kind,
   ),
   expenseCount: expenses,
   recurringCount: 0,
@@ -183,6 +191,67 @@ void main() {
         isA<CategoryFormState>().having((s) => s.status, 'status', CategoryFormStatus.deleting),
         isA<CategoryFormState>().having((s) => s.status, 'status', CategoryFormStatus.deleted),
       ],
+    );
+
+    blocTest<CategoryFormCubit, CategoryFormState>(
+      'the type is chosen on a new category and saved with it',
+      setUp: () => when(() => save(any(), id: any(named: 'id'))).thenAnswer((_) async => const Right(10)),
+      build: build,
+      seed: () => const CategoryFormState(icon: 'pets', color: 1, status: CategoryFormStatus.ready, name: 'Tips'),
+      act: (cubit) async {
+        cubit.kindSelected(TransactionKind.income);
+        await cubit.save();
+      },
+      verify: (_) => verify(
+        () => save(const CategoryDraft(name: 'Tips', icon: 'pets', color: 1, kind: TransactionKind.income)),
+      ).called(1),
+    );
+
+    blocTest<CategoryFormCubit, CategoryFormState>(
+      'editing loads the type, and an unused category can change it',
+      setUp: () => when(() => repository.getSummary(9)).thenAnswer(
+        (_) async => Right(_summary(9, name: 'Tips', kind: TransactionKind.income)),
+      ),
+      build: () => build(id: 9),
+      act: (cubit) async {
+        await cubit.load();
+        cubit.kindSelected(TransactionKind.expense);
+      },
+      verify: (cubit) {
+        expect(cubit.state.kindLocked, isFalse);
+        expect(cubit.state.kind, TransactionKind.expense);
+      },
+    );
+
+    blocTest<CategoryFormCubit, CategoryFormState>(
+      'the type is locked once the category has transactions',
+      setUp: () => when(() => repository.getSummary(9)).thenAnswer(
+        (_) async => Right(_summary(9, name: 'Tips', expenses: 2, kind: TransactionKind.income)),
+      ),
+      build: () => build(id: 9),
+      act: (cubit) async {
+        await cubit.load();
+        cubit.kindSelected(TransactionKind.expense);
+      },
+      verify: (cubit) {
+        expect(cubit.state.kindLocked, isTrue);
+        expect(cubit.state.kind, TransactionKind.income);
+      },
+    );
+
+    blocTest<CategoryFormCubit, CategoryFormState>(
+      'a kind lock failure from the repository is shown as a failure',
+      setUp: () => when(() => save(any(), id: any(named: 'id'))).thenAnswer(
+        (_) async => const Left(Failure.validation(field: 'kind', reason: ValidationReason.inUse)),
+      ),
+      build: build,
+      seed: () =>
+          const CategoryFormState(icon: 'pets', color: 1, status: CategoryFormStatus.ready, id: 9, name: 'Tips'),
+      act: (cubit) => cubit.save(),
+      verify: (cubit) {
+        expect(cubit.state.failure, const Failure.validation(field: 'kind', reason: ValidationReason.inUse));
+        expect(cubit.state.status, CategoryFormStatus.ready);
+      },
     );
 
     blocTest<CategoryFormCubit, CategoryFormState>(

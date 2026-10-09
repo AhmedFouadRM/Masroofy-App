@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:masroofy/core/domain/local_date.dart';
+import 'package:masroofy/core/domain/transaction_kind.dart';
 import 'package:masroofy/core/strings/string_manager.dart';
 import 'package:masroofy/core/theme/app_dimensions.dart';
 import 'package:masroofy/core/theme/masroofy_colors.dart';
@@ -70,8 +71,16 @@ class RecurringRow extends StatelessWidget {
             ),
             const SizedBox(width: AppSpacing.sm),
             Text(
-              context.money(template.amount),
-              style: text.titleMedium!.copyWith(color: active ? null : colors.textSecondary),
+              template.kind == TransactionKind.income
+                  ? context.signedMoney(template.amount)
+                  : context.money(template.amount),
+              style: text.titleMedium!.copyWith(
+                color: !active
+                    ? colors.textSecondary
+                    : template.kind == TransactionKind.income
+                    ? colors.textPositive
+                    : null,
+              ),
             ),
             const SizedBox(width: AppSpacing.sm),
             Semantics(

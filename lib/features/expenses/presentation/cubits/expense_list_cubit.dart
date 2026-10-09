@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:masroofy/core/domain/date_range.dart';
 import 'package:masroofy/core/domain/local_date.dart';
+import 'package:masroofy/core/domain/transaction_kind.dart';
 import 'package:masroofy/core/error/failures.dart';
 import 'package:masroofy/features/categories/domain/repositories/i_category_repository.dart';
 import 'package:masroofy/features/expenses/domain/entities/expense_filter.dart';
@@ -12,7 +13,8 @@ import 'package:masroofy/features/expenses/presentation/cubits/expense_list_stat
 
 export 'package:masroofy/features/expenses/presentation/cubits/expense_list_state.dart';
 
-/// The home screen: a live, filterable, paged list with period totals.
+/// The home screen: a live, filterable, paged list of transactions (expenses
+/// and income) with period totals.
 class ExpenseListCubit extends Cubit<ExpenseListState> {
   ExpenseListCubit(
     this._expenses,
@@ -45,7 +47,8 @@ class ExpenseListCubit extends Cubit<ExpenseListState> {
   /// Ids whose delete was sent (successfully or in flight).
   final Set<int> _committed = {};
 
-  ExpenseFilter get _filter => ExpenseFilter(range: state.range, categoryId: state.categoryId, search: state.search);
+  ExpenseFilter get _filter =>
+      ExpenseFilter(range: state.range, kind: state.kind, categoryId: state.categoryId, search: state.search);
 
   void load() {
     unawaited(_categoriesSub?.cancel());
@@ -73,6 +76,14 @@ class ExpenseListCubit extends Cubit<ExpenseListState> {
 
   void selectCustomRange(DateRange range) => _apply(state.copyWith(period: ExpensePeriod.custom, range: range));
 
+  /// All (null), Income or Expenses. A selected category of the other kind
+  /// is dropped.
+  void selectKind(TransactionKind? kind) {
+    final category = state.categories[state.categoryId];
+    final keepCategory = kind == null || category?.kind == kind;
+    _apply(state.copyWith(kind: kind, categoryId: keepCategory ? state.categoryId : null));
+  }
+
   void selectCategory(int? categoryId) => _apply(state.copyWith(categoryId: categoryId));
 
   /// Debounced, so typing doesn't re-query on every key.
@@ -96,7 +107,7 @@ class ExpenseListCubit extends Cubit<ExpenseListState> {
   void _apply(ExpenseListState next) {
     if (isClosed) return;
     _limit = pageSize;
-    emit(next.copyWith(status: ExpenseListStatus.loading, previousTotal: null));
+    emit(next.copyWith(status: ExpenseListStatus.loading, previousTotals: null));
     _subscribe();
   }
 
@@ -108,10 +119,12 @@ class ExpenseListCubit extends Cubit<ExpenseListState> {
     final filter = _filter;
     final comparison = filter.copyWith(range: _comparisonRange());
     _filterSubs.addAll([
-      _expenses.watchTotal(filter).listen((r) => r.match(_onLoadFailure, (t) => emit(state.copyWith(total: t)))),
-      _expenses
-          .watchTotal(comparison)
-          .listen((r) => r.match(_onLoadFailure, (t) => emit(state.copyWith(previousTotal: t)))),
+      _expenses.watchTotals(filter).listen((r) => r.match(_onLoadFailure, (t) => emit(state.copyWith(totals: t)))),
+      // The balance card on All has no comparison.
+      if (filter.kind != null)
+        _expenses
+            .watchTotals(comparison)
+            .listen((r) => r.match(_onLoadFailure, (t) => emit(state.copyWith(previousTotals: t)))),
       _expenses
           .watchDailyTotals(filter)
           .listen((r) => r.match(_onLoadFailure, (d) => emit(state.copyWith(dailyTotals: d)))),

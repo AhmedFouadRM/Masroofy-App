@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:masroofy/core/constants/app_constants.dart';
+import 'package:masroofy/core/domain/transaction_kind.dart';
 import 'package:masroofy/core/strings/string_manager.dart';
 import 'package:masroofy/core/theme/app_colors.dart';
 import 'package:masroofy/core/theme/app_dimensions.dart';
@@ -15,6 +16,7 @@ import 'package:masroofy/shared/categories/category_icon_registry.dart';
 import 'package:masroofy/shared/formatting/display_format.dart';
 import 'package:masroofy/shared/widgets/aura_background.dart';
 import 'package:masroofy/shared/widgets/glass_app_bar.dart';
+import 'package:masroofy/shared/widgets/segmented_pills.dart';
 import 'package:material_symbols_icons/symbols.dart';
 
 /// New / Edit Category. Expects a [CategoryFormCubit] above it.
@@ -144,6 +146,27 @@ class _Form extends StatelessWidget {
             errorText: state.nameError == null ? null : StringManager.validation(state.nameError!),
           ),
         ),
+        _Heading(StringManager.categoryKindLabel),
+        // Disabled once the category has transactions or templates.
+        IgnorePointer(
+          ignoring: state.kindLocked || busy,
+          child: Opacity(
+            opacity: state.kindLocked ? 0.5 : 1,
+            child: SegmentedPills(
+              labels: [for (final kind in TransactionKind.values) StringManager.kindLabel(kind)],
+              selected: state.kind.index,
+              onSelected: (i) => cubit.kindSelected(TransactionKind.values[i]),
+            ),
+          ),
+        ),
+        if (state.kindLocked)
+          Padding(
+            padding: const EdgeInsetsDirectional.only(start: AppSpacing.xs, top: AppSpacing.sm),
+            child: Text(
+              StringManager.categoryKindInUse,
+              style: text.bodySmall!.copyWith(color: colors.textSecondary),
+            ),
+          ),
         _Heading(StringManager.categoryIcon),
         GridView.count(
           crossAxisCount: 6,

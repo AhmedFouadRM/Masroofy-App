@@ -5,6 +5,7 @@ import 'package:fpdart/fpdart.dart';
 import 'package:masroofy/core/database/app_database.dart';
 import 'package:masroofy/core/domain/local_date.dart';
 import 'package:masroofy/core/domain/money.dart';
+import 'package:masroofy/core/domain/transaction_kind.dart';
 import 'package:masroofy/core/error/failures.dart';
 import 'package:masroofy/features/categories/data/datasources/category_local_datasource.dart';
 import 'package:masroofy/features/recurring_expenses/data/datasources/recurring_expense_local_datasource.dart';
@@ -142,6 +143,50 @@ void main() {
     expect(await generatedDates(id), [LocalDate(2026, 9, 9), today]);
   });
 
+  group('income templates', () {
+    late int salary;
+
+    setUp(() async {
+      salary = (await (db.select(db.categoriesTable)..where((c) => c.seedKey.equals('salary'))).getSingle()).id;
+    });
+
+    Future<Either<Failure, int>> addSalary({TransactionKind kind = TransactionKind.income, int? category}) => save(
+      RecurringDraft(
+        title: 'Salary',
+        amount: const Money(1500000),
+        categoryId: category ?? salary,
+        frequency: RecurringFrequency.monthly,
+        startDate: LocalDate(2026, 8, 25),
+        kind: kind,
+      ),
+    );
+
+    test('a monthly Salary template generates income rows on its due dates', () async {
+      final id = right(await addSalary());
+
+      expect(right(await repository.getById(id)).kind, TransactionKind.income);
+      expect(await generatedDates(id), [LocalDate(2026, 8, 25), LocalDate(2026, 9, 25)]);
+      final rows = await db.select(db.expensesTable).get();
+      expect(rows.map((r) => (r.categoryId, r.amountMinor)), [(salary, 1500000), (salary, 1500000)]);
+      // The rows are income: their category says so.
+      final incomeRows = await (db.select(db.expensesTable).join([
+        innerJoin(db.categoriesTable, db.categoriesTable.id.equalsExp(db.expensesTable.categoryId)),
+      ])..where(db.categoriesTable.kind.equals('income'))).get();
+      expect(incomeRows, hasLength(2));
+    });
+
+    test('a template must match its category kind', () async {
+      expect(
+        (await addSalary(kind: TransactionKind.expense)).getLeft().toNullable(),
+        const Failure.validation(field: 'categoryId', reason: ValidationReason.wrongKind),
+      );
+      expect(
+        (await addSalary(category: bills)).getLeft().toNullable(),
+        const Failure.validation(field: 'categoryId', reason: ValidationReason.wrongKind),
+      );
+    });
+  });
+
   test('deleting a template keeps its expenses and their badge', () async {
     final id = await add(today);
     right(await DeleteRecurring(repository)(id));
@@ -153,7 +198,12 @@ void main() {
 
   test('deleting a category moves its templates to Other', () async {
     final categories = CategoryLocalDatasource(db);
-    final custom = await categories.insertCategory(name: 'Gym', icon: 'fitness_center', color: 0xFF000000);
+    final custom = await categories.insertCategory(
+      name: 'Gym',
+      icon: 'fitness_center',
+      color: 0xFF000000,
+      kind: 'expense',
+    );
     final id = right(
       await save(
         RecurringDraft(

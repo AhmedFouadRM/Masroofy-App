@@ -1,4 +1,5 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:masroofy/core/domain/transaction_kind.dart';
 import 'package:masroofy/core/error/failures.dart';
 import 'package:masroofy/core/theme/app_colors.dart';
 import 'package:masroofy/features/categories/domain/category_icons.dart';
@@ -55,6 +56,7 @@ class CategoryFormCubit extends Cubit<CategoryFormState> {
           state.copyWith(
             status: CategoryFormStatus.ready,
             name: category.name!,
+            kind: category.kind,
             icon: category.icon,
             color: category.color,
             usage: summary,
@@ -66,6 +68,10 @@ class CategoryFormCubit extends Cubit<CategoryFormState> {
 
   void nameChanged(String name) => emit(state.copyWith(name: name, nameError: null));
 
+  void kindSelected(TransactionKind kind) {
+    if (!state.kindLocked) emit(state.copyWith(kind: kind));
+  }
+
   void iconSelected(String icon) => emit(state.copyWith(icon: icon));
 
   void colorSelected(int color) => emit(state.copyWith(color: color));
@@ -74,7 +80,7 @@ class CategoryFormCubit extends Cubit<CategoryFormState> {
     if (!state.canSave) return;
     emit(state.copyWith(status: CategoryFormStatus.saving, nameError: null, failure: null));
     final result = await _saveCategory(
-      CategoryDraft(name: state.name, icon: state.icon, color: state.color),
+      CategoryDraft(name: state.name, icon: state.icon, color: state.color, kind: state.kind),
       id: state.id,
     );
     if (isClosed) return;

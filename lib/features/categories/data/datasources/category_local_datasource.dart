@@ -4,6 +4,7 @@ import 'package:masroofy/core/database/tables/budgets_table.dart';
 import 'package:masroofy/core/database/tables/categories_table.dart';
 import 'package:masroofy/core/database/tables/expenses_table.dart';
 import 'package:masroofy/core/database/tables/recurring_expenses_table.dart';
+import 'package:masroofy/core/domain/transaction_kind.dart';
 
 part 'category_local_datasource.g.dart';
 
@@ -77,12 +78,18 @@ class CategoryLocalDatasource extends DatabaseAccessor<AppDatabase> with _$Categ
     return [for (final row in rows) row.read(categoriesTable.name)!];
   }
 
-  Future<int> insertCategory({required String name, required String icon, required int color}) => transaction(() async {
+  Future<int> insertCategory({
+    required String name,
+    required String icon,
+    required int color,
+    required String kind,
+  }) => transaction(() async {
     final maxOrder = categoriesTable.sortOrder.max();
     final last = await (selectOnly(categoriesTable)..addColumns([maxOrder])).getSingle();
     return into(categoriesTable).insert(
       CategoriesTableCompanion.insert(
         name: Value(name),
+        kind: Value(kind),
         icon: icon,
         color: color,
         sortOrder: (last.read(maxOrder) ?? -1) + 1,
@@ -91,22 +98,31 @@ class CategoryLocalDatasource extends DatabaseAccessor<AppDatabase> with _$Categ
   });
 
   /// Updates a custom category. Returns the number of rows changed.
-  Future<int> updateCategory(int id, {required String name, required String icon, required int color}) =>
-      (update(categoriesTable)..where((c) => c.id.equals(id) & c.seedKey.isNull())).write(
-        CategoriesTableCompanion(
-          name: Value(name),
-          icon: Value(icon),
-          color: Value(color),
-          updatedAt: Value(DateTime.now().toUtc()),
-        ),
-      );
+  Future<int> updateCategory(
+    int id, {
+    required String name,
+    required String icon,
+    required int color,
+    required String kind,
+  }) => (update(categoriesTable)..where((c) => c.id.equals(id) & c.seedKey.isNull())).write(
+    CategoriesTableCompanion(
+      name: Value(name),
+      kind: Value(kind),
+      icon: Value(icon),
+      color: Value(color),
+      updatedAt: Value(DateTime.now().toUtc()),
+    ),
+  );
 
-  /// Moves expenses and templates to Other, then deletes the category (its
-  /// budget cascades). Returns the number of categories deleted (0 or 1).
+  /// Moves expenses and templates to Other (or Other income, for an income
+  /// category), then deletes the category (its budget cascades). Returns the number of categories deleted (0 or 1).
   Future<int> deleteCategory(int id) => transaction(() async {
-    final other = await (select(
-      categoriesTable,
-    )..where((c) => c.seedKey.equals(DefaultCategories.otherSeedKey))).getSingle();
+    final category = await (select(categoriesTable)..where((c) => c.id.equals(id))).getSingleOrNull();
+    if (category == null) return 0;
+    final otherSeedKey = category.kind == TransactionKind.income.name
+        ? DefaultCategories.otherIncomeSeedKey
+        : DefaultCategories.otherSeedKey;
+    final other = await (select(categoriesTable)..where((c) => c.seedKey.equals(otherSeedKey))).getSingle();
     final now = Value(DateTime.now().toUtc());
     await (update(expensesTable)..where((e) => e.categoryId.equals(id))).write(
       ExpensesTableCompanion(categoryId: Value(other.id), updatedAt: now),

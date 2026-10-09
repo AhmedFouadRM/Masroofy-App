@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:masroofy/core/domain/local_date.dart';
 import 'package:masroofy/core/domain/money.dart';
+import 'package:masroofy/core/domain/transaction_kind.dart';
 import 'package:masroofy/core/error/failures.dart';
 import 'package:masroofy/features/categories/domain/entities/category.dart';
 import 'package:masroofy/features/categories/domain/repositories/i_category_repository.dart';
@@ -30,17 +31,30 @@ class _MockSave extends Mock implements SaveRecurring {}
 final _today = LocalDate(2026, 10, 9);
 final _epoch = DateTime.utc(2026, 10, 9);
 
-RecurringExpense _template(int id, {bool active = true}) => RecurringExpense(
-  id: id,
-  title: 'Rent $id',
-  amount: const Money(500000),
-  categoryId: 1,
-  frequency: RecurringFrequency.monthly,
-  startDate: _today,
-  nextDueDate: _today.addMonths(1),
-  isActive: active,
+RecurringExpense _template(int id, {bool active = true, TransactionKind kind = TransactionKind.expense}) =>
+    RecurringExpense(
+      id: id,
+      title: 'Rent $id',
+      amount: const Money(500000),
+      categoryId: 1,
+      frequency: RecurringFrequency.monthly,
+      startDate: _today,
+      nextDueDate: _today.addMonths(1),
+      isActive: active,
+      createdAt: _epoch,
+      updatedAt: _epoch,
+      kind: kind,
+    );
+
+final _salary = Category(
+  id: 2,
+  seedKey: 'salary',
+  icon: 'payments',
+  color: 0,
+  sortOrder: 8,
   createdAt: _epoch,
   updatedAt: _epoch,
+  kind: TransactionKind.income,
 );
 
 final _bills = Category(
@@ -175,6 +189,55 @@ void main() {
           ),
         );
       },
+    );
+
+    blocTest<RecurringFormCubit, RecurringFormState>(
+      'switching to Income clears an expense category and offers income ones',
+      build: build,
+      setUp: () => when(() => categories.watchAll()).thenAnswer((_) => Stream.value(Right([_bills, _salary]))),
+      act: (cubit) async {
+        await cubit.load();
+        cubit
+          ..categorySelected(1)
+          ..kindSelected(TransactionKind.income);
+      },
+      verify: (cubit) {
+        expect(cubit.state.kind, TransactionKind.income);
+        expect(cubit.state.categoryId, isNull);
+        expect(cubit.state.pickerCategories, [_salary]);
+      },
+    );
+
+    blocTest<RecurringFormCubit, RecurringFormState>(
+      'a monthly salary saves as an income template',
+      build: build,
+      setUp: () {
+        when(() => categories.watchAll()).thenAnswer((_) => Stream.value(Right([_bills, _salary])));
+        when(() => save(any(), id: any(named: 'id'))).thenAnswer((_) async => const Right(7));
+      },
+      act: (cubit) async {
+        await cubit.load();
+        cubit
+          ..kindSelected(TransactionKind.income)
+          ..amountChanged('15000')
+          ..categorySelected(2)
+          ..titleChanged('Salary');
+        await cubit.save();
+      },
+      verify: (cubit) {
+        final draft = verify(() => save(captureAny(), id: any(named: 'id'))).captured.single as RecurringDraft;
+        expect((draft.kind, draft.categoryId, draft.amount), (TransactionKind.income, 2, const Money(1500000)));
+      },
+    );
+
+    blocTest<RecurringFormCubit, RecurringFormState>(
+      'editing an income template opens on Income',
+      build: () => build(id: 5),
+      setUp: () => when(() => recurring.getById(5)).thenAnswer(
+        (_) async => Right(_template(5, kind: TransactionKind.income)),
+      ),
+      act: (cubit) => cubit.load(),
+      verify: (cubit) => expect(cubit.state.kind, TransactionKind.income),
     );
 
     blocTest<RecurringFormCubit, RecurringFormState>(

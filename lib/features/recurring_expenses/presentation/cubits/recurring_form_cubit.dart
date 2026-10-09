@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:masroofy/core/domain/local_date.dart';
 import 'package:masroofy/core/domain/money.dart';
+import 'package:masroofy/core/domain/transaction_kind.dart';
 import 'package:masroofy/core/error/failures.dart';
 import 'package:masroofy/features/categories/domain/repositories/i_category_repository.dart';
 import 'package:masroofy/features/recurring_expenses/domain/entities/recurring_draft.dart';
@@ -54,6 +55,7 @@ class RecurringFormCubit extends Cubit<RecurringFormState> {
       (template) => emit(
         state.copyWith(
           status: RecurringFormStatus.ready,
+          kind: template.kind,
           amountText: template.amount.toDecimalString(state.fractionDigits),
           categoryId: template.categoryId,
           title: template.title,
@@ -63,6 +65,14 @@ class RecurringFormCubit extends Cubit<RecurringFormState> {
         ),
       ),
     );
+  }
+
+  /// Switches Expense | Income. A category of the other kind is cleared, so
+  /// Save asks for a new one.
+  void kindSelected(TransactionKind kind) {
+    if (kind == state.kind) return;
+    final keep = state.category?.kind == kind;
+    emit(state.copyWith(kind: kind, categoryId: keep ? state.categoryId : null, errors: _without('categoryId')));
   }
 
   void amountChanged(String text) => emit(state.copyWith(amountText: text, errors: _without('amount')));
@@ -89,7 +99,11 @@ class RecurringFormCubit extends Cubit<RecurringFormState> {
       errors['amount'] = ValidationReason.invalidFormat;
     }
     final categoryId = state.categoryId;
-    if (categoryId == null) errors['categoryId'] = ValidationReason.required;
+    if (categoryId == null) {
+      errors['categoryId'] = ValidationReason.required;
+    } else if (state.category case final category? when category.kind != state.kind) {
+      errors['categoryId'] = ValidationReason.wrongKind;
+    }
     if (state.title.trim().isEmpty) errors['title'] = ValidationReason.required;
     if (errors.isNotEmpty) {
       emit(state.copyWith(errors: errors));
@@ -105,6 +119,7 @@ class RecurringFormCubit extends Cubit<RecurringFormState> {
         frequency: state.frequency,
         startDate: state.startDate,
         isActive: state.isActive,
+        kind: state.kind,
       ),
       id: state.id,
     );

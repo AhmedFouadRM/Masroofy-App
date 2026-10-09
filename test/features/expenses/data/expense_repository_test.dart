@@ -6,6 +6,8 @@ import 'package:masroofy/core/database/app_database.dart';
 import 'package:masroofy/core/domain/date_range.dart';
 import 'package:masroofy/core/domain/local_date.dart';
 import 'package:masroofy/core/domain/money.dart';
+import 'package:masroofy/core/domain/period_totals.dart';
+import 'package:masroofy/core/domain/transaction_kind.dart';
 import 'package:masroofy/core/error/failures.dart';
 import 'package:masroofy/features/expenses/data/datasources/expense_local_datasource.dart';
 import 'package:masroofy/features/expenses/data/repositories/expense_repository_impl.dart';
@@ -19,6 +21,7 @@ void main() {
   late SaveExpense save;
   late int food;
   late int transport;
+  late int salary;
   final today = LocalDate(2026, 10, 8);
   final october = ExpenseFilter(range: DateRange.monthToDate(today));
 
@@ -31,6 +34,7 @@ void main() {
         (await (db.select(db.categoriesTable)..where((c) => c.seedKey.equals(key))).getSingle()).id;
     food = await seed('food');
     transport = await seed('transport');
+    salary = await seed('salary');
   });
   tearDown(() => db.close());
 
@@ -41,6 +45,10 @@ void main() {
     await save(
       ExpenseDraft(amount: Money(minor), categoryId: category ?? food, date: date, title: title, note: note),
     ),
+  );
+
+  Future<int> addIncome(int minor, LocalDate date) async => right(
+    await save(ExpenseDraft(amount: Money(minor), categoryId: salary, date: date, kind: TransactionKind.income)),
   );
 
   test('saves trimmed text, and empty text as null', () async {
@@ -86,11 +94,78 @@ void main() {
     }
     await add(250, LocalDate(2026, 10, 2), category: transport);
 
-    expect(right(await repository.watchTotal(october).first), const Money(1250));
-    expect(right(await repository.watchTotal(october.copyWith(categoryId: transport)).first), const Money(250));
+    expect(right(await repository.watchTotals(october).first).spent, const Money(1250));
+    expect(right(await repository.watchTotals(october.copyWith(categoryId: transport)).first).spent, const Money(250));
     expect(right(await repository.watchDailyTotals(october).first), {
-      today: const Money(1000),
-      LocalDate(2026, 10, 2): const Money(250),
+      today: const PeriodTotals(income: Money.zero, spent: Money(1000)),
+      LocalDate(2026, 10, 2): const PeriodTotals(income: Money.zero, spent: Money(250)),
+    });
+  });
+
+  group('income', () {
+    test('rows carry their category kind, and income never changes spending', () async {
+      await add(1000, today);
+      final before = right(await repository.watchTotals(october).first);
+      final pay = await addIncome(500000, today);
+
+      final after = right(await repository.watchTotals(october).first);
+      expect(after.spent, before.spent);
+      expect(after.income, const Money(500000));
+      expect(after.balance, const Money(499000));
+      expect(right(await repository.getById(pay)).kind, TransactionKind.income);
+    });
+
+    test('the kind filter narrows rows and totals', () async {
+      await add(1000, today);
+      final pay = await addIncome(500000, today);
+
+      final incomeOnly = october.copyWith(kind: TransactionKind.income);
+      final rows = right(await repository.watchExpenses(incomeOnly, limit: 50).first);
+      expect(rows.map((e) => (e.id, e.kind)), [(pay, TransactionKind.income)]);
+      expect(
+        right(await repository.watchTotals(incomeOnly).first),
+        const PeriodTotals(income: Money(500000), spent: Money.zero),
+      );
+      expect(
+        right(await repository.watchTotals(october.copyWith(kind: TransactionKind.expense)).first),
+        const PeriodTotals(income: Money.zero, spent: Money(1000)),
+      );
+    });
+
+    test('daily totals hold both series', () async {
+      await add(1000, today);
+      await addIncome(500000, today);
+
+      expect(right(await repository.watchDailyTotals(october).first), {
+        today: const PeriodTotals(income: Money(500000), spent: Money(1000)),
+      });
+    });
+
+    test('a category of the other kind is rejected', () async {
+      const wrongKind = Failure.validation(field: 'categoryId', reason: ValidationReason.wrongKind);
+      expect(
+        left(await save(ExpenseDraft(amount: const Money(1), categoryId: salary, date: today))),
+        wrongKind,
+      );
+      expect(
+        left(
+          await save(
+            ExpenseDraft(amount: const Money(1), categoryId: food, date: today, kind: TransactionKind.income),
+          ),
+        ),
+        wrongKind,
+      );
+      final id = await add(100, today);
+      expect(
+        left(
+          await save(
+            ExpenseDraft(amount: const Money(1), categoryId: salary, date: today),
+            id: id,
+          ),
+        ),
+        wrongKind,
+      );
+      expect(right(await repository.getById(id)).categoryId, food);
     });
   });
 

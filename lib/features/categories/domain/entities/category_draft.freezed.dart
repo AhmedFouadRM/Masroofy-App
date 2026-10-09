@@ -14,7 +14,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$CategoryDraft {
 
- String get name; String get icon; int get color;
+ String get name; String get icon; int get color; TransactionKind get kind;
 /// Create a copy of CategoryDraft
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -25,16 +25,16 @@ $CategoryDraftCopyWith<CategoryDraft> get copyWith => _$CategoryDraftCopyWithImp
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is CategoryDraft&&(identical(other.name, name) || other.name == name)&&(identical(other.icon, icon) || other.icon == icon)&&(identical(other.color, color) || other.color == color));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is CategoryDraft&&(identical(other.name, name) || other.name == name)&&(identical(other.icon, icon) || other.icon == icon)&&(identical(other.color, color) || other.color == color)&&(identical(other.kind, kind) || other.kind == kind));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,name,icon,color);
+int get hashCode => Object.hash(runtimeType,name,icon,color,kind);
 
 @override
 String toString() {
-  return 'CategoryDraft(name: $name, icon: $icon, color: $color)';
+  return 'CategoryDraft(name: $name, icon: $icon, color: $color, kind: $kind)';
 }
 
 
@@ -45,7 +45,7 @@ abstract mixin class $CategoryDraftCopyWith<$Res>  {
   factory $CategoryDraftCopyWith(CategoryDraft value, $Res Function(CategoryDraft) _then) = _$CategoryDraftCopyWithImpl;
 @useResult
 $Res call({
- String name, String icon, int color
+ String name, String icon, int color, TransactionKind kind
 });
 
 
@@ -62,12 +62,13 @@ class _$CategoryDraftCopyWithImpl<$Res>
 
 /// Create a copy of CategoryDraft
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? name = null,Object? icon = null,Object? color = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? name = null,Object? icon = null,Object? color = null,Object? kind = null,}) {
   return _then(_self.copyWith(
 name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
 as String,icon: null == icon ? _self.icon : icon // ignore: cast_nullable_to_non_nullable
 as String,color: null == color ? _self.color : color // ignore: cast_nullable_to_non_nullable
-as int,
+as int,kind: null == kind ? _self.kind : kind // ignore: cast_nullable_to_non_nullable
+as TransactionKind,
   ));
 }
 
@@ -152,10 +153,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String name,  String icon,  int color)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String name,  String icon,  int color,  TransactionKind kind)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _CategoryDraft() when $default != null:
-return $default(_that.name,_that.icon,_that.color);case _:
+return $default(_that.name,_that.icon,_that.color,_that.kind);case _:
   return orElse();
 
 }
@@ -173,10 +174,10 @@ return $default(_that.name,_that.icon,_that.color);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String name,  String icon,  int color)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String name,  String icon,  int color,  TransactionKind kind)  $default,) {final _that = this;
 switch (_that) {
 case _CategoryDraft():
-return $default(_that.name,_that.icon,_that.color);case _:
+return $default(_that.name,_that.icon,_that.color,_that.kind);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -193,10 +194,10 @@ return $default(_that.name,_that.icon,_that.color);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String name,  String icon,  int color)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String name,  String icon,  int color,  TransactionKind kind)?  $default,) {final _that = this;
 switch (_that) {
 case _CategoryDraft() when $default != null:
-return $default(_that.name,_that.icon,_that.color);case _:
+return $default(_that.name,_that.icon,_that.color,_that.kind);case _:
   return null;
 
 }
@@ -208,12 +209,13 @@ return $default(_that.name,_that.icon,_that.color);case _:
 
 
 class _CategoryDraft implements CategoryDraft {
-  const _CategoryDraft({required this.name, required this.icon, required this.color});
+  const _CategoryDraft({required this.name, required this.icon, required this.color, this.kind = TransactionKind.expense});
   
 
 @override final  String name;
 @override final  String icon;
 @override final  int color;
+@override@JsonKey() final  TransactionKind kind;
 
 /// Create a copy of CategoryDraft
 /// with the given fields replaced by the non-null parameter values.
@@ -225,16 +227,16 @@ _$CategoryDraftCopyWith<_CategoryDraft> get copyWith => __$CategoryDraftCopyWith
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _CategoryDraft&&(identical(other.name, name) || other.name == name)&&(identical(other.icon, icon) || other.icon == icon)&&(identical(other.color, color) || other.color == color));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _CategoryDraft&&(identical(other.name, name) || other.name == name)&&(identical(other.icon, icon) || other.icon == icon)&&(identical(other.color, color) || other.color == color)&&(identical(other.kind, kind) || other.kind == kind));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,name,icon,color);
+int get hashCode => Object.hash(runtimeType,name,icon,color,kind);
 
 @override
 String toString() {
-  return 'CategoryDraft(name: $name, icon: $icon, color: $color)';
+  return 'CategoryDraft(name: $name, icon: $icon, color: $color, kind: $kind)';
 }
 
 
@@ -245,7 +247,7 @@ abstract mixin class _$CategoryDraftCopyWith<$Res> implements $CategoryDraftCopy
   factory _$CategoryDraftCopyWith(_CategoryDraft value, $Res Function(_CategoryDraft) _then) = __$CategoryDraftCopyWithImpl;
 @override @useResult
 $Res call({
- String name, String icon, int color
+ String name, String icon, int color, TransactionKind kind
 });
 
 
@@ -262,12 +264,13 @@ class __$CategoryDraftCopyWithImpl<$Res>
 
 /// Create a copy of CategoryDraft
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? name = null,Object? icon = null,Object? color = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? name = null,Object? icon = null,Object? color = null,Object? kind = null,}) {
   return _then(_CategoryDraft(
 name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
 as String,icon: null == icon ? _self.icon : icon // ignore: cast_nullable_to_non_nullable
 as String,color: null == color ? _self.color : color // ignore: cast_nullable_to_non_nullable
-as int,
+as int,kind: null == kind ? _self.kind : kind // ignore: cast_nullable_to_non_nullable
+as TransactionKind,
   ));
 }
 

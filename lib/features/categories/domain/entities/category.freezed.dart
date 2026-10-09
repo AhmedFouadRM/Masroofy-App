@@ -14,7 +14,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$Category {
 
- int get id; String get icon; int get color; int get sortOrder; DateTime get createdAt; DateTime get updatedAt; String? get seedKey; String? get name; bool get isHidden;
+ int get id; String get icon; int get color; int get sortOrder; DateTime get createdAt; DateTime get updatedAt; String? get seedKey; String? get name; TransactionKind get kind; bool get isHidden;
 /// Create a copy of Category
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -25,16 +25,16 @@ $CategoryCopyWith<Category> get copyWith => _$CategoryCopyWithImpl<Category>(thi
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is Category&&(identical(other.id, id) || other.id == id)&&(identical(other.icon, icon) || other.icon == icon)&&(identical(other.color, color) || other.color == color)&&(identical(other.sortOrder, sortOrder) || other.sortOrder == sortOrder)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt)&&(identical(other.seedKey, seedKey) || other.seedKey == seedKey)&&(identical(other.name, name) || other.name == name)&&(identical(other.isHidden, isHidden) || other.isHidden == isHidden));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is Category&&(identical(other.id, id) || other.id == id)&&(identical(other.icon, icon) || other.icon == icon)&&(identical(other.color, color) || other.color == color)&&(identical(other.sortOrder, sortOrder) || other.sortOrder == sortOrder)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt)&&(identical(other.seedKey, seedKey) || other.seedKey == seedKey)&&(identical(other.name, name) || other.name == name)&&(identical(other.kind, kind) || other.kind == kind)&&(identical(other.isHidden, isHidden) || other.isHidden == isHidden));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,id,icon,color,sortOrder,createdAt,updatedAt,seedKey,name,isHidden);
+int get hashCode => Object.hash(runtimeType,id,icon,color,sortOrder,createdAt,updatedAt,seedKey,name,kind,isHidden);
 
 @override
 String toString() {
-  return 'Category(id: $id, icon: $icon, color: $color, sortOrder: $sortOrder, createdAt: $createdAt, updatedAt: $updatedAt, seedKey: $seedKey, name: $name, isHidden: $isHidden)';
+  return 'Category(id: $id, icon: $icon, color: $color, sortOrder: $sortOrder, createdAt: $createdAt, updatedAt: $updatedAt, seedKey: $seedKey, name: $name, kind: $kind, isHidden: $isHidden)';
 }
 
 
@@ -45,7 +45,7 @@ abstract mixin class $CategoryCopyWith<$Res>  {
   factory $CategoryCopyWith(Category value, $Res Function(Category) _then) = _$CategoryCopyWithImpl;
 @useResult
 $Res call({
- int id, String icon, int color, int sortOrder, DateTime createdAt, DateTime updatedAt, String? seedKey, String? name, bool isHidden
+ int id, String icon, int color, int sortOrder, DateTime createdAt, DateTime updatedAt, String? seedKey, String? name, TransactionKind kind, bool isHidden
 });
 
 
@@ -62,7 +62,7 @@ class _$CategoryCopyWithImpl<$Res>
 
 /// Create a copy of Category
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? icon = null,Object? color = null,Object? sortOrder = null,Object? createdAt = null,Object? updatedAt = null,Object? seedKey = freezed,Object? name = freezed,Object? isHidden = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? icon = null,Object? color = null,Object? sortOrder = null,Object? createdAt = null,Object? updatedAt = null,Object? seedKey = freezed,Object? name = freezed,Object? kind = null,Object? isHidden = null,}) {
   return _then(_self.copyWith(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as int,icon: null == icon ? _self.icon : icon // ignore: cast_nullable_to_non_nullable
@@ -72,7 +72,8 @@ as int,createdAt: null == createdAt ? _self.createdAt : createdAt // ignore: cas
 as DateTime,updatedAt: null == updatedAt ? _self.updatedAt : updatedAt // ignore: cast_nullable_to_non_nullable
 as DateTime,seedKey: freezed == seedKey ? _self.seedKey : seedKey // ignore: cast_nullable_to_non_nullable
 as String?,name: freezed == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
-as String?,isHidden: null == isHidden ? _self.isHidden : isHidden // ignore: cast_nullable_to_non_nullable
+as String?,kind: null == kind ? _self.kind : kind // ignore: cast_nullable_to_non_nullable
+as TransactionKind,isHidden: null == isHidden ? _self.isHidden : isHidden // ignore: cast_nullable_to_non_nullable
 as bool,
   ));
 }
@@ -158,10 +159,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( int id,  String icon,  int color,  int sortOrder,  DateTime createdAt,  DateTime updatedAt,  String? seedKey,  String? name,  bool isHidden)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( int id,  String icon,  int color,  int sortOrder,  DateTime createdAt,  DateTime updatedAt,  String? seedKey,  String? name,  TransactionKind kind,  bool isHidden)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _Category() when $default != null:
-return $default(_that.id,_that.icon,_that.color,_that.sortOrder,_that.createdAt,_that.updatedAt,_that.seedKey,_that.name,_that.isHidden);case _:
+return $default(_that.id,_that.icon,_that.color,_that.sortOrder,_that.createdAt,_that.updatedAt,_that.seedKey,_that.name,_that.kind,_that.isHidden);case _:
   return orElse();
 
 }
@@ -179,10 +180,10 @@ return $default(_that.id,_that.icon,_that.color,_that.sortOrder,_that.createdAt,
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( int id,  String icon,  int color,  int sortOrder,  DateTime createdAt,  DateTime updatedAt,  String? seedKey,  String? name,  bool isHidden)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( int id,  String icon,  int color,  int sortOrder,  DateTime createdAt,  DateTime updatedAt,  String? seedKey,  String? name,  TransactionKind kind,  bool isHidden)  $default,) {final _that = this;
 switch (_that) {
 case _Category():
-return $default(_that.id,_that.icon,_that.color,_that.sortOrder,_that.createdAt,_that.updatedAt,_that.seedKey,_that.name,_that.isHidden);case _:
+return $default(_that.id,_that.icon,_that.color,_that.sortOrder,_that.createdAt,_that.updatedAt,_that.seedKey,_that.name,_that.kind,_that.isHidden);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -199,10 +200,10 @@ return $default(_that.id,_that.icon,_that.color,_that.sortOrder,_that.createdAt,
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( int id,  String icon,  int color,  int sortOrder,  DateTime createdAt,  DateTime updatedAt,  String? seedKey,  String? name,  bool isHidden)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( int id,  String icon,  int color,  int sortOrder,  DateTime createdAt,  DateTime updatedAt,  String? seedKey,  String? name,  TransactionKind kind,  bool isHidden)?  $default,) {final _that = this;
 switch (_that) {
 case _Category() when $default != null:
-return $default(_that.id,_that.icon,_that.color,_that.sortOrder,_that.createdAt,_that.updatedAt,_that.seedKey,_that.name,_that.isHidden);case _:
+return $default(_that.id,_that.icon,_that.color,_that.sortOrder,_that.createdAt,_that.updatedAt,_that.seedKey,_that.name,_that.kind,_that.isHidden);case _:
   return null;
 
 }
@@ -214,7 +215,7 @@ return $default(_that.id,_that.icon,_that.color,_that.sortOrder,_that.createdAt,
 
 
 class _Category extends Category {
-  const _Category({required this.id, required this.icon, required this.color, required this.sortOrder, required this.createdAt, required this.updatedAt, this.seedKey, this.name, this.isHidden = false}): super._();
+  const _Category({required this.id, required this.icon, required this.color, required this.sortOrder, required this.createdAt, required this.updatedAt, this.seedKey, this.name, this.kind = TransactionKind.expense, this.isHidden = false}): super._();
   
 
 @override final  int id;
@@ -225,6 +226,7 @@ class _Category extends Category {
 @override final  DateTime updatedAt;
 @override final  String? seedKey;
 @override final  String? name;
+@override@JsonKey() final  TransactionKind kind;
 @override@JsonKey() final  bool isHidden;
 
 /// Create a copy of Category
@@ -237,16 +239,16 @@ _$CategoryCopyWith<_Category> get copyWith => __$CategoryCopyWithImpl<_Category>
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Category&&(identical(other.id, id) || other.id == id)&&(identical(other.icon, icon) || other.icon == icon)&&(identical(other.color, color) || other.color == color)&&(identical(other.sortOrder, sortOrder) || other.sortOrder == sortOrder)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt)&&(identical(other.seedKey, seedKey) || other.seedKey == seedKey)&&(identical(other.name, name) || other.name == name)&&(identical(other.isHidden, isHidden) || other.isHidden == isHidden));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Category&&(identical(other.id, id) || other.id == id)&&(identical(other.icon, icon) || other.icon == icon)&&(identical(other.color, color) || other.color == color)&&(identical(other.sortOrder, sortOrder) || other.sortOrder == sortOrder)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt)&&(identical(other.seedKey, seedKey) || other.seedKey == seedKey)&&(identical(other.name, name) || other.name == name)&&(identical(other.kind, kind) || other.kind == kind)&&(identical(other.isHidden, isHidden) || other.isHidden == isHidden));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,id,icon,color,sortOrder,createdAt,updatedAt,seedKey,name,isHidden);
+int get hashCode => Object.hash(runtimeType,id,icon,color,sortOrder,createdAt,updatedAt,seedKey,name,kind,isHidden);
 
 @override
 String toString() {
-  return 'Category(id: $id, icon: $icon, color: $color, sortOrder: $sortOrder, createdAt: $createdAt, updatedAt: $updatedAt, seedKey: $seedKey, name: $name, isHidden: $isHidden)';
+  return 'Category(id: $id, icon: $icon, color: $color, sortOrder: $sortOrder, createdAt: $createdAt, updatedAt: $updatedAt, seedKey: $seedKey, name: $name, kind: $kind, isHidden: $isHidden)';
 }
 
 
@@ -257,7 +259,7 @@ abstract mixin class _$CategoryCopyWith<$Res> implements $CategoryCopyWith<$Res>
   factory _$CategoryCopyWith(_Category value, $Res Function(_Category) _then) = __$CategoryCopyWithImpl;
 @override @useResult
 $Res call({
- int id, String icon, int color, int sortOrder, DateTime createdAt, DateTime updatedAt, String? seedKey, String? name, bool isHidden
+ int id, String icon, int color, int sortOrder, DateTime createdAt, DateTime updatedAt, String? seedKey, String? name, TransactionKind kind, bool isHidden
 });
 
 
@@ -274,7 +276,7 @@ class __$CategoryCopyWithImpl<$Res>
 
 /// Create a copy of Category
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? icon = null,Object? color = null,Object? sortOrder = null,Object? createdAt = null,Object? updatedAt = null,Object? seedKey = freezed,Object? name = freezed,Object? isHidden = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? icon = null,Object? color = null,Object? sortOrder = null,Object? createdAt = null,Object? updatedAt = null,Object? seedKey = freezed,Object? name = freezed,Object? kind = null,Object? isHidden = null,}) {
   return _then(_Category(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as int,icon: null == icon ? _self.icon : icon // ignore: cast_nullable_to_non_nullable
@@ -284,7 +286,8 @@ as int,createdAt: null == createdAt ? _self.createdAt : createdAt // ignore: cas
 as DateTime,updatedAt: null == updatedAt ? _self.updatedAt : updatedAt // ignore: cast_nullable_to_non_nullable
 as DateTime,seedKey: freezed == seedKey ? _self.seedKey : seedKey // ignore: cast_nullable_to_non_nullable
 as String?,name: freezed == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
-as String?,isHidden: null == isHidden ? _self.isHidden : isHidden // ignore: cast_nullable_to_non_nullable
+as String?,kind: null == kind ? _self.kind : kind // ignore: cast_nullable_to_non_nullable
+as TransactionKind,isHidden: null == isHidden ? _self.isHidden : isHidden // ignore: cast_nullable_to_non_nullable
 as bool,
   ));
 }

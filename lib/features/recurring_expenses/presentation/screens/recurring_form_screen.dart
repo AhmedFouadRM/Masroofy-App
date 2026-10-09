@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:masroofy/core/constants/app_constants.dart';
 import 'package:masroofy/core/domain/local_date.dart';
+import 'package:masroofy/core/domain/transaction_kind.dart';
 import 'package:masroofy/core/error/failures.dart';
 import 'package:masroofy/core/strings/string_manager.dart';
 import 'package:masroofy/core/theme/app_dimensions.dart';
@@ -119,6 +120,7 @@ class _Fields extends StatelessWidget {
   final TextEditingController title;
 
   String? _error(String field) => switch (state.errors[field]) {
+    ValidationReason.wrongKind => StringManager.wrongKind(state.kind),
     final ValidationReason reason => StringManager.validation(reason),
     null => null,
   };
@@ -138,7 +140,11 @@ class _Fields extends StatelessWidget {
 
   Future<void> _pickCategory(BuildContext context) async {
     final cubit = context.read<RecurringFormCubit>();
-    final id = await showCategoryPickerSheet(context, categories: state.categories, selectedId: state.categoryId);
+    final id = await showCategoryPickerSheet(
+      context,
+      categories: state.pickerCategories,
+      selectedId: state.categoryId,
+    );
     if (id != null) cubit.categorySelected(id);
   }
 
@@ -166,13 +172,23 @@ class _Fields extends StatelessWidget {
         AppSpacing.xl,
       ),
       children: [
+        SegmentedPills(
+          labels: [for (final kind in TransactionKind.values) StringManager.kindLabel(kind)],
+          selected: state.kind.index,
+          onSelected: (i) => cubit.kindSelected(TransactionKind.values[i]),
+        ),
+        gap,
         TextField(
           controller: amount,
           autofocus: !state.isEditing,
           keyboardType: TextInputType.numberWithOptions(decimal: state.fractionDigits > 0),
           // Western and Arabic-Indic digits, with `.` or `٫` as decimal point.
           inputFormatters: [FilteringTextInputFormatter.allow(RegExp('[0-9٠-٩۰-۹.٫,٬]'))],
-          style: text.displaySmall!.copyWith(fontSize: 28, height: 36 / 28),
+          style: text.displaySmall!.copyWith(
+            fontSize: 28,
+            height: 36 / 28,
+            color: state.kind == TransactionKind.income ? colors.textPositive : null,
+          ),
           textInputAction: TextInputAction.next,
           onChanged: cubit.amountChanged,
           decoration: InputDecoration(

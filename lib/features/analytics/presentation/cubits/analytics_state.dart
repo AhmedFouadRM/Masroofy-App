@@ -2,6 +2,8 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:masroofy/core/domain/date_range.dart';
 import 'package:masroofy/core/domain/local_date.dart';
 import 'package:masroofy/core/domain/money.dart';
+import 'package:masroofy/core/domain/period_totals.dart';
+import 'package:masroofy/core/domain/transaction_kind.dart';
 import 'package:masroofy/core/error/failures.dart';
 import 'package:masroofy/features/analytics/domain/analytics_math.dart';
 import 'package:masroofy/features/budgets/domain/entities/budget_progress.dart';
@@ -23,12 +25,17 @@ abstract class AnalyticsState with _$AnalyticsState {
     /// `DateTime.weekday` the week starts on, for weekly bars.
     required int firstWeekday,
     @Default(AnalyticsStatus.loading) AnalyticsStatus status,
-    @Default(Money.zero) Money total,
+    @Default(PeriodTotals.zero) PeriodTotals totals,
 
-    /// Total of the comparison period; null until it has loaded.
+    /// Spending of the comparison period; null until it has loaded.
     Money? previousTotal,
+
+    /// What the breakdown card shows: spending or income by category.
+    @Default(TransactionKind.expense) TransactionKind breakdownKind,
+
+    /// Totals per category of [breakdownKind].
     @Default(<int, Money>{}) Map<int, Money> byCategory,
-    @Default(<LocalDate, Money>{}) Map<LocalDate, Money> daily,
+    @Default(<LocalDate, PeriodTotals>{}) Map<LocalDate, PeriodTotals> daily,
 
     /// Every category (hidden ones too), by id.
     @Default(<int, Category>{}) Map<int, Category> categories,
@@ -40,7 +47,14 @@ abstract class AnalyticsState with _$AnalyticsState {
 
   const AnalyticsState._();
 
-  bool get isEmpty => total == Money.zero;
+  /// Spending in the period (income never counts).
+  Money get total => totals.spent;
+
+  /// Nothing came in and nothing went out.
+  bool get isEmpty => totals.income == Money.zero && totals.spent == Money.zero;
+
+  /// What the breakdown card adds up to.
+  Money get breakdownTotal => Money.sum(byCategory.values);
 
   SpendingBucket get bucket => AnalyticsMath.bucketFor(range);
 
@@ -48,10 +62,15 @@ abstract class AnalyticsState with _$AnalyticsState {
 
   List<SpendingSlice> get slices => AnalyticsMath.slices(
     byCategory,
-    otherCategoryId: categories.values.where((c) => c.seedKey == 'other').firstOrNull?.id,
+    otherCategoryId: categories.values
+        .where(
+          (c) => c.seedKey == (breakdownKind == TransactionKind.income ? 'other_income' : 'other'),
+        )
+        .firstOrNull
+        ?.id,
   );
 
-  /// Categories with spending, largest first, for the legend.
+  /// Categories with transactions of [breakdownKind], largest first, for the legend.
   List<(Category, Money)> get legend => [
     for (final MapEntry(:key, :value) in byCategory.entries.toList()..sort((a, b) => b.value.compareTo(a.value)))
       if (categories[key] case final category?) (category, value),

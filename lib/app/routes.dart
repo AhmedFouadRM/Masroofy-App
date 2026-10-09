@@ -4,6 +4,9 @@ abstract final class RoutePaths {
   static const analytics = '/analytics';
   static const settings = '/settings';
   static const newExpense = '/expenses/new';
+
+  /// The add form, opened on Income.
+  static const newIncome = '/expenses/new?kind=income';
   static String editExpense(int id) => '/expenses/$id';
   static const recurring = '/expenses/recurring';
   static const newRecurring = '/expenses/recurring/new';

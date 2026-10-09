@@ -1,4 +1,5 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:masroofy/core/domain/transaction_kind.dart';
 import 'package:masroofy/core/error/failures.dart';
 import 'package:masroofy/features/categories/domain/entities/category_summary.dart';
 
@@ -16,6 +17,7 @@ abstract class CategoryFormState with _$CategoryFormState {
     /// Null for a new category.
     int? id,
     @Default('') String name,
+    @Default(TransactionKind.expense) TransactionKind kind,
 
     /// Shown under the name field; cleared as soon as the user types.
     ValidationReason? nameError,
@@ -30,6 +32,9 @@ abstract class CategoryFormState with _$CategoryFormState {
   const CategoryFormState._();
 
   bool get isEditing => id != null;
+
+  /// A category's type can't change once anything uses it.
+  bool get kindLocked => isEditing && (usage?.isInUse ?? false);
 
   bool get canSave => status == CategoryFormStatus.ready && name.trim().isNotEmpty;
 }

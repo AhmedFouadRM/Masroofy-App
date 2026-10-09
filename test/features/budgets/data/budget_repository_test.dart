@@ -121,9 +121,35 @@ void main() {
     expect(await alerts(november), hasLength(1));
   });
 
+  test('an income category cannot have a budget', () async {
+    final salary = (await (db.select(db.categoriesTable)..where((c) => c.seedKey.equals('salary'))).getSingle()).id;
+
+    final result = await save(BudgetDraft(categoryId: salary, limit: const Money(1000), period: BudgetPeriod.monthly));
+
+    expect(
+      result.getLeft().toNullable(),
+      const Failure.validation(field: 'categoryId', reason: ValidationReason.invalidFormat),
+    );
+    expect(await progress(), isEmpty);
+  });
+
+  test('income never counts towards a budget', () async {
+    right(await save(BudgetDraft(categoryId: food, limit: const Money(1000), period: BudgetPeriod.monthly)));
+    final salary = (await (db.select(db.categoriesTable)..where((c) => c.seedKey.equals('salary'))).getSingle()).id;
+    await spend(1000000, salary, today);
+    await spend(400, food, today);
+
+    expect((await progress()).single.spent, const Money(400));
+  });
+
   test('deleting a category deletes its budget', () async {
     final categories = CategoryLocalDatasource(db);
-    final gym = await categories.insertCategory(name: 'Gym', icon: 'fitness_center', color: 0xFF000000);
+    final gym = await categories.insertCategory(
+      name: 'Gym',
+      icon: 'fitness_center',
+      color: 0xFF000000,
+      kind: 'expense',
+    );
     right(await save(BudgetDraft(categoryId: gym, limit: const Money(1), period: BudgetPeriod.monthly)));
 
     await categories.deleteCategory(gym);

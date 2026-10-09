@@ -4,6 +4,7 @@ import 'package:masroofy/core/database/app_database.dart';
 import 'package:masroofy/core/database/db_guard.dart';
 import 'package:masroofy/core/domain/local_date.dart';
 import 'package:masroofy/core/domain/money.dart';
+import 'package:masroofy/core/domain/transaction_kind.dart';
 import 'package:masroofy/core/error/failures.dart';
 import 'package:masroofy/features/recurring_expenses/data/datasources/recurring_expense_local_datasource.dart';
 import 'package:masroofy/features/recurring_expenses/domain/entities/recurring_draft.dart';
@@ -30,37 +31,53 @@ class RecurringExpenseRepositoryImpl implements IRecurringExpenseRepository {
   Future<Either<Failure, LocalDate?>> lastOccurrence(int id) => guardDb(() => _datasource.lastOccurrence(id));
 
   @override
-  Future<Either<Failure, int>> create(RecurringDraft draft, {required LocalDate nextDue}) => guardDb(
-    () => _datasource.insertTemplate(
-      RecurringExpensesTableCompanion.insert(
-        title: draft.title,
-        amountMinor: draft.amount.minor,
-        categoryId: draft.categoryId,
-        frequency: draft.frequency.name,
-        startDate: draft.startDate,
-        nextDueDate: nextDue,
-        isActive: Value(draft.isActive),
+  Future<Either<Failure, int>> create(RecurringDraft draft, {required LocalDate nextDue}) async {
+    final wrongKind = await _wrongKind(draft);
+    if (wrongKind != null) return Left(wrongKind);
+    return guardDb(
+      () => _datasource.insertTemplate(
+        RecurringExpensesTableCompanion.insert(
+          title: draft.title,
+          amountMinor: draft.amount.minor,
+          categoryId: draft.categoryId,
+          frequency: draft.frequency.name,
+          startDate: draft.startDate,
+          nextDueDate: nextDue,
+          isActive: Value(draft.isActive),
+        ),
       ),
-    ),
-  );
+    );
+  }
 
   @override
-  Future<Either<Failure, Unit>> update(int id, RecurringDraft draft, {required LocalDate nextDue}) async =>
-      (await guardDb(
-        () => _datasource.updateTemplate(
-          id,
-          RecurringExpensesTableCompanion(
-            title: Value(draft.title),
-            amountMinor: Value(draft.amount.minor),
-            categoryId: Value(draft.categoryId),
-            frequency: Value(draft.frequency.name),
-            startDate: Value(draft.startDate),
-            nextDueDate: Value(nextDue),
-            isActive: Value(draft.isActive),
-            updatedAt: Value(DateTime.now().toUtc()),
-          ),
+  Future<Either<Failure, Unit>> update(int id, RecurringDraft draft, {required LocalDate nextDue}) async {
+    final wrongKind = await _wrongKind(draft);
+    if (wrongKind != null) return Left(wrongKind);
+    return (await guardDb(
+      () => _datasource.updateTemplate(
+        id,
+        RecurringExpensesTableCompanion(
+          title: Value(draft.title),
+          amountMinor: Value(draft.amount.minor),
+          categoryId: Value(draft.categoryId),
+          frequency: Value(draft.frequency.name),
+          startDate: Value(draft.startDate),
+          nextDueDate: Value(nextDue),
+          isActive: Value(draft.isActive),
+          updatedAt: Value(DateTime.now().toUtc()),
         ),
-      )).flatMap(_oneRowChanged);
+      ),
+    )).flatMap(_oneRowChanged);
+  }
+
+  /// The category must be of the draft's kind. A missing category is left to
+  /// the foreign key.
+  Future<Failure?> _wrongKind(RecurringDraft draft) async {
+    final kind = (await guardDb(() => _datasource.categoryKind(draft.categoryId))).getOrElse((_) => null);
+    return kind == null || kind == draft.kind.name
+        ? null
+        : const ValidationFailure(field: 'categoryId', reason: ValidationReason.wrongKind);
+  }
 
   @override
   Future<Either<Failure, Unit>> setActive(int id, {required bool active, required LocalDate nextDue}) async =>
@@ -111,16 +128,20 @@ class RecurringExpenseRepositoryImpl implements IRecurringExpenseRepository {
   static Either<Failure, Unit> _oneRowChanged(int rows) =>
       rows == 1 ? const Right(unit) : const Left(Failure.notFound());
 
-  static RecurringExpense _toTemplate(RecurringExpensesTableData row) => RecurringExpense(
-    id: row.id,
-    title: row.title,
-    amount: Money(row.amountMinor),
-    categoryId: row.categoryId,
-    frequency: RecurringFrequency.values.byName(row.frequency),
-    startDate: row.startDate,
-    nextDueDate: row.nextDueDate,
-    isActive: row.isActive,
-    createdAt: row.createdAt,
-    updatedAt: row.updatedAt,
-  );
+  static RecurringExpense _toTemplate(TemplateRow result) {
+    final row = result.template;
+    return RecurringExpense(
+      id: row.id,
+      title: row.title,
+      amount: Money(row.amountMinor),
+      categoryId: row.categoryId,
+      frequency: RecurringFrequency.values.byName(row.frequency),
+      startDate: row.startDate,
+      nextDueDate: row.nextDueDate,
+      isActive: row.isActive,
+      createdAt: row.createdAt,
+      updatedAt: row.updatedAt,
+      kind: TransactionKind.values.byName(result.kind),
+    );
+  }
 }

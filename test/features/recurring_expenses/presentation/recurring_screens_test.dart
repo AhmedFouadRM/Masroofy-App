@@ -4,7 +4,9 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:masroofy/core/domain/local_date.dart';
 import 'package:masroofy/core/domain/money.dart';
+import 'package:masroofy/core/domain/transaction_kind.dart';
 import 'package:masroofy/core/error/failures.dart';
+import 'package:masroofy/core/theme/masroofy_colors.dart';
 import 'package:masroofy/features/categories/domain/entities/category.dart';
 import 'package:masroofy/features/recurring_expenses/domain/entities/recurring_expense.dart';
 import 'package:masroofy/features/recurring_expenses/domain/entities/recurring_frequency.dart';
@@ -23,6 +25,17 @@ class _MockForm extends MockCubit<RecurringFormState> implements RecurringFormCu
 final _today = LocalDate.today();
 final _epoch = DateTime.utc(2026);
 
+final _salary = Category(
+  id: 2,
+  seedKey: 'salary',
+  icon: 'payments',
+  color: 0xFF6366F1,
+  sortOrder: 8,
+  createdAt: _epoch,
+  updatedAt: _epoch,
+  kind: TransactionKind.income,
+);
+
 final _bills = Category(
   id: 1,
   seedKey: 'bills',
@@ -33,7 +46,13 @@ final _bills = Category(
   updatedAt: _epoch,
 );
 
-RecurringExpense _template(int id, String title, {bool active = true, LocalDate? due}) => RecurringExpense(
+RecurringExpense _template(
+  int id,
+  String title, {
+  bool active = true,
+  LocalDate? due,
+  TransactionKind kind = TransactionKind.expense,
+}) => RecurringExpense(
   id: id,
   title: title,
   amount: const Money(500000),
@@ -44,6 +63,7 @@ RecurringExpense _template(int id, String title, {bool active = true, LocalDate?
   isActive: active,
   createdAt: _epoch,
   updatedAt: _epoch,
+  kind: kind,
 );
 
 void main() {
@@ -80,6 +100,19 @@ void main() {
       expect(find.text('Monthly · Next Today'), findsOneWidget);
       expect(find.text('Monthly · Paused'), findsOneWidget);
       expect(find.text('EGP 5,000'), findsNWidgets(2));
+    });
+
+    testWidgets('income templates show a green signed amount', (tester) async {
+      await pump(
+        tester,
+        loaded.copyWith(
+          templates: [_template(3, 'Pay day', kind: TransactionKind.income).copyWith(categoryId: 2)],
+          categories: {1: _bills, 2: _salary},
+        ),
+      );
+
+      final amount = tester.widget<Text>(find.text('\u2066+EGP 5,000\u2069'));
+      expect(amount.style!.color, MasroofyColors.light.textPositive);
     });
 
     testWidgets('the switch pauses a template', (tester) async {
@@ -143,6 +176,7 @@ void main() {
     setUp(() {
       cubit = _MockForm();
       when(() => cubit.save()).thenAnswer((_) async {});
+      registerFallbackValue(TransactionKind.expense);
     });
 
     Future<void> pump(WidgetTester tester, RecurringFormState state) {
@@ -166,6 +200,30 @@ void main() {
 
       await tester.tap(find.text('Save recurring expense'));
       verify(() => cubit.save()).called(1);
+    });
+
+    testWidgets('has the Expense | Income switch, offering only categories of its kind', (tester) async {
+      await pump(tester, ready.copyWith(categories: [_bills, _salary]));
+
+      expect(find.text('Expense'), findsOneWidget);
+      await tester.tap(find.text('Income'));
+      verify(() => cubit.kindSelected(TransactionKind.income)).called(1);
+
+      await tester.tap(find.text('Category'));
+      await tester.pumpAndSettle();
+      expect(find.text('Bills'), findsOneWidget);
+      expect(find.text('Salary'), findsNothing);
+    });
+
+    testWidgets('an income template has a green amount and income categories', (tester) async {
+      await pump(tester, ready.copyWith(kind: TransactionKind.income, categories: [_bills, _salary]));
+
+      final amount = tester.widget<TextField>(find.byType(TextField).first);
+      expect(amount.style!.color, MasroofyColors.light.textPositive);
+      await tester.tap(find.text('Category'));
+      await tester.pumpAndSettle();
+      expect(find.text('Salary'), findsOneWidget);
+      expect(find.text('Bills'), findsNothing);
     });
 
     testWidgets('editing shows the active switch', (tester) async {

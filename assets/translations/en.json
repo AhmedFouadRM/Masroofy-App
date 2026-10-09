@@ -12,7 +12,7 @@
     "continue": "Continue"
   },
   "expenses": {
-    "title": "Expenses",
+    "title": "Transactions",
     "add": "Add expense",
     "edit": "Edit expense",
     "deleted": "“{}” deleted",
@@ -46,6 +46,26 @@
     "note_hint": "Add a note",
     "save": "Save expense"
   },
+  "income": {
+    "add": "Add income",
+    "edit": "Edit income",
+    "save": "Save income",
+    "kind_expense": "Expense",
+    "kind_income": "Income",
+    "filter_income": "Income",
+    "filter_expenses": "Expenses",
+    "empty_title": "No income yet",
+    "empty_body": "Add your salary or other money you receive.",
+    "left_week": "Left this week",
+    "left_month": "Left this month",
+    "left_range": "Left {}",
+    "in": "In",
+    "out": "Out",
+    "earned_week": "Earned this week",
+    "earned_month": "Earned this month",
+    "earned_range": "Earned {}",
+    "row_semantics": "Income, {}, plus {}"
+  },
   "categories": {
     "title": "Categories",
     "add": "Add Category",
@@ -57,8 +77,18 @@
     "entertainment": "Entertainment",
     "education": "Education",
     "other": "Other",
+    "salary": "Salary",
+    "freelance": "Freelance",
+    "gifts": "Gifts",
+    "refunds": "Refunds",
+    "investments": "Investments",
+    "other_income": "Other income",
     "section_default": "Default",
     "section_custom": "Custom",
+    "section_expense": "Expense",
+    "section_income": "Income",
+    "kind_label": "Type",
+    "kind_in_use": "This category has transactions, so its type can't change.",
     "new": "New category",
     "edit": "Edit category",
     "name": "Name",
@@ -68,6 +98,7 @@
     "delete": "Delete category",
     "delete_title": "Delete “{}”?",
     "delete_moves": "{} will move to Other.",
+    "delete_moves_income": "{} will move to Other income.",
     "delete_budget": "Its budget will be removed.",
     "delete_unused": "This category isn't used yet.",
     "and": " and ",
@@ -79,6 +110,14 @@
       "few": "{} expenses",
       "many": "{} expenses",
       "other": "{} expenses"
+    },
+    "income_count": {
+      "zero": "No income yet",
+      "one": "{} income entry",
+      "two": "{} income entries",
+      "few": "{} income entries",
+      "many": "{} income entries",
+      "other": "{} income entries"
     },
     "recurring_count": {
       "zero": "",
@@ -103,6 +142,14 @@
       "few": "{} recurring templates",
       "many": "{} recurring templates",
       "other": "{} recurring templates"
+    },
+    "income_to_move": {
+      "zero": "",
+      "one": "{} income entry",
+      "two": "{} income entries",
+      "few": "{} income entries",
+      "many": "{} income entries",
+      "other": "{} income entries"
     }
   },
   "recurring": {
@@ -142,6 +189,14 @@
     "vs_month_before": "vs the month before",
     "by_category": "By category",
     "over_time": "Spending over time",
+    "income_vs_spending": "Income vs spending",
+    "income": "Income",
+    "spent": "Spent",
+    "balance": "Balance",
+    "savings_rate": "Savings rate",
+    "spending": "Spending",
+    "tooltip": "Income {} · Spent {}",
+    "no_income": "No income in this period",
     "smaller_categories": "Smaller categories",
     "no_data": "No spending data for this period",
     "no_data_hint": "Expenses you add in this period will show up here.",
@@ -274,7 +329,11 @@
     "must_be_positive": "Enter an amount greater than zero",
     "in_future": "The date can't be in the future",
     "invalid_format": "This value is not valid",
-    "duplicate": "This name is already used"
+    "duplicate": "This name is already used",
+    "category_wrong_kind": {
+      "expense": "Pick an expense category",
+      "income": "Pick an income category"
+    }
   },
   "errors": {
     "not_found": "This item no longer exists",

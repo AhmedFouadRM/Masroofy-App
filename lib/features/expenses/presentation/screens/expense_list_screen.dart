@@ -6,6 +6,8 @@ import 'package:go_router/go_router.dart';
 import 'package:masroofy/app/routes.dart';
 import 'package:masroofy/core/domain/date_range.dart';
 import 'package:masroofy/core/domain/local_date.dart';
+import 'package:masroofy/core/domain/period_totals.dart';
+import 'package:masroofy/core/domain/transaction_kind.dart';
 import 'package:masroofy/core/strings/string_manager.dart';
 import 'package:masroofy/core/theme/app_dimensions.dart';
 import 'package:masroofy/core/theme/masroofy_colors.dart';
@@ -151,7 +153,16 @@ class _ExpenseListScreenState extends State<ExpenseListScreen> {
         return [
           SliverFillRemaining(
             hasScrollBody: false,
-            child: state.isFiltered
+            child: state.kind == TransactionKind.income && !state.isFiltered
+                ? EmptyStateWidget(
+                    icon: Symbols.payments_rounded,
+                    title: StringManager.emptyIncome,
+                    message: StringManager.emptyIncomeHint,
+                    actionLabel: StringManager.addIncome,
+                    actionIcon: Symbols.add_rounded,
+                    onAction: () => context.push(RoutePaths.newIncome),
+                  )
+                : state.isFiltered
                 ? EmptyStateWidget(
                     icon: Symbols.search_off_rounded,
                     title: StringManager.noMatchingExpenses,
@@ -203,20 +214,49 @@ class _Summary extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final (label, comparison) = switch (state.period) {
-      ExpensePeriod.week => (StringManager.spentThisWeek, StringManager.vsLastWeek),
-      ExpensePeriod.month => (StringManager.spentThisMonth, StringManager.vsLastMonth),
-      ExpensePeriod.custom => (
-        StringManager.spentInRange(_rangeLabel(context, state.range)),
-        StringManager.vsPreviousPeriod,
+    final range = _rangeLabel(context, state.range);
+    final totals = state.visibleTotals;
+    final comparison = switch (state.period) {
+      ExpensePeriod.week => StringManager.vsLastWeek,
+      ExpensePeriod.month => StringManager.vsLastMonth,
+      ExpensePeriod.custom => StringManager.vsPreviousPeriod,
+    };
+    return switch (state.kind) {
+      // The balance, with what came in and went out.
+      null => SummaryCard(
+        label: switch (state.period) {
+          ExpensePeriod.week => StringManager.leftThisWeek,
+          ExpensePeriod.month => StringManager.leftThisMonth,
+          ExpensePeriod.custom => StringManager.leftInRange(range),
+        },
+        total: totals.balance,
+        signed: true,
+        details: [
+          (label: StringManager.incomeIn, amount: totals.income),
+          (label: StringManager.incomeOut, amount: totals.spent),
+        ],
+      ),
+      TransactionKind.expense => SummaryCard(
+        label: switch (state.period) {
+          ExpensePeriod.week => StringManager.spentThisWeek,
+          ExpensePeriod.month => StringManager.spentThisMonth,
+          ExpensePeriod.custom => StringManager.spentInRange(range),
+        },
+        total: totals.spent,
+        previousTotal: state.previousTotals?.spent,
+        comparisonLabel: comparison,
+      ),
+      TransactionKind.income => SummaryCard(
+        label: switch (state.period) {
+          ExpensePeriod.week => StringManager.earnedThisWeek,
+          ExpensePeriod.month => StringManager.earnedThisMonth,
+          ExpensePeriod.custom => StringManager.earnedInRange(range),
+        },
+        total: totals.income,
+        previousTotal: state.previousTotals?.income,
+        comparisonLabel: comparison,
       ),
     };
-    return SummaryCard(
-      label: label,
-      total: state.visibleTotal,
-      previousTotal: state.previousTotal,
-      comparisonLabel: comparison,
-    );
   }
 }
 
@@ -274,19 +314,25 @@ class _CategoryFilter extends StatelessWidget {
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: AppSpacing.screen, vertical: AppSpacing.md),
-        itemCount: categories.length + 1,
+        itemCount: categories.length + 3,
         separatorBuilder: (_, _) => const SizedBox(width: AppSpacing.sm),
         itemBuilder: (context, i) {
-          if (i == 0) {
+          // All · Income · Expenses, then the categories of the selected kind.
+          if (i < 3) {
+            final (kind, label, icon) = switch (i) {
+              0 => (null, StringManager.allCategories, Symbols.apps_rounded),
+              1 => (TransactionKind.income, StringManager.filterIncome, Symbols.trending_up_rounded),
+              _ => (TransactionKind.expense, StringManager.filterExpenses, Symbols.trending_down_rounded),
+            };
             return CategoryChip(
-              label: StringManager.allCategories,
-              icon: Symbols.apps_rounded,
+              label: label,
+              icon: icon,
               iconColor: colors.textAccent,
-              selected: state.categoryId == null,
-              onTap: () => cubit.selectCategory(null),
+              selected: state.kind == kind,
+              onTap: () => cubit.selectKind(kind),
             );
           }
-          final category = categories[i - 1];
+          final category = categories[i - 3];
           return CategoryChip(
             label: category.displayName,
             icon: CategoryIconRegistry.of(category.icon),
@@ -330,6 +376,13 @@ class _DaySection extends StatelessWidget {
     );
   }
 
+  /// All: the day's net with a sign. Expenses: what was spent. Income: what came in.
+  String _dayTotal(BuildContext context, PeriodTotals totals) => switch (state.kind) {
+    null => context.signedMoney(totals.balance),
+    TransactionKind.expense => context.money(totals.spent),
+    TransactionKind.income => context.signedMoney(totals.income),
+  };
+
   @override
   Widget build(BuildContext context) {
     final colors = MasroofyColors.of(context);
@@ -337,7 +390,7 @@ class _DaySection extends StatelessWidget {
       children: [
         SectionHeader(
           title: context.dayLabel(day, today: LocalDate.today()),
-          trailing: context.money(state.dayTotal(day)),
+          trailing: _dayTotal(context, state.dayTotals(day)),
         ),
         GroupedCard(
           children: [

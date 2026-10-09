@@ -2,6 +2,7 @@ import 'package:fpdart/fpdart.dart';
 import 'package:masroofy/core/database/app_database.dart';
 import 'package:masroofy/core/database/db_guard.dart';
 import 'package:masroofy/core/domain/money.dart';
+import 'package:masroofy/core/domain/transaction_kind.dart';
 import 'package:masroofy/core/error/failures.dart';
 import 'package:masroofy/features/budgets/domain/entities/budget_period.dart';
 import 'package:masroofy/features/categories/data/datasources/category_local_datasource.dart';
@@ -39,13 +40,34 @@ class CategoryRepositoryImpl implements ICategoryRepository {
       guardDb(() => _datasource.customNames(excludeId: excludeId));
 
   @override
-  Future<Either<Failure, int>> create(CategoryDraft draft) =>
-      guardDb(() => _datasource.insertCategory(name: draft.name, icon: draft.icon, color: draft.color));
+  Future<Either<Failure, int>> create(CategoryDraft draft) => guardDb(
+    () => _datasource.insertCategory(
+      name: draft.name,
+      icon: draft.icon,
+      color: draft.color,
+      kind: draft.kind.name,
+    ),
+  );
 
   @override
-  Future<Either<Failure, Unit>> update(int id, CategoryDraft draft) async => (await guardDb(
-    () => _datasource.updateCategory(id, name: draft.name, icon: draft.icon, color: draft.color),
-  )).flatMap(_oneRowChanged);
+  Future<Either<Failure, Unit>> update(int id, CategoryDraft draft) async {
+    final summary = await getSummary(id);
+    return summary.match(Left.new, (summary) async {
+      // A category's kind is locked once anything uses it.
+      if (summary.category.kind != draft.kind && summary.isInUse) {
+        return const Left(ValidationFailure(field: 'kind', reason: ValidationReason.inUse));
+      }
+      return (await guardDb(
+        () => _datasource.updateCategory(
+          id,
+          name: draft.name,
+          icon: draft.icon,
+          color: draft.color,
+          kind: draft.kind.name,
+        ),
+      )).flatMap(_oneRowChanged);
+    });
+  }
 
   @override
   Future<Either<Failure, Unit>> delete(int id) async =>
@@ -60,6 +82,7 @@ class CategoryRepositoryImpl implements ICategoryRepository {
     name: row.name,
     icon: row.icon,
     color: row.color,
+    kind: TransactionKind.values.byName(row.kind),
     sortOrder: row.sortOrder,
     isHidden: row.isHidden,
     createdAt: row.createdAt,

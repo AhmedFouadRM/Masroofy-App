@@ -7,6 +7,7 @@ import 'package:masroofy/app/app_redirect.dart';
 import 'package:masroofy/app/di.dart';
 import 'package:masroofy/app/routes.dart';
 import 'package:masroofy/app/streams_listenable.dart';
+import 'package:masroofy/core/domain/transaction_kind.dart';
 import 'package:masroofy/features/analytics/presentation/cubits/analytics_cubit.dart';
 import 'package:masroofy/features/analytics/presentation/screens/analytics_screen.dart';
 import 'package:masroofy/features/auth/presentation/cubits/pin_setup_cubit.dart';
@@ -75,7 +76,14 @@ GoRouter buildRouter({required AuthCubit auth, required SettingsCubit settings})
               path: 'new',
               parentNavigatorKey: rootNavigatorKey,
               builder: (context, state) => BlocProvider(
-                create: (context) => _expenseForm(context, null),
+                // `?kind=income` opens the form on Income; + always opens on Expense.
+                create: (context) => _expenseForm(
+                  context,
+                  null,
+                  kind: state.uri.queryParameters['kind'] == TransactionKind.income.name
+                      ? TransactionKind.income
+                      : TransactionKind.expense,
+                ),
                 child: const ExpenseFormScreen(),
               ),
             ),
@@ -222,11 +230,11 @@ ExpenseListCubit _expenseList(int firstWeekday) {
   return getIt<ExpenseListCubit>(param1: firstWeekday)..load();
 }
 
-ExpenseFormCubit _expenseForm(BuildContext context, int? id) {
+ExpenseFormCubit _expenseForm(BuildContext context, int? id, {TransactionKind kind = TransactionKind.expense}) {
   final cubit = getIt<ExpenseFormCubit>(
     param1: context.read<SettingsCubit>().state.currency.fractionDigits,
     param2: id,
-  );
+  )..kindSelected(kind);
   unawaited(cubit.load());
   return cubit;
 }

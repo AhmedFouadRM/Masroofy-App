@@ -23,48 +23,71 @@ void main() {
     int? recurringId,
     LocalDate? occurrence,
     InsertMode mode = InsertMode.insert,
-  }) =>
-      db.into(db.expensesTable).insert(
-            ExpensesTableCompanion.insert(
-              amountMinor: amountMinor,
-              categoryId: category,
-              date: date ?? LocalDate(2026, 10, 8),
-              recurringExpenseId: Value(recurringId),
-              occurrenceDate: Value(occurrence),
-            ),
-            mode: mode,
-          );
+  }) => db
+      .into(db.expensesTable)
+      .insert(
+        ExpensesTableCompanion.insert(
+          amountMinor: amountMinor,
+          categoryId: category,
+          date: date ?? LocalDate(2026, 10, 8),
+          recurringExpenseId: Value(recurringId),
+          occurrenceDate: Value(occurrence),
+        ),
+        mode: mode,
+      );
 
-  Future<int> insertTemplate(int category, {int amountMinor = 1000}) =>
-      db.into(db.recurringExpensesTable).insert(
-            RecurringExpensesTableCompanion.insert(
-              title: 'Rent',
-              amountMinor: amountMinor,
-              categoryId: category,
-              frequency: 'monthly',
-              startDate: LocalDate(2026, 1, 31),
-              nextDueDate: LocalDate(2026, 2, 28),
-            ),
-          );
+  Future<int> insertTemplate(int category, {int amountMinor = 1000}) => db
+      .into(db.recurringExpensesTable)
+      .insert(
+        RecurringExpensesTableCompanion.insert(
+          title: 'Rent',
+          amountMinor: amountMinor,
+          categoryId: category,
+          frequency: 'monthly',
+          startDate: LocalDate(2026, 1, 31),
+          nextDueDate: LocalDate(2026, 2, 28),
+        ),
+      );
 
-  Future<int> insertCustomCategory(String name) => db.into(db.categoriesTable).insert(
+  Future<int> insertCustomCategory(String name) => db
+      .into(db.categoriesTable)
+      .insert(
         CategoriesTableCompanion.insert(name: Value(name), icon: 'pets', color: 0xFF000000, sortOrder: 8),
       );
 
   group('seeding', () {
-    test('creates the 8 default categories in order, keyed by seed_key', () async {
+    test('creates the 8 expense and 6 income default categories in order, keyed by seed_key', () async {
       final rows = await (db.select(db.categoriesTable)..orderBy([(c) => OrderingTerm(expression: c.sortOrder)])).get();
-      expect(
-        rows.map((r) => r.seedKey),
-        ['food', 'transport', 'shopping', 'bills', 'health', 'entertainment', 'education', DefaultCategories.otherSeedKey],
-      );
-      expect(rows.map((r) => r.sortOrder), List.generate(8, (i) => i));
+      expect(rows.map((r) => r.seedKey), [
+        'food',
+        'transport',
+        'shopping',
+        'bills',
+        'health',
+        'entertainment',
+        'education',
+        DefaultCategories.otherSeedKey,
+        'salary',
+        'freelance',
+        'gifts',
+        'refunds',
+        'investments',
+        DefaultCategories.otherIncomeSeedKey,
+      ]);
+      expect(rows.map((r) => r.sortOrder), List.generate(14, (i) => i));
       expect(rows.every((r) => r.name == null && !r.isHidden), isTrue);
+      expect(rows.take(8).every((r) => r.kind == 'expense'), isTrue);
+      expect(rows.skip(8).every((r) => r.kind == 'income'), isTrue);
     });
 
     test('re-seeding is idempotent', () async {
       await db.seedDefaultCategories();
-      expect(await db.select(db.categoriesTable).get(), hasLength(8));
+      expect(await db.select(db.categoriesTable).get(), hasLength(14));
+    });
+
+    test('a custom category defaults to the expense kind', () async {
+      final id = await insertCustomCategory('Pets');
+      expect((await (db.select(db.categoriesTable)..where((c) => c.id.equals(id))).getSingle()).kind, 'expense');
     });
   });
 
@@ -76,13 +99,17 @@ void main() {
 
     test('a category needs exactly one of seed_key / name', () async {
       await expectLater(
-        db.into(db.categoriesTable).insert(
+        db
+            .into(db.categoriesTable)
+            .insert(
               CategoriesTableCompanion.insert(icon: 'x', color: 0, sortOrder: 9),
             ),
         throwsA(isA<SqliteException>()),
       );
       await expectLater(
-        db.into(db.categoriesTable).insert(
+        db
+            .into(db.categoriesTable)
+            .insert(
               CategoriesTableCompanion.insert(
                 seedKey: const Value('pets'),
                 name: const Value('Pets'),
@@ -94,6 +121,23 @@ void main() {
         throwsA(isA<SqliteException>()),
       );
       expect(await insertCustomCategory('Pets'), greaterThan(0));
+    });
+
+    test('a category kind must be expense or income', () async {
+      await expectLater(
+        db
+            .into(db.categoriesTable)
+            .insert(
+              CategoriesTableCompanion.insert(
+                name: const Value('Pets'),
+                kind: const Value('transfer'),
+                icon: 'x',
+                color: 0,
+                sortOrder: 9,
+              ),
+            ),
+        throwsA(isA<SqliteException>()),
+      );
     });
 
     test('amounts must be positive', () async {
@@ -134,7 +178,9 @@ void main() {
 
     test('deleting a category deletes its budget', () async {
       final pets = await insertCustomCategory('Pets');
-      await db.into(db.budgetsTable).insert(
+      await db
+          .into(db.budgetsTable)
+          .insert(
             BudgetsTableCompanion.insert(categoryId: pets, limitMinor: 50000, period: 'monthly'),
           );
       await (db.delete(db.categoriesTable)..where((c) => c.id.equals(pets))).go();
@@ -166,7 +212,9 @@ void main() {
       final food = await categoryId('food');
       await insertExpense(category: food, amountMinor: 1250);
       await insertTemplate(food, amountMinor: 1250);
-      await db.into(db.budgetsTable).insert(
+      await db
+          .into(db.budgetsTable)
+          .insert(
             BudgetsTableCompanion.insert(categoryId: food, limitMinor: 1250, period: 'weekly'),
           );
 

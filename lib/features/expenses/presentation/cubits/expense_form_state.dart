@@ -1,5 +1,6 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:masroofy/core/domain/local_date.dart';
+import 'package:masroofy/core/domain/transaction_kind.dart';
 import 'package:masroofy/core/error/failures.dart';
 import 'package:masroofy/features/categories/domain/entities/category.dart';
 
@@ -16,6 +17,9 @@ abstract class ExpenseFormState with _$ExpenseFormState {
     required int fractionDigits,
     @Default(ExpenseFormStatus.loading) ExpenseFormStatus status,
 
+    /// The Expense | Income switch; the category must be of this kind.
+    @Default(TransactionKind.expense) TransactionKind kind,
+
     /// Null for a new expense.
     int? id,
 
@@ -25,7 +29,7 @@ abstract class ExpenseFormState with _$ExpenseFormState {
     @Default('') String title,
     @Default('') String note,
 
-    /// Categories offered by the picker (hidden ones left out).
+    /// Every visible category; the picker offers those of [kind].
     @Default(<Category>[]) List<Category> categories,
 
     /// Field errors, keyed by `amount`, `categoryId`, `title`, `date`, `note`.
@@ -38,6 +42,12 @@ abstract class ExpenseFormState with _$ExpenseFormState {
   const ExpenseFormState._();
 
   bool get isEditing => id != null;
+
+  /// What the picker offers: the categories of the selected [kind].
+  List<Category> get pickerCategories => [
+    for (final c in categories)
+      if (c.kind == kind) c,
+  ];
 
   Category? get category => categories.where((c) => c.id == categoryId).firstOrNull;
 

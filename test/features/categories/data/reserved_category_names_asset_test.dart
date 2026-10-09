@@ -8,8 +8,8 @@ void main() {
   test('reads the default names of both languages from the translation files', () async {
     final names = await ReservedCategoryNamesAsset(rootBundle).load();
 
-    expect(names, containsAll(['Food', 'Other', 'طعام', 'أخرى']));
-    expect(names, hasLength(16));
+    expect(names, containsAll(['Food', 'Other', 'Salary', 'Other income', 'طعام', 'أخرى', 'الراتب', 'دخل آخر']));
+    expect(names, hasLength(28));
     expect(names, isNot(contains('Categories')), reason: 'only seed keys, not other strings in the section');
   });
 }

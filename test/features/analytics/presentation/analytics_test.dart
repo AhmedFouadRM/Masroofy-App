@@ -6,6 +6,8 @@ import 'package:fpdart/fpdart.dart';
 import 'package:masroofy/core/domain/date_range.dart';
 import 'package:masroofy/core/domain/local_date.dart';
 import 'package:masroofy/core/domain/money.dart';
+import 'package:masroofy/core/domain/period_totals.dart';
+import 'package:masroofy/core/domain/transaction_kind.dart';
 import 'package:masroofy/features/analytics/domain/repositories/i_analytics_repository.dart';
 import 'package:masroofy/features/analytics/presentation/cubits/analytics_cubit.dart';
 import 'package:masroofy/features/analytics/presentation/screens/analytics_screen.dart';
@@ -15,6 +17,7 @@ import 'package:masroofy/features/budgets/domain/entities/budget_progress.dart';
 import 'package:masroofy/features/budgets/domain/repositories/i_budget_repository.dart';
 import 'package:masroofy/features/categories/domain/entities/category.dart';
 import 'package:masroofy/features/categories/domain/repositories/i_category_repository.dart';
+import 'package:masroofy/shared/widgets/segmented_pills.dart';
 import 'package:mocktail/mocktail.dart';
 
 import '../../../helpers/pump_app.dart';
@@ -46,6 +49,7 @@ void main() {
   setUpAll(() {
     registerFallbackValue(DateRange(LocalDate(2026, 1, 1), LocalDate(2026, 1, 1)));
     registerFallbackValue(LocalDate(2026, 1, 1));
+    registerFallbackValue(TransactionKind.expense);
   });
 
   group('AnalyticsCubit', () {
@@ -64,12 +68,16 @@ void main() {
       ).thenAnswer((_) => Stream.value(const Right([])));
       ranges.clear();
       when(() => categories.watchAll(includeHidden: true)).thenAnswer((_) => Stream.value(Right([_food])));
-      when(() => analytics.watchTotal(any())).thenAnswer((invocation) {
+      when(() => analytics.watchTotals(any())).thenAnswer((invocation) {
         ranges.add(invocation.positionalArguments.single as DateRange);
-        return Stream.value(Right(Money(ranges.length * 100)));
+        return Stream.value(Right(PeriodTotals(income: const Money(5000), spent: Money(ranges.length * 100))));
       });
-      when(() => analytics.watchTotalsByCategory(any())).thenAnswer((_) => Stream.value(const Right({1: Money(100)})));
-      when(() => analytics.watchDailyTotals(any())).thenAnswer((_) => Stream.value(Right({today: const Money(100)})));
+      when(
+        () => analytics.watchTotalsByCategory(any(), any()),
+      ).thenAnswer((_) => Stream.value(const Right({1: Money(100)})));
+      when(
+        () => analytics.watchDailyTotals(any()),
+      ).thenAnswer((_) => Stream.value(const Right({})));
     });
 
     AnalyticsCubit build() =>
@@ -86,6 +94,21 @@ void main() {
         ]);
         expect(cubit.state.status, AnalyticsStatus.loaded);
         expect(cubit.state.byCategory, {1: const Money(100)});
+        // The comparison is of spending only.
+        expect(cubit.state.totals.income, const Money(5000));
+        expect(cubit.state.previousTotal, const Money(200));
+      },
+    );
+
+    blocTest<AnalyticsCubit, AnalyticsState>(
+      'the breakdown switch re-reads the categories of the other kind',
+      build: build,
+      act: (cubit) => cubit
+        ..load()
+        ..selectBreakdown(TransactionKind.income),
+      verify: (cubit) {
+        expect(cubit.state.breakdownKind, TransactionKind.income);
+        verify(() => analytics.watchTotalsByCategory(any(), TransactionKind.income)).called(1);
       },
     );
 
@@ -122,10 +145,10 @@ void main() {
       range: range,
       firstWeekday: DateTime.saturday,
       status: AnalyticsStatus.loaded,
-      total: const Money(100000),
+      totals: const PeriodTotals(income: Money(500000), spent: Money(100000)),
       previousTotal: const Money(80000),
       byCategory: {1: const Money(75000), 2: const Money(25000)},
-      daily: {today: const Money(100000)},
+      daily: {today: const PeriodTotals(income: Money(500000), spent: Money(100000))},
       categories: {1: _food, 2: _transport},
     );
 
@@ -153,6 +176,59 @@ void main() {
       expect(find.text('By category'), findsOneWidget);
       expect(find.text('Food'), findsOneWidget);
       expect(find.text('75%'), findsOneWidget);
+      expect(find.text('Spending over time'), findsOneWidget);
+    });
+
+    testWidgets('the Income vs spending card shows income, spent, balance and savings rate', (tester) async {
+      await pump(tester, loaded);
+
+      expect(find.text('Income vs spending'), findsOneWidget);
+      expect(find.text('EGP 5,000'), findsOneWidget);
+      expect(find.text('\u2066EGP 4,000\u2069'), findsOneWidget);
+      expect(find.text('Savings rate'), findsOneWidget);
+      expect(find.text('80%'), findsOneWidget);
+    });
+
+    testWidgets('the savings rate is hidden when there is no income', (tester) async {
+      await pump(
+        tester,
+        loaded.copyWith(
+          totals: const PeriodTotals(income: Money.zero, spent: Money(100000)),
+        ),
+      );
+
+      expect(find.text('Income vs spending'), findsOneWidget);
+      expect(find.text('Savings rate'), findsNothing);
+    });
+
+    testWidgets('a negative balance shows with a minus sign', (tester) async {
+      await pump(
+        tester,
+        loaded.copyWith(
+          totals: const PeriodTotals(income: Money(20000), spent: Money(100000)),
+        ),
+      );
+
+      expect(find.text('\u2066−EGP 800\u2069'), findsOneWidget);
+    });
+
+    testWidgets('the breakdown switch asks the cubit', (tester) async {
+      await pump(tester, loaded);
+
+      await tester.tap(find.descendant(of: find.byType(SegmentedPills), matching: find.text('Income')));
+      verify(() => cubit.selectBreakdown(TransactionKind.income)).called(1);
+    });
+
+    testWidgets('the income breakdown with no income says so', (tester) async {
+      await pump(tester, loaded.copyWith(breakdownKind: TransactionKind.income, byCategory: {}));
+
+      expect(find.text('No income in this period'), findsOneWidget);
+    });
+
+    testWidgets('the chart has a legend for both series', (tester) async {
+      await pump(tester, loaded);
+
+      expect(find.text('Spent'), findsWidgets);
       expect(find.text('Spending over time'), findsOneWidget);
     });
 
@@ -196,7 +272,10 @@ void main() {
     });
 
     testWidgets('an empty period shows the empty state', (tester) async {
-      await pump(tester, loaded.copyWith(total: Money.zero, byCategory: {}, daily: {}, previousTotal: Money.zero));
+      await pump(
+        tester,
+        loaded.copyWith(totals: PeriodTotals.zero, byCategory: {}, daily: {}, previousTotal: Money.zero),
+      );
 
       expect(find.text('No spending data for this period'), findsOneWidget);
       expect(find.text('By category'), findsNothing);

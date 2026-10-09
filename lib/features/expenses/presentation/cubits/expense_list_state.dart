@@ -2,6 +2,8 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:masroofy/core/domain/date_range.dart';
 import 'package:masroofy/core/domain/local_date.dart';
 import 'package:masroofy/core/domain/money.dart';
+import 'package:masroofy/core/domain/period_totals.dart';
+import 'package:masroofy/core/domain/transaction_kind.dart';
 import 'package:masroofy/core/error/failures.dart';
 import 'package:masroofy/features/categories/domain/entities/category.dart';
 import 'package:masroofy/features/expenses/domain/entities/expense.dart';
@@ -18,17 +20,21 @@ abstract class ExpenseListState with _$ExpenseListState {
     required ExpensePeriod period,
     required DateRange range,
     @Default(ExpenseListStatus.loading) ExpenseListStatus status,
+
+    /// The All / Income / Expenses filter; null is All.
+    TransactionKind? kind,
     int? categoryId,
     @Default('') String search,
 
     /// The loaded page, including rows waiting out their undo window.
     @Default(<Expense>[]) List<Expense> loaded,
     @Default(false) bool hasMore,
-    @Default(Money.zero) Money total,
+    @Default(PeriodTotals.zero) PeriodTotals totals,
 
-    /// Total of the comparison period; null until it has loaded.
-    Money? previousTotal,
-    @Default(<LocalDate, Money>{}) Map<LocalDate, Money> dailyTotals,
+    /// Totals of the comparison period; null until loaded, and not loaded at
+    /// all on All (the balance card has no comparison).
+    PeriodTotals? previousTotals,
+    @Default(<LocalDate, PeriodTotals>{}) Map<LocalDate, PeriodTotals> dailyTotals,
 
     /// All categories by id (incl. hidden, which old expenses may use).
     @Default(<int, Category>{}) Map<int, Category> categories,
@@ -48,25 +54,36 @@ abstract class ExpenseListState with _$ExpenseListState {
       if (!pendingDelete.contains(e.id)) e,
   ];
 
-  Money get _pendingTotal => Money.sum([
-    for (final e in loaded)
-      if (pendingDelete.contains(e.id)) e.amount,
-  ]);
+  /// [totals] without the rows waiting to be deleted.
+  static PeriodTotals _without(PeriodTotals totals, Iterable<Expense> pending) => PeriodTotals(
+    income:
+        totals.income -
+        Money.sum([
+          for (final e in pending)
+            if (e.kind == TransactionKind.income) e.amount,
+        ]),
+    spent:
+        totals.spent -
+        Money.sum([
+          for (final e in pending)
+            if (e.kind == TransactionKind.expense) e.amount,
+        ]),
+  );
 
-  /// The period total without the rows waiting to be deleted.
-  Money get visibleTotal => total - _pendingTotal;
+  /// The period totals without the rows waiting to be deleted.
+  PeriodTotals get visibleTotals => _without(totals, loaded.where((e) => pendingDelete.contains(e.id)));
 
-  Money dayTotal(LocalDate day) =>
-      (dailyTotals[day] ?? Money.zero) -
-      Money.sum([
-        for (final e in loaded)
-          if (e.date == day && pendingDelete.contains(e.id)) e.amount,
-      ]);
+  /// One day's totals, likewise without the rows waiting to be deleted.
+  PeriodTotals dayTotals(LocalDate day) => _without(
+    dailyTotals[day] ?? PeriodTotals.zero,
+    loaded.where((e) => e.date == day && pendingDelete.contains(e.id)),
+  );
 
-  /// Categories offered as filter chips (hidden ones are left out).
+  /// Categories offered as filter chips: those of the selected [kind] (all
+  /// of them on All); hidden ones are left out.
   List<Category> get filterCategories => [
     for (final c in categories.values)
-      if (!c.isHidden) c,
+      if (!c.isHidden && (kind == null || c.kind == kind)) c,
   ];
 
   bool get isFiltered => categoryId != null || search.trim().isNotEmpty;

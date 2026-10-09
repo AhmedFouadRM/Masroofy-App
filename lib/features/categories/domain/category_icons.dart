@@ -19,6 +19,7 @@ abstract final class CategoryIcons {
     'spa', 'content_cut', 'checkroom', 'local_pharmacy',
     // Money & work
     'work', 'savings', 'credit_card', 'account_balance', 'volunteer_activism',
+    'payments', 'currency_exchange', 'trending_up',
     // Leisure
     'sports_esports', 'music_note', 'menu_book',
   ];

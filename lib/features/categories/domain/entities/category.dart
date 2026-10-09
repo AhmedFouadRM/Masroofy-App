@@ -1,4 +1,5 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:masroofy/core/domain/transaction_kind.dart';
 
 part 'category.freezed.dart';
 
@@ -16,6 +17,7 @@ abstract class Category with _$Category {
     required DateTime updatedAt,
     String? seedKey,
     String? name,
+    @Default(TransactionKind.expense) TransactionKind kind,
     @Default(false) bool isHidden,
   }) = _Category;
 

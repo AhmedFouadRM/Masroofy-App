@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:masroofy/app/routes.dart';
+import 'package:masroofy/core/domain/transaction_kind.dart';
 import 'package:masroofy/core/strings/string_manager.dart';
 import 'package:masroofy/core/theme/app_dimensions.dart';
 import 'package:masroofy/core/theme/masroofy_colors.dart';
@@ -64,12 +65,40 @@ class _CategoryList extends StatelessWidget {
       // Bottom space keeps the last row clear of the FAB.
       padding: EdgeInsets.fromLTRB(AppSpacing.screen, MediaQuery.paddingOf(context).top, AppSpacing.screen, 96),
       children: [
-        SectionHeader(title: StringManager.categoriesDefaultSection, trailing: context.count(state.defaults.length)),
-        GroupedCard(children: [for (final s in state.defaults) _CategoryRow(summary: s)]),
-        if (state.custom.isNotEmpty) ...[
-          SectionHeader(title: StringManager.categoriesCustomSection, trailing: context.count(state.custom.length)),
-          GroupedCard(children: [for (final s in state.custom) _DismissibleCategoryRow(summary: s)]),
-        ],
+        _KindSection(title: StringManager.categoriesExpenseSection, kind: TransactionKind.expense, state: state),
+        _KindSection(title: StringManager.categoriesIncomeSection, kind: TransactionKind.income, state: state),
+      ],
+    );
+  }
+}
+
+/// The Expense or Income section: defaults first, then custom categories.
+class _KindSection extends StatelessWidget {
+  const _KindSection({required this.title, required this.kind, required this.state});
+
+  final String title;
+  final TransactionKind kind;
+  final CategoriesState state;
+
+  @override
+  Widget build(BuildContext context) {
+    final defaults = [
+      for (final s in state.defaults)
+        if (s.category.kind == kind) s,
+    ];
+    final custom = [
+      for (final s in state.custom)
+        if (s.category.kind == kind) s,
+    ];
+    return Column(
+      children: [
+        SectionHeader(title: title, trailing: context.count(defaults.length + custom.length)),
+        GroupedCard(
+          children: [
+            for (final s in defaults) _CategoryRow(summary: s),
+            for (final s in custom) _DismissibleCategoryRow(summary: s),
+          ],
+        ),
       ],
     );
   }
@@ -85,8 +114,12 @@ class _CategoryRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final category = summary.category;
     final budget = summary.budgetLimit;
+    final count = context.count(summary.expenseCount);
     final subtitle = [
-      StringManager.categoryExpenseCount(summary.expenseCount, context.count(summary.expenseCount)),
+      if (category.kind == TransactionKind.income)
+        StringManager.categoryIncomeCount(summary.expenseCount, count)
+      else
+        StringManager.categoryExpenseCount(summary.expenseCount, count),
       if (summary.recurringCount > 0)
         StringManager.categoryRecurringCount(summary.recurringCount, context.count(summary.recurringCount)),
       if (budget != null) StringManager.categoryBudget(context.money(budget)),
