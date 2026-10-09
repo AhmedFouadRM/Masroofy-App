@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:masroofy/core/database/app_database.dart';
 import 'package:masroofy/core/domain/date_range.dart';
+import 'package:masroofy/core/domain/expense_source.dart';
 import 'package:masroofy/core/domain/local_date.dart';
 import 'package:masroofy/core/domain/money.dart';
 import 'package:masroofy/core/domain/period_totals.dart';
@@ -396,6 +397,76 @@ void main() {
       expect(await db.select(db.transfersTable).get(), isEmpty);
       expect(await db.select(db.expensesTable).get(), hasLength(2));
       expect(left(await repository.delete(inLeg)), const Failure.notFound());
+    });
+  });
+
+  group('source', () {
+    test('a row typed by the user is manual, and its entry says so', () async {
+      final id = await add(1250, today);
+
+      final entry = right(await repository.getEntry(id)) as TransactionEntry;
+
+      expect(entry.expense.source, ExpenseSource.manual);
+      expect(entry.expense.isFromSms, isFalse);
+    });
+
+    test('an SMS row keeps its source, in lists and when read alone', () async {
+      final id = right(
+        await save(
+          ExpenseDraft(
+            amount: const Money(500),
+            walletId: me,
+            categoryId: transport,
+            date: today,
+            title: 'Uber',
+            source: ExpenseSource.sms,
+          ),
+        ),
+      );
+
+      final entry = right(await repository.getEntry(id)) as TransactionEntry;
+      final listed = right(
+        await repository.watchEntries(october, limit: 10).first,
+      ).whereType<TransactionEntry>().single;
+
+      expect(entry.expense.source, ExpenseSource.sms);
+      expect(entry.expense.isFromSms, isTrue);
+      expect(listed.expense.source, ExpenseSource.sms);
+      expect((await db.select(db.expensesTable).getSingle()).source, 'sms');
+    });
+
+    test('editing a row keeps its source, whatever the draft says', () async {
+      final id = right(
+        await save(
+          ExpenseDraft(
+            amount: const Money(500),
+            walletId: me,
+            categoryId: transport,
+            date: today,
+            source: ExpenseSource.sms,
+          ),
+        ),
+      );
+
+      right(
+        await save(
+          ExpenseDraft(amount: const Money(700), walletId: me, categoryId: transport, date: today),
+          id: id,
+        ),
+      );
+
+      final row = await db.select(db.expensesTable).getSingle();
+      expect(row.amountMinor, 700);
+      expect(row.source, 'sms');
+    });
+
+    test('the database refuses an unknown source', () async {
+      await expectLater(
+        db.customStatement(
+          "INSERT INTO expenses (amount_minor, date, wallet_id, category_id, source) VALUES (1, '2026-10-08', $me, $food, 'import')",
+        ),
+        throwsA(anything),
+      );
     });
   });
 }

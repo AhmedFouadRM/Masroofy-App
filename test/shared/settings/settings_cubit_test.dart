@@ -168,6 +168,29 @@ void main() {
     expect(cubit.state.firstWeekday, DateTime.saturday);
   });
 
+  group('SMS Import', () {
+    test('is off on a fresh install', () async {
+      expect((await makeCubit()).state.smsEnabled, isFalse);
+    });
+
+    test('reads the switch SMS Import wrote, at start and on reload', () async {
+      final cubit = await makeCubit({PreferenceKeys.smsEnabled: true});
+      expect(cubit.state.smsEnabled, isTrue);
+
+      final preferences = await SharedPreferences.getInstance();
+      await preferences.setBool(PreferenceKeys.smsEnabled, false);
+      cubit.reload();
+
+      expect(cubit.state.smsEnabled, isFalse);
+    });
+
+    test('the native receiver reads the same key', () {
+      // SmsBridge.kt reads `flutter.sms_enabled` from FlutterSharedPreferences,
+      // which is how shared_preferences stores this key.
+      expect(PreferenceKeys.smsEnabled, 'sms_enabled');
+    });
+  });
+
   group('wallets', () {
     Future<SharedPreferences> preferences() => SharedPreferences.getInstance();
 

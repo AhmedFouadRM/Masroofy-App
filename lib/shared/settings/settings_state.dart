@@ -29,5 +29,8 @@ abstract class SettingsState with _$SettingsState {
 
     /// The wallet the Transactions list and Analytics show; null is All wallets.
     int? viewedWalletId,
+
+    /// SMS Import (Android) is on. Shown as the value of the Settings row.
+    @Default(false) bool smsEnabled,
   }) = _SettingsState;
 }

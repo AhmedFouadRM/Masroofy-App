@@ -16,6 +16,8 @@ class BackupSnapshot {
     required this.transfers,
     required this.expenses,
     required this.budgets,
+    this.merchantCategories = const [],
+    this.trustedSenders = const [],
   });
 
   final List<WalletsTableData> wallets;
@@ -24,6 +26,11 @@ class BackupSnapshot {
   final List<TransfersTableData> transfers;
   final List<ExpensesTableData> expenses;
   final List<BudgetsTableData> budgets;
+
+  /// SMS Import's learned categories and sender answers. Its import history
+  /// is not part of a backup.
+  final List<MerchantCategoriesTableData> merchantCategories;
+  final List<TrustedSendersTableData> trustedSenders;
 }
 
 /// The preferences a backup carries. App Lock and the PIN are deliberately
@@ -49,21 +56,26 @@ typedef DecodedBackup = ({BackupSnapshot snapshot, BackupPreferences preferences
 /// The versioned backup file (Settings PRD → Export Backup).
 ///
 /// ```json
-/// {"format":"masroofy-backup","version":3,"exportedAt":"…Z",
+/// {"format":"masroofy-backup","version":4,"exportedAt":"…Z",
 ///  "preferences":{"currency_code":"EGP","theme_mode":"system","western_digits":false,"default_wallet_id":1},
-///  "wallets":[…],"categories":[…],"recurringExpenses":[…],"transfers":[…],"expenses":[…],"budgets":[…]}
+///  "wallets":[…],"categories":[…],"recurringExpenses":[…],"transfers":[…],"expenses":[…],"budgets":[…],
+///  "merchantCategories":[…],"trustedSenders":[…]}
 /// ```
 ///
 /// Version 2 adds each category's `kind` (`expense` or `income`); a version 1
 /// file has none and every category is an expense category. Version 3 adds the
 /// wallets, the default wallet, the transfers and each row's `walletId`,
 /// `transferId` and `direction`; an older file restores into one wallet, "Me".
+/// Version 4 adds SMS Import's learned merchant categories and trusted senders
+/// (not its import history) and each expense's `source`; an older file has no
+/// SMS data, and its rows from a template are `recurring`, the rest `manual`.
 /// Amounts are integer minor units in the file's `currency_code`. [decode]
 /// checks everything (types, ranges, references, uniqueness) and throws a
 /// [FormatException] on the first problem, so nothing is written from a bad file.
 abstract final class BackupCodec {
   static const format = 'masroofy-backup';
-  static const version = 3;
+  static const version = 4;
+  static const _sources = ['manual', 'sms', 'recurring'];
 
   static const _frequencies = ['daily', 'weekly', 'monthly', 'yearly'];
   static const _periods = ['weekly', 'monthly'];
@@ -143,6 +155,7 @@ abstract final class BackupCodec {
               'occurrenceDate': e.occurrenceDate?.toIso(),
               'transferId': e.transferId,
               'direction': e.direction,
+              'source': e.source,
               'createdAt': _time(e.createdAt),
               'updatedAt': _time(e.updatedAt),
             },
@@ -158,6 +171,14 @@ abstract final class BackupCodec {
               'createdAt': _time(b.createdAt),
               'updatedAt': _time(b.updatedAt),
             },
+        ],
+        'merchantCategories': [
+          for (final m in snapshot.merchantCategories)
+            {'merchantKey': m.merchantKey, 'categoryId': m.categoryId, 'updatedAt': _time(m.updatedAt)},
+        ],
+        'trustedSenders': [
+          for (final t in snapshot.trustedSenders)
+            {'sender': t.sender, 'trusted': t.trusted, 'createdAt': _time(t.createdAt)},
         ],
       });
 
@@ -239,6 +260,20 @@ abstract final class BackupCodec {
       throw const FormatException('Two budgets for one category');
     }
 
+    // SMS Import data exists from version 4.
+    final merchantCategories = fileVersion < 4
+        ? <MerchantCategoriesTableData>[]
+        : _list(root, 'merchantCategories').map((m) => _merchantCategory(m, categoryIds)).toList();
+    if (merchantCategories.map((m) => m.merchantKey).toSet().length != merchantCategories.length) {
+      throw const FormatException('Two categories for one merchant');
+    }
+    final trustedSenders = fileVersion < 4
+        ? <TrustedSendersTableData>[]
+        : _list(root, 'trustedSenders').map(_trustedSender).toList();
+    if (trustedSenders.map((t) => t.sender).toSet().length != trustedSenders.length) {
+      throw const FormatException('Two answers for one sender');
+    }
+
     return (
       snapshot: BackupSnapshot(
         wallets: wallets,
@@ -247,6 +282,8 @@ abstract final class BackupCodec {
         transfers: transfers,
         expenses: expenses,
         budgets: budgets,
+        merchantCategories: merchantCategories,
+        trustedSenders: trustedSenders,
       ),
       preferences: preferences,
       exportedAt: exportedAt,
@@ -464,6 +501,11 @@ abstract final class BackupCodec {
     }
     // A category on every row except transfer legs, and a direction on legs only
     // (the table's CHECK constraints).
+    // Before version 4 there was no source: a row from a template is `recurring`.
+    final source = fileVersion < 4
+        ? (recurringId != null || map['occurrenceDate'] != null ? 'recurring' : 'manual')
+        : _get<String>(map, 'source');
+    if (!_sources.contains(source)) throw const FormatException('Unknown source');
     if (transferId == null) {
       if (categoryId == null || !categoryIds.contains(categoryId)) throw const FormatException('Unknown category');
       if (direction != null) throw const FormatException('Only a transfer leg has a direction');
@@ -484,10 +526,27 @@ abstract final class BackupCodec {
       occurrenceDate: _dateOrNull(map, 'occurrenceDate'),
       transferId: transferId,
       direction: direction,
+      source: source,
       createdAt: _timestamp(map, 'createdAt'),
       updatedAt: _timestamp(map, 'updatedAt'),
     );
   }
+
+  static MerchantCategoriesTableData _merchantCategory(Map<String, dynamic> map, Set<int> categoryIds) {
+    final categoryId = _get<int>(map, 'categoryId');
+    if (!categoryIds.contains(categoryId)) throw const FormatException('Unknown category');
+    return MerchantCategoriesTableData(
+      merchantKey: _text(map, 'merchantKey', min: 1, max: 200),
+      categoryId: categoryId,
+      updatedAt: _timestamp(map, 'updatedAt'),
+    );
+  }
+
+  static TrustedSendersTableData _trustedSender(Map<String, dynamic> map) => TrustedSendersTableData(
+    sender: _text(map, 'sender', min: 1, max: 100),
+    trusted: _get<bool>(map, 'trusted'),
+    createdAt: _timestamp(map, 'createdAt'),
+  );
 
   static BudgetsTableData _budget(Map<String, dynamic> map, Set<int> categoryIds) {
     final categoryId = _get<int>(map, 'categoryId');

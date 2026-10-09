@@ -2,6 +2,7 @@ import 'package:drift/drift.dart' show driftRuntimeOptions;
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:masroofy/app/di.dart';
+import 'package:masroofy/app/sms_import_services.dart';
 import 'package:masroofy/core/database/app_database.dart';
 import 'package:masroofy/features/analytics/presentation/cubits/analytics_cubit.dart';
 import 'package:masroofy/features/auth/presentation/cubits/pin_setup_cubit.dart';
@@ -16,6 +17,11 @@ import 'package:masroofy/features/recurring_expenses/presentation/cubits/recurri
 import 'package:masroofy/features/settings/domain/entities/app_info.dart';
 import 'package:masroofy/features/settings/presentation/cubits/data_management_cubit.dart';
 import 'package:masroofy/features/settings/presentation/cubits/wallet_count_cubit.dart';
+import 'package:masroofy/features/sms_import/domain/repositories/i_sms_import_repository.dart';
+import 'package:masroofy/features/sms_import/domain/repositories/i_sms_permissions.dart';
+import 'package:masroofy/features/sms_import/domain/repositories/i_sms_settings.dart';
+import 'package:masroofy/features/sms_import/domain/usecases/sms_import_actions.dart';
+import 'package:masroofy/features/sms_import/presentation/cubits/sms_import_cubit.dart';
 import 'package:masroofy/features/wallets/domain/repositories/i_transfer_repository.dart';
 import 'package:masroofy/features/wallets/domain/repositories/i_wallet_repository.dart';
 import 'package:masroofy/features/wallets/domain/usecases/delete_wallet.dart';
@@ -102,4 +108,23 @@ void main() {
     await analytics.close();
     await getIt<ExpenseFormCubit>(param1: 2).close();
   });
+
+  test(
+    'registers SMS Import: one set of services, repositories as singletons, the screen cubit as a factory',
+    () async {
+      driftRuntimeOptions.dontWarnAboutMultipleDatabases = true;
+      await configureDependencies(openDatabase: () => AppDatabase(NativeDatabase.memory()));
+
+      expect(getIt<SmsImportServices>(), same(getIt<SmsImportServices>()));
+      expect(getIt<ISmsImportRepository>(), same(getIt<SmsImportServices>().repository));
+      expect(getIt<ISmsSettings>(), same(getIt<SmsImportServices>().settings));
+      expect(getIt<SmsImportActions>(), same(getIt<SmsImportServices>().actions));
+      expect(getIt<ISmsPermissions>(), isNotNull);
+
+      final cubit = getIt<SmsImportCubit>();
+      expect(cubit, isNot(same(getIt<SmsImportCubit>())));
+      expect(cubit.state.loading, isTrue);
+      await cubit.close();
+    },
+  );
 }

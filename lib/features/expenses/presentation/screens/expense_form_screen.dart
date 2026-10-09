@@ -16,6 +16,7 @@ import 'package:masroofy/shared/categories/category_icon_registry.dart';
 import 'package:masroofy/shared/categories/category_picker_sheet.dart';
 import 'package:masroofy/shared/formatting/display_format.dart';
 import 'package:masroofy/shared/settings/settings_cubit.dart';
+import 'package:masroofy/shared/sms/sms_banner.dart';
 import 'package:masroofy/shared/wallets/wallet_avatar.dart';
 import 'package:masroofy/shared/wallets/wallet_display.dart';
 import 'package:masroofy/shared/wallets/wallet_sheet.dart';
@@ -229,6 +230,8 @@ class _Fields extends StatelessWidget {
         MediaQuery.paddingOf(context).bottom + AppSpacing.xl,
       ),
       children: [
+        // "From an SMS · CIB" on a form pre-filled from a bank message.
+        if (state.smsBank case final bank?) ...[SmsBanner(bank: bank), gap],
         // Expense | Income | Transfer. A saved row keeps its type, except that
         // an expense and an income can be switched (a misfiled row).
         if (!(state.isEditing && state.isTransfer)) ...[

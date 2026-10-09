@@ -393,6 +393,55 @@ class StringManager {
   /// Localized currency name by ISO 4217 code (e.g. `EGP`).
   static String currencyName(String code) => 'currencies.$code'.tr();
 
+  // ── SMS Import ──
+  static String get smsTitle => 'sms.title'.tr();
+  static String get smsOn => 'sms.on'.tr();
+  static String get smsOff => 'sms.off'.tr();
+  static String get smsIntro => 'sms.intro'.tr();
+  static String get smsSwitch => 'sms.switch'.tr();
+  static String get smsPrivacy => 'sms.privacy'.tr();
+  static String get smsMode => 'sms.mode'.tr();
+  static String get smsModeAsk => 'sms.mode_ask'.tr();
+  static String get smsModeAuto => 'sms.mode_auto'.tr();
+  static String get smsModeAskHelper => 'sms.mode_ask_helper'.tr();
+  static String get smsModeAutoHelper => 'sms.mode_auto_helper'.tr();
+  static String get smsSenders => 'sms.senders'.tr();
+  static String get smsTrustedByYou => 'sms.trusted_by_you'.tr();
+  static String get smsRecent => 'sms.recent'.tr();
+  static String get smsRecentEmpty => 'sms.recent_empty'.tr();
+
+  /// `added`, `pending`, `ignored` or `cancelled`.
+  static String smsStatus(String name) => 'sms.status_$name'.tr();
+  static String get smsScan => 'sms.scan'.tr();
+  static String get smsDeleteHistory => 'sms.delete_history'.tr();
+  static String get smsDeleteHistoryTitle => 'sms.delete_history_title'.tr();
+  static String get smsDeleteHistoryBody => 'sms.delete_history_body'.tr();
+  static String get smsHistoryDeleted => 'sms.history_deleted'.tr();
+  static String get smsPermissionDenied => 'sms.permission_denied'.tr();
+  static String get smsOpenSettings => 'sms.open_settings'.tr();
+  static String get smsNotificationsDenied => 'sms.notifications_denied'.tr();
+  static String get smsDisclosureTitle => 'sms.disclosure_title'.tr();
+  static String get smsDisclosureBody => 'sms.disclosure_body'.tr();
+  static String get smsDisclosureBanks => 'sms.disclosure_banks'.tr();
+  static String get smsDisclosureOtp => 'sms.disclosure_otp'.tr();
+  static String get smsDisclosureLocal => 'sms.disclosure_local'.tr();
+  static String get smsCatchUpTitle => 'sms.catchup_title'.tr();
+
+  /// "12 transactions found"; [number] is already shaped for the locale.
+  static String smsCatchUpFound(int count, String number) => 'sms.catchup_found'.plural(count, args: [number]);
+  static String get smsCatchUpEmpty => 'sms.catchup_empty'.tr();
+  static String smsCatchUpAdd(String number) => 'sms.catchup_add'.tr(args: [number]);
+  static String get smsCatchUpSkip => 'sms.catchup_skip'.tr();
+  static String get smsCatchUpScanning => 'sms.catchup_scanning'.tr();
+  static String get smsCatchUpFailed => 'sms.catchup_failed'.tr();
+  static String get smsPossibleDuplicate => 'sms.possible_duplicate'.tr();
+  static String smsCatchUpAdded(int count, String number) => 'sms.catchup_added'.plural(count, args: [number]);
+
+  /// The banner of a form pre-filled from an SMS: "From an SMS · CIB".
+  static String smsFromBank(String bank) => 'sms.from_sms'.tr(args: [bank]);
+  static String get smsBadge => 'sms.badge'.tr();
+  static String get smsBadgeSemantics => 'sms.badge_semantics'.tr();
+
   // ── Auth ──
   static String get enterPin => 'auth.enter_pin'.tr();
   static String get wrongPin => 'auth.wrong_pin'.tr();

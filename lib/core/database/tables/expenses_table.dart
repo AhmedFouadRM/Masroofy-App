@@ -44,6 +44,10 @@ class ExpensesTable extends Table {
   /// transfer legs.
   TextColumn get direction => text().nullable().check(direction.isIn(const ['out', 'in']))();
 
+  /// How the row came to be: `manual`, `sms` or `recurring`.
+  TextColumn get source =>
+      text().withDefault(const Constant('manual')).check(source.isIn(const ['manual', 'sms', 'recurring']))();
+
   DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
   DateTimeColumn get updatedAt => dateTime().withDefault(currentDateAndTime)();
 

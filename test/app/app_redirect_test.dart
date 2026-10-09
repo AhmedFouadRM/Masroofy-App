@@ -84,6 +84,38 @@ void main() {
       expect(redirect(RoutePaths.analytics, auth: enabledUnlocked), isNull);
     });
 
+    group('an SMS notification opens the pre-filled form (SMS Import)', () {
+      final target = RoutePaths.newExpenseFromSms(12);
+
+      test('the route is /expenses/new?sms={id}', () {
+        expect(target, '/expenses/new?sms=12');
+        expect(Uri.parse(target).path, RoutePaths.newExpense);
+        expect(Uri.parse(target).queryParameters['sms'], '12');
+      });
+
+      test('goes straight there when the app is unlocked', () {
+        expect(redirect(target), isNull);
+        expect(redirect(target, auth: enabledUnlocked), isNull);
+      });
+
+      test('goes to the lock screen first when App Lock is on, remembering the form', () {
+        final to = Uri.parse(redirect(target, auth: locked)!);
+
+        expect(to.path, RoutePaths.lock);
+        expect(to.queryParameters['from'], target);
+      });
+
+      test('after unlocking, lands on the pre-filled form, query and all', () {
+        final lock = Uri.parse(redirect(target, auth: locked)!);
+
+        expect(redirect(lock.toString(), auth: enabledUnlocked), target);
+      });
+
+      test('a notification on first launch waits for the currency picker', () {
+        expect(redirect(target, state: settings(currencyChosen: false)), RoutePaths.firstLaunch);
+      });
+    });
+
     test('a locked app shows the lock before the first-launch picker', () {
       final to = redirect(RoutePaths.expenses, auth: locked, state: settings(currencyChosen: false))!;
 

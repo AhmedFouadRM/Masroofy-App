@@ -30,7 +30,9 @@ mixin _$ExpenseFormState {
  List<WalletSummary> get wallets;/// Field errors, keyed by `amount`, `walletId`, `fromWallet`, `toWallet`,
 /// `categoryId`, `title`, `date`, `note`.
  Map<String, ValidationReason> get errors;/// A load or save failure other than a field error.
- Failure? get failure;
+ Failure? get failure;/// The SMS import this new transaction is pre-filled from (SMS Import).
+ int? get smsImportId;/// The bank of that SMS, for the "From an SMS · CIB" banner.
+ String? get smsBank;
 /// Create a copy of ExpenseFormState
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -41,16 +43,16 @@ $ExpenseFormStateCopyWith<ExpenseFormState> get copyWith => _$ExpenseFormStateCo
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is ExpenseFormState&&(identical(other.date, date) || other.date == date)&&(identical(other.fractionDigits, fractionDigits) || other.fractionDigits == fractionDigits)&&(identical(other.status, status) || other.status == status)&&(identical(other.kind, kind) || other.kind == kind)&&(identical(other.isTransfer, isTransfer) || other.isTransfer == isTransfer)&&(identical(other.id, id) || other.id == id)&&(identical(other.transferId, transferId) || other.transferId == transferId)&&(identical(other.walletId, walletId) || other.walletId == walletId)&&(identical(other.toWalletId, toWalletId) || other.toWalletId == toWalletId)&&(identical(other.amountText, amountText) || other.amountText == amountText)&&(identical(other.categoryId, categoryId) || other.categoryId == categoryId)&&(identical(other.title, title) || other.title == title)&&(identical(other.note, note) || other.note == note)&&const DeepCollectionEquality().equals(other.categories, categories)&&const DeepCollectionEquality().equals(other.wallets, wallets)&&const DeepCollectionEquality().equals(other.errors, errors)&&(identical(other.failure, failure) || other.failure == failure));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ExpenseFormState&&(identical(other.date, date) || other.date == date)&&(identical(other.fractionDigits, fractionDigits) || other.fractionDigits == fractionDigits)&&(identical(other.status, status) || other.status == status)&&(identical(other.kind, kind) || other.kind == kind)&&(identical(other.isTransfer, isTransfer) || other.isTransfer == isTransfer)&&(identical(other.id, id) || other.id == id)&&(identical(other.transferId, transferId) || other.transferId == transferId)&&(identical(other.walletId, walletId) || other.walletId == walletId)&&(identical(other.toWalletId, toWalletId) || other.toWalletId == toWalletId)&&(identical(other.amountText, amountText) || other.amountText == amountText)&&(identical(other.categoryId, categoryId) || other.categoryId == categoryId)&&(identical(other.title, title) || other.title == title)&&(identical(other.note, note) || other.note == note)&&const DeepCollectionEquality().equals(other.categories, categories)&&const DeepCollectionEquality().equals(other.wallets, wallets)&&const DeepCollectionEquality().equals(other.errors, errors)&&(identical(other.failure, failure) || other.failure == failure)&&(identical(other.smsImportId, smsImportId) || other.smsImportId == smsImportId)&&(identical(other.smsBank, smsBank) || other.smsBank == smsBank));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,date,fractionDigits,status,kind,isTransfer,id,transferId,walletId,toWalletId,amountText,categoryId,title,note,const DeepCollectionEquality().hash(categories),const DeepCollectionEquality().hash(wallets),const DeepCollectionEquality().hash(errors),failure);
+int get hashCode => Object.hashAll([runtimeType,date,fractionDigits,status,kind,isTransfer,id,transferId,walletId,toWalletId,amountText,categoryId,title,note,const DeepCollectionEquality().hash(categories),const DeepCollectionEquality().hash(wallets),const DeepCollectionEquality().hash(errors),failure,smsImportId,smsBank]);
 
 @override
 String toString() {
-  return 'ExpenseFormState(date: $date, fractionDigits: $fractionDigits, status: $status, kind: $kind, isTransfer: $isTransfer, id: $id, transferId: $transferId, walletId: $walletId, toWalletId: $toWalletId, amountText: $amountText, categoryId: $categoryId, title: $title, note: $note, categories: $categories, wallets: $wallets, errors: $errors, failure: $failure)';
+  return 'ExpenseFormState(date: $date, fractionDigits: $fractionDigits, status: $status, kind: $kind, isTransfer: $isTransfer, id: $id, transferId: $transferId, walletId: $walletId, toWalletId: $toWalletId, amountText: $amountText, categoryId: $categoryId, title: $title, note: $note, categories: $categories, wallets: $wallets, errors: $errors, failure: $failure, smsImportId: $smsImportId, smsBank: $smsBank)';
 }
 
 
@@ -61,7 +63,7 @@ abstract mixin class $ExpenseFormStateCopyWith<$Res>  {
   factory $ExpenseFormStateCopyWith(ExpenseFormState value, $Res Function(ExpenseFormState) _then) = _$ExpenseFormStateCopyWithImpl;
 @useResult
 $Res call({
- LocalDate date, int fractionDigits, ExpenseFormStatus status, TransactionKind kind, bool isTransfer, int? id, int? transferId, int? walletId, int? toWalletId, String amountText, int? categoryId, String title, String note, List<Category> categories, List<WalletSummary> wallets, Map<String, ValidationReason> errors, Failure? failure
+ LocalDate date, int fractionDigits, ExpenseFormStatus status, TransactionKind kind, bool isTransfer, int? id, int? transferId, int? walletId, int? toWalletId, String amountText, int? categoryId, String title, String note, List<Category> categories, List<WalletSummary> wallets, Map<String, ValidationReason> errors, Failure? failure, int? smsImportId, String? smsBank
 });
 
 
@@ -78,7 +80,7 @@ class _$ExpenseFormStateCopyWithImpl<$Res>
 
 /// Create a copy of ExpenseFormState
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? date = null,Object? fractionDigits = null,Object? status = null,Object? kind = null,Object? isTransfer = null,Object? id = freezed,Object? transferId = freezed,Object? walletId = freezed,Object? toWalletId = freezed,Object? amountText = null,Object? categoryId = freezed,Object? title = null,Object? note = null,Object? categories = null,Object? wallets = null,Object? errors = null,Object? failure = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? date = null,Object? fractionDigits = null,Object? status = null,Object? kind = null,Object? isTransfer = null,Object? id = freezed,Object? transferId = freezed,Object? walletId = freezed,Object? toWalletId = freezed,Object? amountText = null,Object? categoryId = freezed,Object? title = null,Object? note = null,Object? categories = null,Object? wallets = null,Object? errors = null,Object? failure = freezed,Object? smsImportId = freezed,Object? smsBank = freezed,}) {
   return _then(_self.copyWith(
 date: null == date ? _self.date : date // ignore: cast_nullable_to_non_nullable
 as LocalDate,fractionDigits: null == fractionDigits ? _self.fractionDigits : fractionDigits // ignore: cast_nullable_to_non_nullable
@@ -97,7 +99,9 @@ as String,categories: null == categories ? _self.categories : categories // igno
 as List<Category>,wallets: null == wallets ? _self.wallets : wallets // ignore: cast_nullable_to_non_nullable
 as List<WalletSummary>,errors: null == errors ? _self.errors : errors // ignore: cast_nullable_to_non_nullable
 as Map<String, ValidationReason>,failure: freezed == failure ? _self.failure : failure // ignore: cast_nullable_to_non_nullable
-as Failure?,
+as Failure?,smsImportId: freezed == smsImportId ? _self.smsImportId : smsImportId // ignore: cast_nullable_to_non_nullable
+as int?,smsBank: freezed == smsBank ? _self.smsBank : smsBank // ignore: cast_nullable_to_non_nullable
+as String?,
   ));
 }
 /// Create a copy of ExpenseFormState
@@ -194,10 +198,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( LocalDate date,  int fractionDigits,  ExpenseFormStatus status,  TransactionKind kind,  bool isTransfer,  int? id,  int? transferId,  int? walletId,  int? toWalletId,  String amountText,  int? categoryId,  String title,  String note,  List<Category> categories,  List<WalletSummary> wallets,  Map<String, ValidationReason> errors,  Failure? failure)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( LocalDate date,  int fractionDigits,  ExpenseFormStatus status,  TransactionKind kind,  bool isTransfer,  int? id,  int? transferId,  int? walletId,  int? toWalletId,  String amountText,  int? categoryId,  String title,  String note,  List<Category> categories,  List<WalletSummary> wallets,  Map<String, ValidationReason> errors,  Failure? failure,  int? smsImportId,  String? smsBank)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _ExpenseFormState() when $default != null:
-return $default(_that.date,_that.fractionDigits,_that.status,_that.kind,_that.isTransfer,_that.id,_that.transferId,_that.walletId,_that.toWalletId,_that.amountText,_that.categoryId,_that.title,_that.note,_that.categories,_that.wallets,_that.errors,_that.failure);case _:
+return $default(_that.date,_that.fractionDigits,_that.status,_that.kind,_that.isTransfer,_that.id,_that.transferId,_that.walletId,_that.toWalletId,_that.amountText,_that.categoryId,_that.title,_that.note,_that.categories,_that.wallets,_that.errors,_that.failure,_that.smsImportId,_that.smsBank);case _:
   return orElse();
 
 }
@@ -215,10 +219,10 @@ return $default(_that.date,_that.fractionDigits,_that.status,_that.kind,_that.is
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( LocalDate date,  int fractionDigits,  ExpenseFormStatus status,  TransactionKind kind,  bool isTransfer,  int? id,  int? transferId,  int? walletId,  int? toWalletId,  String amountText,  int? categoryId,  String title,  String note,  List<Category> categories,  List<WalletSummary> wallets,  Map<String, ValidationReason> errors,  Failure? failure)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( LocalDate date,  int fractionDigits,  ExpenseFormStatus status,  TransactionKind kind,  bool isTransfer,  int? id,  int? transferId,  int? walletId,  int? toWalletId,  String amountText,  int? categoryId,  String title,  String note,  List<Category> categories,  List<WalletSummary> wallets,  Map<String, ValidationReason> errors,  Failure? failure,  int? smsImportId,  String? smsBank)  $default,) {final _that = this;
 switch (_that) {
 case _ExpenseFormState():
-return $default(_that.date,_that.fractionDigits,_that.status,_that.kind,_that.isTransfer,_that.id,_that.transferId,_that.walletId,_that.toWalletId,_that.amountText,_that.categoryId,_that.title,_that.note,_that.categories,_that.wallets,_that.errors,_that.failure);case _:
+return $default(_that.date,_that.fractionDigits,_that.status,_that.kind,_that.isTransfer,_that.id,_that.transferId,_that.walletId,_that.toWalletId,_that.amountText,_that.categoryId,_that.title,_that.note,_that.categories,_that.wallets,_that.errors,_that.failure,_that.smsImportId,_that.smsBank);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -235,10 +239,10 @@ return $default(_that.date,_that.fractionDigits,_that.status,_that.kind,_that.is
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( LocalDate date,  int fractionDigits,  ExpenseFormStatus status,  TransactionKind kind,  bool isTransfer,  int? id,  int? transferId,  int? walletId,  int? toWalletId,  String amountText,  int? categoryId,  String title,  String note,  List<Category> categories,  List<WalletSummary> wallets,  Map<String, ValidationReason> errors,  Failure? failure)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( LocalDate date,  int fractionDigits,  ExpenseFormStatus status,  TransactionKind kind,  bool isTransfer,  int? id,  int? transferId,  int? walletId,  int? toWalletId,  String amountText,  int? categoryId,  String title,  String note,  List<Category> categories,  List<WalletSummary> wallets,  Map<String, ValidationReason> errors,  Failure? failure,  int? smsImportId,  String? smsBank)?  $default,) {final _that = this;
 switch (_that) {
 case _ExpenseFormState() when $default != null:
-return $default(_that.date,_that.fractionDigits,_that.status,_that.kind,_that.isTransfer,_that.id,_that.transferId,_that.walletId,_that.toWalletId,_that.amountText,_that.categoryId,_that.title,_that.note,_that.categories,_that.wallets,_that.errors,_that.failure);case _:
+return $default(_that.date,_that.fractionDigits,_that.status,_that.kind,_that.isTransfer,_that.id,_that.transferId,_that.walletId,_that.toWalletId,_that.amountText,_that.categoryId,_that.title,_that.note,_that.categories,_that.wallets,_that.errors,_that.failure,_that.smsImportId,_that.smsBank);case _:
   return null;
 
 }
@@ -250,7 +254,7 @@ return $default(_that.date,_that.fractionDigits,_that.status,_that.kind,_that.is
 
 
 class _ExpenseFormState extends ExpenseFormState {
-  const _ExpenseFormState({required this.date, required this.fractionDigits, this.status = ExpenseFormStatus.loading, this.kind = TransactionKind.expense, this.isTransfer = false, this.id, this.transferId, this.walletId, this.toWalletId, this.amountText = '', this.categoryId, this.title = '', this.note = '', final  List<Category> categories = const <Category>[], final  List<WalletSummary> wallets = const <WalletSummary>[], final  Map<String, ValidationReason> errors = const <String, ValidationReason>{}, this.failure}): _categories = categories,_wallets = wallets,_errors = errors,super._();
+  const _ExpenseFormState({required this.date, required this.fractionDigits, this.status = ExpenseFormStatus.loading, this.kind = TransactionKind.expense, this.isTransfer = false, this.id, this.transferId, this.walletId, this.toWalletId, this.amountText = '', this.categoryId, this.title = '', this.note = '', final  List<Category> categories = const <Category>[], final  List<WalletSummary> wallets = const <WalletSummary>[], final  Map<String, ValidationReason> errors = const <String, ValidationReason>{}, this.failure, this.smsImportId, this.smsBank}): _categories = categories,_wallets = wallets,_errors = errors,super._();
   
 
 @override final  LocalDate date;
@@ -308,6 +312,10 @@ class _ExpenseFormState extends ExpenseFormState {
 
 /// A load or save failure other than a field error.
 @override final  Failure? failure;
+/// The SMS import this new transaction is pre-filled from (SMS Import).
+@override final  int? smsImportId;
+/// The bank of that SMS, for the "From an SMS · CIB" banner.
+@override final  String? smsBank;
 
 /// Create a copy of ExpenseFormState
 /// with the given fields replaced by the non-null parameter values.
@@ -319,16 +327,16 @@ _$ExpenseFormStateCopyWith<_ExpenseFormState> get copyWith => __$ExpenseFormStat
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _ExpenseFormState&&(identical(other.date, date) || other.date == date)&&(identical(other.fractionDigits, fractionDigits) || other.fractionDigits == fractionDigits)&&(identical(other.status, status) || other.status == status)&&(identical(other.kind, kind) || other.kind == kind)&&(identical(other.isTransfer, isTransfer) || other.isTransfer == isTransfer)&&(identical(other.id, id) || other.id == id)&&(identical(other.transferId, transferId) || other.transferId == transferId)&&(identical(other.walletId, walletId) || other.walletId == walletId)&&(identical(other.toWalletId, toWalletId) || other.toWalletId == toWalletId)&&(identical(other.amountText, amountText) || other.amountText == amountText)&&(identical(other.categoryId, categoryId) || other.categoryId == categoryId)&&(identical(other.title, title) || other.title == title)&&(identical(other.note, note) || other.note == note)&&const DeepCollectionEquality().equals(other._categories, _categories)&&const DeepCollectionEquality().equals(other._wallets, _wallets)&&const DeepCollectionEquality().equals(other._errors, _errors)&&(identical(other.failure, failure) || other.failure == failure));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _ExpenseFormState&&(identical(other.date, date) || other.date == date)&&(identical(other.fractionDigits, fractionDigits) || other.fractionDigits == fractionDigits)&&(identical(other.status, status) || other.status == status)&&(identical(other.kind, kind) || other.kind == kind)&&(identical(other.isTransfer, isTransfer) || other.isTransfer == isTransfer)&&(identical(other.id, id) || other.id == id)&&(identical(other.transferId, transferId) || other.transferId == transferId)&&(identical(other.walletId, walletId) || other.walletId == walletId)&&(identical(other.toWalletId, toWalletId) || other.toWalletId == toWalletId)&&(identical(other.amountText, amountText) || other.amountText == amountText)&&(identical(other.categoryId, categoryId) || other.categoryId == categoryId)&&(identical(other.title, title) || other.title == title)&&(identical(other.note, note) || other.note == note)&&const DeepCollectionEquality().equals(other._categories, _categories)&&const DeepCollectionEquality().equals(other._wallets, _wallets)&&const DeepCollectionEquality().equals(other._errors, _errors)&&(identical(other.failure, failure) || other.failure == failure)&&(identical(other.smsImportId, smsImportId) || other.smsImportId == smsImportId)&&(identical(other.smsBank, smsBank) || other.smsBank == smsBank));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,date,fractionDigits,status,kind,isTransfer,id,transferId,walletId,toWalletId,amountText,categoryId,title,note,const DeepCollectionEquality().hash(_categories),const DeepCollectionEquality().hash(_wallets),const DeepCollectionEquality().hash(_errors),failure);
+int get hashCode => Object.hashAll([runtimeType,date,fractionDigits,status,kind,isTransfer,id,transferId,walletId,toWalletId,amountText,categoryId,title,note,const DeepCollectionEquality().hash(_categories),const DeepCollectionEquality().hash(_wallets),const DeepCollectionEquality().hash(_errors),failure,smsImportId,smsBank]);
 
 @override
 String toString() {
-  return 'ExpenseFormState(date: $date, fractionDigits: $fractionDigits, status: $status, kind: $kind, isTransfer: $isTransfer, id: $id, transferId: $transferId, walletId: $walletId, toWalletId: $toWalletId, amountText: $amountText, categoryId: $categoryId, title: $title, note: $note, categories: $categories, wallets: $wallets, errors: $errors, failure: $failure)';
+  return 'ExpenseFormState(date: $date, fractionDigits: $fractionDigits, status: $status, kind: $kind, isTransfer: $isTransfer, id: $id, transferId: $transferId, walletId: $walletId, toWalletId: $toWalletId, amountText: $amountText, categoryId: $categoryId, title: $title, note: $note, categories: $categories, wallets: $wallets, errors: $errors, failure: $failure, smsImportId: $smsImportId, smsBank: $smsBank)';
 }
 
 
@@ -339,7 +347,7 @@ abstract mixin class _$ExpenseFormStateCopyWith<$Res> implements $ExpenseFormSta
   factory _$ExpenseFormStateCopyWith(_ExpenseFormState value, $Res Function(_ExpenseFormState) _then) = __$ExpenseFormStateCopyWithImpl;
 @override @useResult
 $Res call({
- LocalDate date, int fractionDigits, ExpenseFormStatus status, TransactionKind kind, bool isTransfer, int? id, int? transferId, int? walletId, int? toWalletId, String amountText, int? categoryId, String title, String note, List<Category> categories, List<WalletSummary> wallets, Map<String, ValidationReason> errors, Failure? failure
+ LocalDate date, int fractionDigits, ExpenseFormStatus status, TransactionKind kind, bool isTransfer, int? id, int? transferId, int? walletId, int? toWalletId, String amountText, int? categoryId, String title, String note, List<Category> categories, List<WalletSummary> wallets, Map<String, ValidationReason> errors, Failure? failure, int? smsImportId, String? smsBank
 });
 
 
@@ -356,7 +364,7 @@ class __$ExpenseFormStateCopyWithImpl<$Res>
 
 /// Create a copy of ExpenseFormState
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? date = null,Object? fractionDigits = null,Object? status = null,Object? kind = null,Object? isTransfer = null,Object? id = freezed,Object? transferId = freezed,Object? walletId = freezed,Object? toWalletId = freezed,Object? amountText = null,Object? categoryId = freezed,Object? title = null,Object? note = null,Object? categories = null,Object? wallets = null,Object? errors = null,Object? failure = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? date = null,Object? fractionDigits = null,Object? status = null,Object? kind = null,Object? isTransfer = null,Object? id = freezed,Object? transferId = freezed,Object? walletId = freezed,Object? toWalletId = freezed,Object? amountText = null,Object? categoryId = freezed,Object? title = null,Object? note = null,Object? categories = null,Object? wallets = null,Object? errors = null,Object? failure = freezed,Object? smsImportId = freezed,Object? smsBank = freezed,}) {
   return _then(_ExpenseFormState(
 date: null == date ? _self.date : date // ignore: cast_nullable_to_non_nullable
 as LocalDate,fractionDigits: null == fractionDigits ? _self.fractionDigits : fractionDigits // ignore: cast_nullable_to_non_nullable
@@ -375,7 +383,9 @@ as String,categories: null == categories ? _self._categories : categories // ign
 as List<Category>,wallets: null == wallets ? _self._wallets : wallets // ignore: cast_nullable_to_non_nullable
 as List<WalletSummary>,errors: null == errors ? _self._errors : errors // ignore: cast_nullable_to_non_nullable
 as Map<String, ValidationReason>,failure: freezed == failure ? _self.failure : failure // ignore: cast_nullable_to_non_nullable
-as Failure?,
+as Failure?,smsImportId: freezed == smsImportId ? _self.smsImportId : smsImportId // ignore: cast_nullable_to_non_nullable
+as int?,smsBank: freezed == smsBank ? _self.smsBank : smsBank // ignore: cast_nullable_to_non_nullable
+as String?,
   ));
 }
 

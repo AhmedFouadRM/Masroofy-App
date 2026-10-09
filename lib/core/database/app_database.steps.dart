@@ -741,9 +741,444 @@ i1.GeneratedColumn<String> _column_30(String aliasedName) =>
       type: i1.DriftSqlType.string,
       $customConstraints: 'NULL CHECK (direction IN (\'out\', \'in\'))',
     );
+
+final class Schema4 extends i0.VersionedSchema {
+  Schema4({required super.database}) : super(version: 4);
+  @override
+  late final List<i1.DatabaseSchemaEntity> entities = [
+    categories,
+    wallets,
+    recurringExpenses,
+    transfers,
+    expenses,
+    budgets,
+    smsImports,
+    merchantCategories,
+    trustedSenders,
+    idxCategoriesKind,
+    idxExpensesDate,
+    idxExpensesCategoryDate,
+    idxExpensesWalletDate,
+    idxRecurringActiveDue,
+    idxWalletsSortOrder,
+    idxSmsImportsReceivedAt,
+    idxSmsImportsExpense,
+  ];
+  late final Shape0 categories = Shape0(
+    source: i0.VersionedTable(
+      entityName: 'categories',
+      withoutRowId: false,
+      isStrict: false,
+      tableConstraints: ['CHECK((seed_key IS NULL)<>(name IS NULL))'],
+      columns: [
+        _column_0,
+        _column_1,
+        _column_2,
+        _column_3,
+        _column_4,
+        _column_5,
+        _column_6,
+        _column_7,
+        _column_8,
+        _column_9,
+      ],
+      attachedDatabase: database,
+    ),
+    alias: null,
+  );
+  late final Shape4 wallets = Shape4(
+    source: i0.VersionedTable(
+      entityName: 'wallets',
+      withoutRowId: false,
+      isStrict: false,
+      tableConstraints: ['CHECK((seed_key IS NULL)<>(name IS NULL))'],
+      columns: [
+        _column_0,
+        _column_1,
+        _column_26,
+        _column_4,
+        _column_5,
+        _column_6,
+        _column_8,
+        _column_9,
+      ],
+      attachedDatabase: database,
+    ),
+    alias: null,
+  );
+  late final Shape5 recurringExpenses = Shape5(
+    source: i0.VersionedTable(
+      entityName: 'recurring_expenses',
+      withoutRowId: false,
+      isStrict: false,
+      tableConstraints: [],
+      columns: [
+        _column_0,
+        _column_10,
+        _column_11,
+        _column_27,
+        _column_12,
+        _column_13,
+        _column_14,
+        _column_15,
+        _column_16,
+        _column_8,
+        _column_9,
+      ],
+      attachedDatabase: database,
+    ),
+    alias: null,
+  );
+  late final Shape6 transfers = Shape6(
+    source: i0.VersionedTable(
+      entityName: 'transfers',
+      withoutRowId: false,
+      isStrict: false,
+      tableConstraints: [],
+      columns: [_column_0, _column_8, _column_9],
+      attachedDatabase: database,
+    ),
+    alias: null,
+  );
+  late final Shape8 expenses = Shape8(
+    source: i0.VersionedTable(
+      entityName: 'expenses',
+      withoutRowId: false,
+      isStrict: false,
+      tableConstraints: [
+        'UNIQUE(recurring_expense_id, occurrence_date)',
+        'CHECK((transfer_id IS NULL)=(category_id IS NOT NULL))',
+        'CHECK((transfer_id IS NULL)=(direction IS NULL))',
+      ],
+      columns: [
+        _column_0,
+        _column_17,
+        _column_11,
+        _column_27,
+        _column_28,
+        _column_18,
+        _column_19,
+        _column_20,
+        _column_21,
+        _column_29,
+        _column_30,
+        _column_31,
+        _column_8,
+        _column_9,
+      ],
+      attachedDatabase: database,
+    ),
+    alias: null,
+  );
+  late final Shape3 budgets = Shape3(
+    source: i0.VersionedTable(
+      entityName: 'budgets',
+      withoutRowId: false,
+      isStrict: false,
+      tableConstraints: [],
+      columns: [
+        _column_0,
+        _column_22,
+        _column_23,
+        _column_24,
+        _column_25,
+        _column_8,
+        _column_9,
+      ],
+      attachedDatabase: database,
+    ),
+    alias: null,
+  );
+  late final Shape9 smsImports = Shape9(
+    source: i0.VersionedTable(
+      entityName: 'sms_imports',
+      withoutRowId: false,
+      isStrict: false,
+      tableConstraints: [],
+      columns: [
+        _column_0,
+        _column_32,
+        _column_33,
+        _column_34,
+        _column_35,
+        _column_11,
+        _column_36,
+        _column_37,
+        _column_38,
+        _column_39,
+        _column_18,
+        _column_19,
+        _column_40,
+        _column_41,
+      ],
+      attachedDatabase: database,
+    ),
+    alias: null,
+  );
+  late final Shape10 merchantCategories = Shape10(
+    source: i0.VersionedTable(
+      entityName: 'merchant_categories',
+      withoutRowId: false,
+      isStrict: false,
+      tableConstraints: ['PRIMARY KEY(merchant_key)'],
+      columns: [_column_42, _column_43, _column_9],
+      attachedDatabase: database,
+    ),
+    alias: null,
+  );
+  late final Shape11 trustedSenders = Shape11(
+    source: i0.VersionedTable(
+      entityName: 'trusted_senders',
+      withoutRowId: false,
+      isStrict: false,
+      tableConstraints: ['PRIMARY KEY(sender)'],
+      columns: [_column_33, _column_44, _column_8],
+      attachedDatabase: database,
+    ),
+    alias: null,
+  );
+  final i1.Index idxCategoriesKind = i1.Index(
+    'idx_categories_kind',
+    'CREATE INDEX idx_categories_kind ON categories (kind)',
+  );
+  final i1.Index idxExpensesDate = i1.Index(
+    'idx_expenses_date',
+    'CREATE INDEX idx_expenses_date ON expenses (date)',
+  );
+  final i1.Index idxExpensesCategoryDate = i1.Index(
+    'idx_expenses_category_date',
+    'CREATE INDEX idx_expenses_category_date ON expenses (category_id, date)',
+  );
+  final i1.Index idxExpensesWalletDate = i1.Index(
+    'idx_expenses_wallet_date',
+    'CREATE INDEX idx_expenses_wallet_date ON expenses (wallet_id, date)',
+  );
+  final i1.Index idxRecurringActiveDue = i1.Index(
+    'idx_recurring_active_due',
+    'CREATE INDEX idx_recurring_active_due ON recurring_expenses (is_active, next_due_date)',
+  );
+  final i1.Index idxWalletsSortOrder = i1.Index(
+    'idx_wallets_sort_order',
+    'CREATE INDEX idx_wallets_sort_order ON wallets (sort_order)',
+  );
+  final i1.Index idxSmsImportsReceivedAt = i1.Index(
+    'idx_sms_imports_received_at',
+    'CREATE INDEX idx_sms_imports_received_at ON sms_imports (received_at)',
+  );
+  final i1.Index idxSmsImportsExpense = i1.Index(
+    'idx_sms_imports_expense',
+    'CREATE INDEX idx_sms_imports_expense ON sms_imports (expense_id)',
+  );
+}
+
+class Shape8 extends i0.VersionedTable {
+  Shape8({required super.source, required super.alias}) : super.aliased();
+  i1.GeneratedColumn<int> get id =>
+      columnsByName['id']! as i1.GeneratedColumn<int>;
+  i1.GeneratedColumn<String> get title =>
+      columnsByName['title']! as i1.GeneratedColumn<String>;
+  i1.GeneratedColumn<int> get amountMinor =>
+      columnsByName['amount_minor']! as i1.GeneratedColumn<int>;
+  i1.GeneratedColumn<int> get walletId =>
+      columnsByName['wallet_id']! as i1.GeneratedColumn<int>;
+  i1.GeneratedColumn<int> get categoryId =>
+      columnsByName['category_id']! as i1.GeneratedColumn<int>;
+  i1.GeneratedColumn<String> get date =>
+      columnsByName['date']! as i1.GeneratedColumn<String>;
+  i1.GeneratedColumn<String> get note =>
+      columnsByName['note']! as i1.GeneratedColumn<String>;
+  i1.GeneratedColumn<int> get recurringExpenseId =>
+      columnsByName['recurring_expense_id']! as i1.GeneratedColumn<int>;
+  i1.GeneratedColumn<String> get occurrenceDate =>
+      columnsByName['occurrence_date']! as i1.GeneratedColumn<String>;
+  i1.GeneratedColumn<int> get transferId =>
+      columnsByName['transfer_id']! as i1.GeneratedColumn<int>;
+  i1.GeneratedColumn<String> get direction =>
+      columnsByName['direction']! as i1.GeneratedColumn<String>;
+  i1.GeneratedColumn<String> get source =>
+      columnsByName['source']! as i1.GeneratedColumn<String>;
+  i1.GeneratedColumn<int> get createdAt =>
+      columnsByName['created_at']! as i1.GeneratedColumn<int>;
+  i1.GeneratedColumn<int> get updatedAt =>
+      columnsByName['updated_at']! as i1.GeneratedColumn<int>;
+}
+
+i1.GeneratedColumn<String> _column_31(
+  String aliasedName,
+) => i1.GeneratedColumn<String>(
+  'source',
+  aliasedName,
+  false,
+  type: i1.DriftSqlType.string,
+  $customConstraints:
+      'NOT NULL DEFAULT \'manual\' CHECK (source IN (\'manual\', \'sms\', \'recurring\'))',
+  defaultValue: const i1.CustomExpression('\'manual\''),
+);
+
+class Shape9 extends i0.VersionedTable {
+  Shape9({required super.source, required super.alias}) : super.aliased();
+  i1.GeneratedColumn<int> get id =>
+      columnsByName['id']! as i1.GeneratedColumn<int>;
+  i1.GeneratedColumn<String> get smsKey =>
+      columnsByName['sms_key']! as i1.GeneratedColumn<String>;
+  i1.GeneratedColumn<String> get sender =>
+      columnsByName['sender']! as i1.GeneratedColumn<String>;
+  i1.GeneratedColumn<int> get receivedAt =>
+      columnsByName['received_at']! as i1.GeneratedColumn<int>;
+  i1.GeneratedColumn<String> get kind =>
+      columnsByName['kind']! as i1.GeneratedColumn<String>;
+  i1.GeneratedColumn<int> get amountMinor =>
+      columnsByName['amount_minor']! as i1.GeneratedColumn<int>;
+  i1.GeneratedColumn<String> get currency =>
+      columnsByName['currency']! as i1.GeneratedColumn<String>;
+  i1.GeneratedColumn<String> get merchant =>
+      columnsByName['merchant']! as i1.GeneratedColumn<String>;
+  i1.GeneratedColumn<int> get categoryId =>
+      columnsByName['category_id']! as i1.GeneratedColumn<int>;
+  i1.GeneratedColumn<String> get cardLast4 =>
+      columnsByName['card_last4']! as i1.GeneratedColumn<String>;
+  i1.GeneratedColumn<String> get date =>
+      columnsByName['date']! as i1.GeneratedColumn<String>;
+  i1.GeneratedColumn<String> get note =>
+      columnsByName['note']! as i1.GeneratedColumn<String>;
+  i1.GeneratedColumn<String> get status =>
+      columnsByName['status']! as i1.GeneratedColumn<String>;
+  i1.GeneratedColumn<int> get expenseId =>
+      columnsByName['expense_id']! as i1.GeneratedColumn<int>;
+}
+
+i1.GeneratedColumn<String> _column_32(String aliasedName) =>
+    i1.GeneratedColumn<String>(
+      'sms_key',
+      aliasedName,
+      false,
+      type: i1.DriftSqlType.string,
+      $customConstraints: 'NOT NULL UNIQUE',
+    );
+i1.GeneratedColumn<String> _column_33(String aliasedName) =>
+    i1.GeneratedColumn<String>(
+      'sender',
+      aliasedName,
+      false,
+      type: i1.DriftSqlType.string,
+      $customConstraints: 'NOT NULL',
+    );
+i1.GeneratedColumn<int> _column_34(String aliasedName) =>
+    i1.GeneratedColumn<int>(
+      'received_at',
+      aliasedName,
+      false,
+      type: i1.DriftSqlType.int,
+      $customConstraints: 'NOT NULL',
+    );
+i1.GeneratedColumn<String> _column_35(String aliasedName) =>
+    i1.GeneratedColumn<String>(
+      'kind',
+      aliasedName,
+      false,
+      type: i1.DriftSqlType.string,
+      $customConstraints: 'NOT NULL CHECK (kind IN (\'expense\', \'income\'))',
+    );
+i1.GeneratedColumn<String> _column_36(String aliasedName) =>
+    i1.GeneratedColumn<String>(
+      'currency',
+      aliasedName,
+      false,
+      type: i1.DriftSqlType.string,
+      $customConstraints: 'NOT NULL',
+    );
+i1.GeneratedColumn<String> _column_37(String aliasedName) =>
+    i1.GeneratedColumn<String>(
+      'merchant',
+      aliasedName,
+      true,
+      type: i1.DriftSqlType.string,
+      $customConstraints: 'NULL',
+    );
+i1.GeneratedColumn<int> _column_38(String aliasedName) =>
+    i1.GeneratedColumn<int>(
+      'category_id',
+      aliasedName,
+      true,
+      type: i1.DriftSqlType.int,
+      $customConstraints: 'NULL REFERENCES categories(id)ON DELETE SET NULL',
+    );
+i1.GeneratedColumn<String> _column_39(String aliasedName) =>
+    i1.GeneratedColumn<String>(
+      'card_last4',
+      aliasedName,
+      true,
+      type: i1.DriftSqlType.string,
+      $customConstraints: 'NULL',
+    );
+i1.GeneratedColumn<String> _column_40(
+  String aliasedName,
+) => i1.GeneratedColumn<String>(
+  'status',
+  aliasedName,
+  false,
+  type: i1.DriftSqlType.string,
+  $customConstraints:
+      'NOT NULL CHECK (status IN (\'added\', \'pending\', \'ignored\', \'cancelled\'))',
+);
+i1.GeneratedColumn<int> _column_41(String aliasedName) =>
+    i1.GeneratedColumn<int>(
+      'expense_id',
+      aliasedName,
+      true,
+      type: i1.DriftSqlType.int,
+      $customConstraints: 'NULL REFERENCES expenses(id)ON DELETE SET NULL',
+    );
+
+class Shape10 extends i0.VersionedTable {
+  Shape10({required super.source, required super.alias}) : super.aliased();
+  i1.GeneratedColumn<String> get merchantKey =>
+      columnsByName['merchant_key']! as i1.GeneratedColumn<String>;
+  i1.GeneratedColumn<int> get categoryId =>
+      columnsByName['category_id']! as i1.GeneratedColumn<int>;
+  i1.GeneratedColumn<int> get updatedAt =>
+      columnsByName['updated_at']! as i1.GeneratedColumn<int>;
+}
+
+i1.GeneratedColumn<String> _column_42(String aliasedName) =>
+    i1.GeneratedColumn<String>(
+      'merchant_key',
+      aliasedName,
+      false,
+      type: i1.DriftSqlType.string,
+      $customConstraints: 'NOT NULL',
+    );
+i1.GeneratedColumn<int> _column_43(String aliasedName) =>
+    i1.GeneratedColumn<int>(
+      'category_id',
+      aliasedName,
+      false,
+      type: i1.DriftSqlType.int,
+      $customConstraints: 'NOT NULL REFERENCES categories(id)ON DELETE CASCADE',
+    );
+
+class Shape11 extends i0.VersionedTable {
+  Shape11({required super.source, required super.alias}) : super.aliased();
+  i1.GeneratedColumn<String> get sender =>
+      columnsByName['sender']! as i1.GeneratedColumn<String>;
+  i1.GeneratedColumn<int> get trusted =>
+      columnsByName['trusted']! as i1.GeneratedColumn<int>;
+  i1.GeneratedColumn<int> get createdAt =>
+      columnsByName['created_at']! as i1.GeneratedColumn<int>;
+}
+
+i1.GeneratedColumn<int> _column_44(String aliasedName) =>
+    i1.GeneratedColumn<int>(
+      'trusted',
+      aliasedName,
+      false,
+      type: i1.DriftSqlType.int,
+      $customConstraints: 'NOT NULL CHECK (trusted IN (0, 1))',
+    );
 i0.MigrationStepWithVersion migrationSteps({
   required Future<void> Function(i1.Migrator m, Schema2 schema) from1To2,
   required Future<void> Function(i1.Migrator m, Schema3 schema) from2To3,
+  required Future<void> Function(i1.Migrator m, Schema4 schema) from3To4,
 }) {
   return (currentVersion, database) async {
     switch (currentVersion) {
@@ -757,6 +1192,11 @@ i0.MigrationStepWithVersion migrationSteps({
         final migrator = i1.Migrator(database, schema);
         await from2To3(migrator, schema);
         return 3;
+      case 3:
+        final schema = Schema4(database: database);
+        final migrator = i1.Migrator(database, schema);
+        await from3To4(migrator, schema);
+        return 4;
       default:
         throw ArgumentError.value('Unknown migration from $currentVersion');
     }
@@ -766,6 +1206,11 @@ i0.MigrationStepWithVersion migrationSteps({
 i1.OnUpgrade stepByStep({
   required Future<void> Function(i1.Migrator m, Schema2 schema) from1To2,
   required Future<void> Function(i1.Migrator m, Schema3 schema) from2To3,
+  required Future<void> Function(i1.Migrator m, Schema4 schema) from3To4,
 }) => i0.VersionedSchema.stepByStepHelper(
-  step: migrationSteps(from1To2: from1To2, from2To3: from2To3),
+  step: migrationSteps(
+    from1To2: from1To2,
+    from2To3: from2To3,
+    from3To4: from3To4,
+  ),
 );

@@ -19,6 +19,17 @@ abstract final class PreferenceKeys {
   static const biometricEnabled = 'biometric_enabled';
   static const defaultWalletId = 'default_wallet_id';
 
+  /// SMS Import (Android). The native SMS receiver reads `sms_enabled` from
+  /// the `FlutterSharedPreferences` file, where shared_preferences stores it
+  /// as `flutter.sms_enabled`, so rename it in both places or not at all.
+  static const smsEnabled = 'sms_enabled';
+
+  /// `ask` (default) or `auto`.
+  static const smsMode = 'sms_mode';
+
+  /// Whether the one-time "Import the last 30 days?" sheet was shown.
+  static const smsCatchUpOffered = 'sms_catch_up_offered';
+
   /// The wallet being viewed. Absent until the first launch has picked the
   /// default wallet; [allWallets] stores a choice of All wallets.
   static const viewedWalletId = 'viewed_wallet_id';
@@ -49,6 +60,7 @@ class SettingsCubit extends Cubit<SettingsState> {
     firstWeekday: firstWeekday,
     defaultWalletId: preferences.getInt(PreferenceKeys.defaultWalletId),
     viewedWalletId: _viewedWallet(preferences),
+    smsEnabled: preferences.getBool(PreferenceKeys.smsEnabled) ?? false,
   );
 
   static int? _viewedWallet(SharedPreferences preferences) {

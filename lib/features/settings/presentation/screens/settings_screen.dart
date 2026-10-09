@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io' show Platform;
 
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
@@ -31,9 +32,12 @@ import 'package:material_symbols_icons/symbols.dart';
 /// The Settings tab. Expects a [DataManagementCubit] and a [WalletCountCubit],
 /// and the app-wide [SettingsCubit] and [AuthCubit], above it.
 class SettingsScreen extends StatelessWidget {
-  const SettingsScreen({required this.appInfo, super.key});
+  /// [smsAvailable] shows the Add from SMS row; null means on Android, the
+  /// only platform that lets an app read SMS.
+  const SettingsScreen({required this.appInfo, this.smsAvailable, super.key});
 
   final AppInfo appInfo;
+  final bool? smsAvailable;
 
   static const _languages = [Locale('en'), Locale('ar')];
 
@@ -325,6 +329,13 @@ class SettingsScreen extends StatelessWidget {
                     title: StringManager.manageBudgets,
                     onTap: () => context.push(RoutePaths.budgets),
                   ),
+                  if (smsAvailable ?? Platform.isAndroid)
+                    SettingsTile(
+                      icon: Symbols.sms_rounded,
+                      title: StringManager.smsTitle,
+                      value: settings.smsEnabled ? StringManager.smsOn : StringManager.smsOff,
+                      onTap: () => context.push(RoutePaths.smsImport),
+                    ),
                   SettingsTile(
                     icon: Symbols.table_view_rounded,
                     title: StringManager.exportCsv,

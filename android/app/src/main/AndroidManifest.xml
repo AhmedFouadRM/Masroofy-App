@@ -1,6 +1,15 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <!-- Fingerprint / face unlock for App Lock (local_auth). -->
     <uses-permission android:name="android.permission.USE_BIOMETRIC"/>
+    <!-- SMS Import (off by default): the receiver reads bank messages as they
+         arrive, READ_SMS only serves the 30-day catch-up, and POST_NOTIFICATIONS
+         (Android 13+) lets Ask mode ask. All three are requested at run time,
+         after the in-app disclosure, never at install. -->
+    <uses-permission android:name="android.permission.RECEIVE_SMS"/>
+    <uses-permission android:name="android.permission.READ_SMS"/>
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
+    <!-- The app works fully without telephony (tablets, no SIM). -->
+    <uses-feature android:name="android.hardware.telephony" android:required="false"/>
     <application
         android:label="masroofy"
         android:name="${applicationName}"
@@ -27,6 +36,22 @@
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
         </activity>
+        <!-- SMS Import: assembles an incoming SMS and hands it to Dart. It does
+             nothing while the feature is off. BROADCAST_SMS makes sure only the
+             system can send it. -->
+        <receiver
+            android:name=".SmsReceiver"
+            android:exported="true"
+            android:permission="android.permission.BROADCAST_SMS">
+            <intent-filter>
+                <action android:name="android.provider.Telephony.SMS_RECEIVED"/>
+            </intent-filter>
+        </receiver>
+        <!-- flutter_local_notifications: the buttons of a notification that
+             do not open the app (Ignore, Remove, Keep, Trust). -->
+        <receiver
+            android:name="com.dexterous.flutterlocalnotifications.ActionBroadcastReceiver"
+            android:exported="false"/>
         <!-- Don't delete the meta-data below.
              This is used by the Flutter tool to generate GeneratedPluginRegistrant.java -->
         <meta-data

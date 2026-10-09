@@ -57,6 +57,12 @@ abstract class ExpenseFormState with _$ExpenseFormState {
 
     /// A load or save failure other than a field error.
     Failure? failure,
+
+    /// The SMS import this new transaction is pre-filled from (SMS Import).
+    int? smsImportId,
+
+    /// The bank of that SMS, for the "From an SMS · CIB" banner.
+    String? smsBank,
   }) = _ExpenseFormState;
 
   const ExpenseFormState._();

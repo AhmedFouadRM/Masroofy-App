@@ -2,6 +2,7 @@ import 'package:drift/drift.dart' show Value;
 import 'package:fpdart/fpdart.dart';
 import 'package:masroofy/core/database/app_database.dart';
 import 'package:masroofy/core/database/db_guard.dart';
+import 'package:masroofy/core/domain/expense_source.dart';
 import 'package:masroofy/core/domain/local_date.dart';
 import 'package:masroofy/core/domain/money.dart';
 import 'package:masroofy/core/domain/transaction_kind.dart';
@@ -118,6 +119,7 @@ class RecurringExpenseRepositoryImpl implements IRecurringExpenseRepository {
               date: date,
               recurringExpenseId: Value(template.id),
               occurrenceDate: Value(date),
+              source: Value(ExpenseSource.recurring.name),
             ),
           );
           if (added) inserted++;

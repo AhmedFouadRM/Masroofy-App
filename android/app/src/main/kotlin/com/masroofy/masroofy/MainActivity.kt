@@ -28,5 +28,13 @@ class MainActivity : FlutterFragmentActivity() {
                     else -> result.notImplemented()
                 }
             }
+        // SMS Import: delivers incoming messages to this engine while the app
+        // is running, and reads the inbox for the catch-up scan.
+        SmsBridge.attach(flutterEngine, applicationContext)
+    }
+
+    override fun cleanUpFlutterEngine(flutterEngine: FlutterEngine) {
+        SmsBridge.detach(flutterEngine)
+        super.cleanUpFlutterEngine(flutterEngine)
     }
 }

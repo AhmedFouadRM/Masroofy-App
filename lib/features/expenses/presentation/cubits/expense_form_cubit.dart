@@ -1,7 +1,9 @@
 import 'dart:async';
 
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:fpdart/fpdart.dart';
 import 'package:masroofy/core/domain/date_range.dart';
+import 'package:masroofy/core/domain/expense_source.dart';
 import 'package:masroofy/core/domain/local_date.dart';
 import 'package:masroofy/core/domain/money.dart';
 import 'package:masroofy/core/domain/transaction_kind.dart';
@@ -12,6 +14,9 @@ import 'package:masroofy/features/expenses/domain/entities/list_entry.dart';
 import 'package:masroofy/features/expenses/domain/repositories/i_expense_repository.dart';
 import 'package:masroofy/features/expenses/domain/usecases/save_expense.dart';
 import 'package:masroofy/features/expenses/presentation/cubits/expense_form_state.dart';
+import 'package:masroofy/features/sms_import/domain/catalog/senders.dart';
+import 'package:masroofy/features/sms_import/domain/repositories/i_sms_import_repository.dart';
+import 'package:masroofy/features/sms_import/domain/usecases/sms_import_actions.dart';
 import 'package:masroofy/features/wallets/domain/entities/transfer_draft.dart';
 import 'package:masroofy/features/wallets/domain/entities/wallet_summary.dart';
 import 'package:masroofy/features/wallets/domain/repositories/i_wallet_repository.dart';
@@ -23,7 +28,7 @@ export 'package:masroofy/features/expenses/presentation/cubits/expense_form_stat
 /// Add / Edit Expense, Income or Transfer. Pass `expenseId` to edit. A new row
 /// starts in the wallet given to [walletSelected] before [load] (the one being
 /// viewed, or the default wallet when viewing All wallets), or in the first
-/// wallet.
+/// wallet. [fromSms] before [load] pre-fills a new row from an SMS import.
 class ExpenseFormCubit extends Cubit<ExpenseFormState> {
   ExpenseFormCubit(
     this._expenses,
@@ -34,6 +39,8 @@ class ExpenseFormCubit extends Cubit<ExpenseFormState> {
     required int fractionDigits,
     int? expenseId,
     LocalDate Function()? today,
+    this._smsImports,
+    this._smsActions,
   }) : _today = today ?? LocalDate.today,
        super(
          ExpenseFormState(
@@ -49,8 +56,15 @@ class ExpenseFormCubit extends Cubit<ExpenseFormState> {
   final SaveExpense _saveExpense;
   final SaveTransfer _saveTransfer;
   final LocalDate Function() _today;
+  final ISmsImportRepository? _smsImports;
+  final SmsImportActions? _smsActions;
   StreamSubscription<void>? _categoriesSub;
   StreamSubscription<void>? _walletsSub;
+
+  /// Makes this a new row pre-filled from the SMS import [importId]; call
+  /// before [load]. Saving it completes the import and teaches the merchant's
+  /// category.
+  void fromSms(int importId) => emit(state.copyWith(smsImportId: importId));
 
   Future<void> load() async {
     _categoriesSub = _categories.watchAll().listen(
@@ -69,6 +83,8 @@ class ExpenseFormCubit extends Cubit<ExpenseFormState> {
         );
     final id = state.id;
     if (id == null) {
+      await _prefillFromSms();
+      if (isClosed) return;
       emit(state.copyWith(status: ExpenseFormStatus.ready));
       return;
     }
@@ -98,6 +114,34 @@ class ExpenseFormCubit extends Cubit<ExpenseFormState> {
           note: transfer.note ?? '',
         ),
       }),
+    );
+  }
+
+  /// Fills type, amount, category, title, date and note from the SMS import,
+  /// if there is one. A missing import leaves the form blank.
+  String _amountText(Money amount) {
+    final text = amount.toDecimalString(state.fractionDigits);
+    return RegExp(r'\.0+$').hasMatch(text) ? text.substring(0, text.indexOf('.')) : text;
+  }
+
+  Future<void> _prefillFromSms() async {
+    final importId = state.smsImportId;
+    final imports = _smsImports;
+    if (importId == null || imports == null) return;
+    final import = (await imports.getById(importId)).toNullable();
+    if (import == null || isClosed) return;
+    emit(
+      state.copyWith(
+        kind: import.kind,
+        // Whole amounts as typed ("200", not "200.00"), as in the SMS.
+        amountText: _amountText(import.amount),
+        categoryId: import.categoryId,
+        title: import.merchant ?? '',
+        note: import.note ?? '',
+        date: import.date.isAfter(_today()) ? _today() : import.date,
+        smsImportId: importId,
+        smsBank: SenderCatalog.displayName(import.sender),
+      ),
     );
   }
 
@@ -220,10 +264,18 @@ class ExpenseFormCubit extends Cubit<ExpenseFormState> {
               title: state.title,
               note: state.note,
               kind: state.kind,
+              source: state.smsImportId != null ? ExpenseSource.sms : ExpenseSource.manual,
             ),
             id: state.id,
           );
     if (isClosed) return;
+    // The transaction of an SMS is saved: the import is done, and the merchant
+    // keeps the category the user ended up with.
+    if (!state.isTransfer && !state.isEditing && state.smsImportId != null) {
+      if (result case Right(:final value)) {
+        await _smsActions?.complete(state.smsImportId!, expenseId: value, categoryId: categoryId!);
+      }
+    }
     result.match(
       (failure) => emit(switch (failure) {
         ValidationFailure(:final field, :final reason) => state.copyWith(

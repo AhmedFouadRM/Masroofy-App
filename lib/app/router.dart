@@ -35,6 +35,9 @@ import 'package:masroofy/features/settings/presentation/cubits/wallet_count_cubi
 import 'package:masroofy/features/settings/presentation/screens/currency_picker_screen.dart';
 import 'package:masroofy/features/settings/presentation/screens/first_launch_screen.dart';
 import 'package:masroofy/features/settings/presentation/screens/settings_screen.dart';
+import 'package:masroofy/features/sms_import/presentation/cubits/sms_import_cubit.dart';
+import 'package:masroofy/features/sms_import/presentation/screens/sms_disclosure_screen.dart';
+import 'package:masroofy/features/sms_import/presentation/screens/sms_import_screen.dart';
 import 'package:masroofy/features/wallets/domain/wallet_preselect.dart';
 import 'package:masroofy/features/wallets/presentation/cubits/wallet_form_cubit.dart';
 import 'package:masroofy/features/wallets/presentation/cubits/wallets_cubit.dart';
@@ -83,12 +86,15 @@ GoRouter buildRouter({required AuthCubit auth, required SettingsCubit settings})
               parentNavigatorKey: rootNavigatorKey,
               builder: (context, state) => BlocProvider(
                 // `?kind=income` opens the form on Income; + always opens on Expense.
+                // `?sms=12` pre-fills the form from SMS import 12 (a notification's
+                // Add button, or a row of Recent imports).
                 create: (context) => _expenseForm(
                   context,
                   null,
                   kind: state.uri.queryParameters['kind'] == TransactionKind.income.name
                       ? TransactionKind.income
                       : TransactionKind.expense,
+                  smsImportId: int.tryParse(state.uri.queryParameters['sms'] ?? ''),
                 ),
                 child: const ExpenseFormScreen(),
               ),
@@ -195,6 +201,25 @@ GoRouter buildRouter({required AuthCubit auth, required SettingsCubit settings})
               ],
             ),
             GoRoute(
+              path: 'sms',
+              parentNavigatorKey: rootNavigatorKey,
+              builder: (context, state) => BlocProvider(
+                create: (_) {
+                  final cubit = getIt<SmsImportCubit>();
+                  unawaited(cubit.load());
+                  return cubit;
+                },
+                child: const SmsImportScreen(),
+              ),
+              routes: [
+                GoRoute(
+                  path: 'disclosure',
+                  parentNavigatorKey: rootNavigatorKey,
+                  builder: (context, state) => const SmsDisclosureScreen(),
+                ),
+              ],
+            ),
+            GoRoute(
               path: 'budgets',
               parentNavigatorKey: rootNavigatorKey,
               builder: (context, state) => BlocProvider(
@@ -288,12 +313,21 @@ void _presetWallet(BuildContext context, int? id, void Function(int walletId) se
   if (walletId != null) select(walletId);
 }
 
-ExpenseFormCubit _expenseForm(BuildContext context, int? id, {TransactionKind kind = TransactionKind.expense}) {
-  final cubit = getIt<ExpenseFormCubit>(
-    param1: context.read<SettingsCubit>().state.currency.fractionDigits,
-    param2: id,
-  )..kindSelected(kind);
-  _presetWallet(context, id, cubit.walletSelected);
+ExpenseFormCubit _expenseForm(
+  BuildContext context,
+  int? id, {
+  TransactionKind kind = TransactionKind.expense,
+  int? smsImportId,
+}) {
+  final settings = context.read<SettingsCubit>().state;
+  final cubit = getIt<ExpenseFormCubit>(param1: settings.currency.fractionDigits, param2: id)..kindSelected(kind);
+  if (smsImportId != null && id == null) {
+    // Imports always go to the default wallet; the user can change it here.
+    if (settings.defaultWalletId case final walletId?) cubit.walletSelected(walletId);
+    cubit.fromSms(smsImportId);
+  } else {
+    _presetWallet(context, id, cubit.walletSelected);
+  }
   unawaited(cubit.load());
   return cubit;
 }

@@ -2,6 +2,7 @@ import 'package:drift/drift.dart' show Value;
 import 'package:fpdart/fpdart.dart';
 import 'package:masroofy/core/database/app_database.dart';
 import 'package:masroofy/core/database/db_guard.dart';
+import 'package:masroofy/core/domain/expense_source.dart';
 import 'package:masroofy/core/domain/local_date.dart';
 import 'package:masroofy/core/domain/money.dart';
 import 'package:masroofy/core/domain/period_totals.dart';
@@ -50,6 +51,7 @@ class ExpenseRepositoryImpl implements IExpenseRepository {
           date: draft.date,
           title: Value(draft.title),
           note: Value(draft.note),
+          source: Value(draft.source.name),
         ),
       ),
     );
@@ -133,6 +135,7 @@ class ExpenseRepositoryImpl implements IExpenseRepository {
         createdAt: row.createdAt,
         updatedAt: row.updatedAt,
         kind: TransactionKind.values.byName(result.kind!),
+        source: ExpenseSource.parse(row.source),
       ),
     );
   }

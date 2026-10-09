@@ -45,6 +45,12 @@ class DataManagementLocalDatasource {
       transfers: await (_database.select(_database.transfersTable)..orderBy([(t) => OrderingTerm.asc(t.id)])).get(),
       expenses: await (_database.select(_database.expensesTable)..orderBy([(t) => OrderingTerm.asc(t.id)])).get(),
       budgets: await (_database.select(_database.budgetsTable)..orderBy([(t) => OrderingTerm.asc(t.id)])).get(),
+      merchantCategories: await (_database.select(
+        _database.merchantCategoriesTable,
+      )..orderBy([(t) => OrderingTerm.asc(t.merchantKey)])).get(),
+      trustedSenders: await (_database.select(
+        _database.trustedSendersTable,
+      )..orderBy([(t) => OrderingTerm.asc(t.sender)])).get(),
     ),
   );
 
@@ -61,7 +67,9 @@ class DataManagementLocalDatasource {
         ..insertAll(_database.recurringExpensesTable, snapshot.recurring)
         ..insertAll(_database.transfersTable, snapshot.transfers)
         ..insertAll(_database.expensesTable, snapshot.expenses)
-        ..insertAll(_database.budgetsTable, snapshot.budgets);
+        ..insertAll(_database.budgetsTable, snapshot.budgets)
+        ..insertAll(_database.merchantCategoriesTable, snapshot.merchantCategories)
+        ..insertAll(_database.trustedSendersTable, snapshot.trustedSenders);
     });
     await _database.seedDefaultCategories();
   });
@@ -75,8 +83,13 @@ class DataManagementLocalDatasource {
   });
 
   /// Children before parents: expenses reference categories, wallets and
-  /// transfers (RESTRICT), and templates reference wallets.
+  /// transfers (RESTRICT), and templates reference wallets. SMS Import's
+  /// imports reference expenses and categories, its learned categories
+  /// reference categories.
   Future<void> _deleteEverything() async {
+    await _database.delete(_database.smsImportsTable).go();
+    await _database.delete(_database.merchantCategoriesTable).go();
+    await _database.delete(_database.trustedSendersTable).go();
     await _database.delete(_database.expensesTable).go();
     await _database.delete(_database.transfersTable).go();
     await _database.delete(_database.budgetsTable).go();

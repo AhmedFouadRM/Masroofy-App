@@ -8,6 +8,7 @@ import 'package:masroofy/features/expenses/domain/entities/expense.dart';
 import 'package:masroofy/shared/categories/category_avatar.dart';
 import 'package:masroofy/shared/categories/category_display.dart';
 import 'package:masroofy/shared/formatting/display_format.dart';
+import 'package:masroofy/shared/sms/sms_badge.dart';
 import 'package:material_symbols_icons/symbols.dart';
 
 /// Figma "Expense Row": category avatar, title (or the category name),
@@ -82,6 +83,7 @@ class ExpenseRow extends StatelessWidget {
                     style: income ? text.titleMedium!.copyWith(color: colors.textPositive) : text.titleMedium,
                   ),
                 ),
+                if (expense.isFromSms) const SmsBadge(),
                 if (expense.isRecurringGenerated)
                   Row(
                     mainAxisSize: MainAxisSize.min,

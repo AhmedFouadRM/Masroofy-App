@@ -5,6 +5,9 @@ abstract final class RoutePaths {
   static const settings = '/settings';
   static const newExpense = '/expenses/new';
 
+  /// The add form, pre-filled from the SMS import with this id (SMS Import).
+  static String newExpenseFromSms(int importId) => '/expenses/new?sms=$importId';
+
   /// The add form, opened on Income.
   static const newIncome = '/expenses/new?kind=income';
   static String editExpense(int id) => '/expenses/$id';
@@ -25,6 +28,10 @@ abstract final class RoutePaths {
   static const wallets = '/settings/wallets';
   static const newWallet = '/settings/wallets/new';
   static String editWallet(int id) => '/settings/wallets/$id';
+
+  /// Settings → Add from SMS (Android only), and its disclosure page.
+  static const smsImport = '/settings/sms';
+  static const smsDisclosure = '/settings/sms/disclosure';
 
   static const budgets = '/settings/budgets';
   static const newBudget = '/settings/budgets/new';

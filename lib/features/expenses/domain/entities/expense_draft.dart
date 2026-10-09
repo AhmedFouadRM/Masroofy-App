@@ -1,4 +1,5 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:masroofy/core/domain/expense_source.dart';
 import 'package:masroofy/core/domain/local_date.dart';
 import 'package:masroofy/core/domain/money.dart';
 import 'package:masroofy/core/domain/transaction_kind.dart';
@@ -20,5 +21,9 @@ abstract class ExpenseDraft with _$ExpenseDraft {
 
     /// What the form is set to; the category must be of this kind.
     @Default(TransactionKind.expense) TransactionKind kind,
+
+    /// Where the row comes from. Only used when creating; an edit keeps the
+    /// row's source.
+    @Default(ExpenseSource.manual) ExpenseSource source,
   }) = _ExpenseDraft;
 }

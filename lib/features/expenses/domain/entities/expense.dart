@@ -1,4 +1,5 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:masroofy/core/domain/expense_source.dart';
 import 'package:masroofy/core/domain/local_date.dart';
 import 'package:masroofy/core/domain/money.dart';
 import 'package:masroofy/core/domain/transaction_kind.dart';
@@ -26,9 +27,14 @@ abstract class Expense with _$Expense {
 
     /// The category's kind: income rows show a `+` and the positive colour.
     @Default(TransactionKind.expense) TransactionKind kind,
+
+    /// How the row came to be; SMS rows show the SMS badge.
+    @Default(ExpenseSource.manual) ExpenseSource source,
   }) = _Expense;
 
   const Expense._();
 
   bool get isRecurringGenerated => occurrenceDate != null;
+
+  bool get isFromSms => source == ExpenseSource.sms;
 }

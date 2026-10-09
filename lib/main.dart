@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -8,6 +10,8 @@ import 'package:liquid_glass_widgets/liquid_glass_widgets.dart';
 import 'package:masroofy/app/app.dart';
 import 'package:masroofy/app/di.dart';
 import 'package:masroofy/app/router.dart';
+import 'package:masroofy/app/sms_bootstrap.dart';
+import 'package:masroofy/app/sms_import_services.dart';
 import 'package:masroofy/core/theme/thmanyah_font_loader.dart';
 import 'package:masroofy/features/budgets/presentation/widgets/budget_alert_listener.dart';
 import 'package:masroofy/features/recurring_expenses/presentation/widgets/recurring_auto_generator.dart';
@@ -64,4 +68,7 @@ Future<void> main() async {
       ),
     ),
   );
+  // After the first frame, so a notification tap that launched the app finds
+  // the router. Android only; nothing reads SMS until the user turns it on.
+  unawaited(startSmsImport(getIt<SmsImportServices>()));
 }

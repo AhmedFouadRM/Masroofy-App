@@ -266,7 +266,7 @@ void main() {
       final map = jsonDecode(json) as Map<String, dynamic>;
 
       expect(map['format'], 'masroofy-backup');
-      expect(map['version'], 3);
+      expect(map['version'], 4);
       expect(map['exportedAt'], '2026-10-09T08:30:00.000Z');
       expect(map['preferences'], {
         'currency_code': 'KWD',
@@ -440,7 +440,7 @@ void main() {
 
       final map = jsonDecode(right(await repository.createBackup())) as Map<String, dynamic>;
 
-      expect(map['version'], 3);
+      expect(map['version'], 4);
       expect((map['preferences'] as Map)['default_wallet_id'], son);
       final wallets = (map['wallets'] as List).cast<Map<String, dynamic>>();
       expect(wallets.map((w) => (w['id'], w['seedKey'], w['name'], w['icon'])), [
@@ -492,14 +492,17 @@ void main() {
       final map = (jsonDecode(right(await repository.createBackup())) as Map<String, dynamic>)
         ..['version'] = version
         ..remove('wallets')
-        ..remove('transfers');
+        ..remove('transfers')
+        ..remove('merchantCategories')
+        ..remove('trustedSenders');
       (map['preferences'] as Map<String, dynamic>).remove('default_wallet_id');
       final rows = [...(map['expenses'] as List), ...(map['recurringExpenses'] as List)];
       for (final row in rows.cast<Map<String, dynamic>>()) {
         row
           ..remove('walletId')
           ..remove('transferId')
-          ..remove('direction');
+          ..remove('direction')
+          ..remove('source');
       }
       if (version == 1) {
         map['categories'] = [
@@ -533,6 +536,207 @@ void main() {
     }
   });
 
+  group('backup version 4: SMS Import', () {
+    late int uber;
+
+    setUp(() async {
+      await fillWithData();
+      // The generated row, as the app stores it.
+      await db.customStatement("UPDATE expenses SET source = 'recurring' WHERE recurring_expense_id IS NOT NULL");
+      final food = await seed('food');
+      final transport = await seed('transport');
+      uber = transport;
+      await db
+          .into(db.merchantCategoriesTable)
+          .insert(
+            MerchantCategoriesTableCompanion.insert(merchantKey: 'uber', categoryId: transport),
+          );
+      await db
+          .into(db.merchantCategoriesTable)
+          .insert(
+            MerchantCategoriesTableCompanion.insert(merchantKey: 'carrefour maadi', categoryId: food),
+          );
+      await db
+          .into(db.trustedSendersTable)
+          .insert(TrustedSendersTableCompanion.insert(sender: 'BANQUEMIS', trusted: true));
+      await db.into(db.trustedSendersTable).insert(TrustedSendersTableCompanion.insert(sender: 'cib', trusted: false));
+      // An SMS transaction, and its import row (which a backup leaves out).
+      final expenseId = await db
+          .into(db.expensesTable)
+          .insert(
+            ExpensesTableCompanion.insert(
+              amountMinor: 500,
+              walletId: me,
+              categoryId: Value(transport),
+              date: LocalDate(2026, 10, 9),
+              title: const Value('Uber'),
+              source: const Value('sms'),
+            ),
+          );
+      await db
+          .into(db.smsImportsTable)
+          .insert(
+            SmsImportsTableCompanion.insert(
+              smsKey: 'abc',
+              sender: 'EGBANK',
+              receivedAt: DateTime.utc(2026, 10, 9, 12),
+              kind: 'expense',
+              amountMinor: 500,
+              currency: 'EGP',
+              date: LocalDate(2026, 10, 9),
+              status: 'added',
+              expenseId: Value(expenseId),
+            ),
+          );
+    });
+
+    test('carries the learned categories, the trusted senders and the source of each row, not the imports', () async {
+      final map = jsonDecode(right(await repository.createBackup())) as Map<String, dynamic>;
+
+      expect(map['version'], 4);
+      expect(
+        (map['merchantCategories'] as List).map((m) => ((m as Map)['merchantKey'], m['categoryId'])),
+        [('carrefour maadi', await seed('food')), ('uber', uber)],
+      );
+      expect(
+        (map['trustedSenders'] as List).map((t) => ((t as Map)['sender'], t['trusted'])),
+        [('BANQUEMIS', true), ('cib', false)],
+      );
+      expect((map['expenses'] as List).map((e) => (e as Map)['source']).toSet(), {'manual', 'recurring', 'sms'});
+      expect(map.keys, isNot(contains('smsImports')));
+      expect(map.keys, isNot(contains('sms_imports')));
+      expect(jsonEncode(map), isNot(contains('abc')));
+    });
+
+    test('round trip: restoring into another database brings them back, and no import history', () async {
+      final json = right(await repository.createBackup());
+      final other = AppDatabase(NativeDatabase.memory());
+      addTearDown(other.close);
+      await other.seedDefaultWallet();
+      await other
+          .into(other.trustedSendersTable)
+          .insert(TrustedSendersTableCompanion.insert(sender: 'OLD', trusted: true));
+      final target = DataManagementRepositoryImpl(
+        DataManagementLocalDatasource(other),
+        preferences,
+        now: () => exportedAt,
+      );
+
+      right(await target.restoreBackup(json));
+
+      expect(
+        (await other.select(other.merchantCategoriesTable).get()).map((m) => (m.merchantKey, m.categoryId)),
+        unorderedEquals([('carrefour maadi', await seed('food')), ('uber', uber)]),
+      );
+      expect(
+        (await other.select(other.trustedSendersTable).get()).map((t) => (t.sender, t.trusted)),
+        unorderedEquals([('BANQUEMIS', true), ('cib', false)]),
+      );
+      expect(await other.select(other.smsImportsTable).get(), isEmpty);
+      final restored = await other.select(other.expensesTable).get();
+      expect(restored.map((e) => e.source).toSet(), {'manual', 'recurring', 'sms'});
+    });
+
+    test('restoring replaces the learned categories and the senders of this device', () async {
+      final json = right(await repository.createBackup());
+      await db
+          .into(db.merchantCategoriesTable)
+          .insertOnConflictUpdate(
+            MerchantCategoriesTableCompanion.insert(merchantKey: 'newer', categoryId: await seed('health')),
+          );
+      await db.into(db.trustedSendersTable).insert(TrustedSendersTableCompanion.insert(sender: 'NEWER', trusted: true));
+
+      right(await repository.restoreBackup(json));
+
+      expect((await db.select(db.merchantCategoriesTable).get()).map((m) => m.merchantKey), isNot(contains('newer')));
+      expect((await db.select(db.trustedSendersTable).get()).map((t) => t.sender), isNot(contains('NEWER')));
+      expect(await db.select(db.smsImportsTable).get(), isEmpty);
+    });
+
+    test('a version 3 backup restores with no SMS data and a source worked out from the template', () async {
+      final map = (jsonDecode(right(await repository.createBackup())) as Map<String, dynamic>)
+        ..['version'] = 3
+        ..remove('merchantCategories')
+        ..remove('trustedSenders');
+      for (final row in (map['expenses'] as List).cast<Map<String, dynamic>>()) {
+        row.remove('source');
+      }
+
+      right(await repository.restoreBackup(jsonEncode(map)));
+
+      expect(await db.select(db.merchantCategoriesTable).get(), isEmpty);
+      expect(await db.select(db.trustedSendersTable).get(), isEmpty);
+      final sources = {
+        for (final e in await db.select(db.expensesTable).get()) e.title ?? e.id: e.source,
+      };
+      // The generated row is `recurring`; the SMS row can't be told from a manual one.
+      expect(sources.values.toSet(), {'manual', 'recurring'});
+      expect((await db.select(db.expensesTable).get()).where((e) => e.source == 'recurring'), hasLength(1));
+    });
+
+    test('a version 3 backup is previewed too', () async {
+      final map = (jsonDecode(right(await repository.createBackup())) as Map<String, dynamic>)
+        ..['version'] = 3
+        ..remove('merchantCategories')
+        ..remove('trustedSenders');
+      for (final row in (map['expenses'] as List).cast<Map<String, dynamic>>()) {
+        row.remove('source');
+      }
+
+      expect(right(repository.previewBackup(jsonEncode(map))).expenses, 4);
+    });
+
+    group('a bad file is rejected', () {
+      Future<void> expectRejected(void Function(Map<String, dynamic> map) corrupt) async {
+        final map = jsonDecode(right(await repository.createBackup())) as Map<String, dynamic>;
+        corrupt(map);
+        final before = await db.select(db.merchantCategoriesTable).get();
+
+        final result = await repository.restoreBackup(jsonEncode(map));
+
+        expect(result.isLeft(), isTrue);
+        expect(await db.select(db.merchantCategoriesTable).get(), before);
+      }
+
+      test('the SMS tables missing', () async {
+        await expectRejected((m) => m.remove('merchantCategories'));
+        await expectRejected((m) => m.remove('trustedSenders'));
+      });
+
+      test('a learned category for a category that is not in the file', () {
+        return expectRejected((m) => ((m['merchantCategories'] as List).first as Map)['categoryId'] = 9999);
+      });
+
+      test('two categories for one merchant', () {
+        return expectRejected(
+          (m) => (m['merchantCategories'] as List).add({...(m['merchantCategories'] as List).first as Map}),
+        );
+      });
+
+      test('an empty merchant', () {
+        return expectRejected((m) => ((m['merchantCategories'] as List).first as Map)['merchantKey'] = '');
+      });
+
+      test('two answers for one sender', () {
+        return expectRejected(
+          (m) => (m['trustedSenders'] as List).add({...(m['trustedSenders'] as List).first as Map}),
+        );
+      });
+
+      test('an answer that is not true or false', () {
+        return expectRejected((m) => ((m['trustedSenders'] as List).first as Map)['trusted'] = 'yes');
+      });
+
+      test('a row with an unknown source', () {
+        return expectRejected((m) => ((m['expenses'] as List).first as Map)['source'] = 'import');
+      });
+
+      test('a version 4 row without a source', () {
+        return expectRejected((m) => ((m['expenses'] as List).first as Map).remove('source'));
+      });
+    });
+  });
+
   group('restore rejects a bad file without touching anything', () {
     late Map<String, dynamic> good;
 
@@ -564,7 +768,7 @@ void main() {
     test('an empty file', () => expectRejected((_) => null, raw: ''));
     test('JSON that is not an object', () => expectRejected((_) => null, raw: '[1, 2, 3]'));
     test('a file of another format', () => expectRejected((m) => m['format'] = 'something-else'));
-    test('a newer version', () => expectRejected((m) => m['version'] = 4));
+    test('a newer version', () => expectRejected((m) => m['version'] = 5));
     test('version 0', () => expectRejected((m) => m['version'] = 0));
     test('no version', () => expectRejected((m) => m.remove('version')));
     test('a missing table', () => expectRejected((m) => m.remove('expenses')));
@@ -763,6 +967,57 @@ void main() {
       expect(await db.select(db.expensesTable).get(), isEmpty);
       expect(preferences.getInt(PreferenceKeys.defaultWalletId), wallets.single.id);
       expect(preferences.getInt(PreferenceKeys.viewedWalletId), wallets.single.id);
+    });
+
+    test('also clears SMS Import: its history, learned categories and sender answers', () async {
+      await fillWithData();
+      final transport = await seed('transport');
+      final expenseId = (await db.select(db.expensesTable).get()).first.id;
+      await db
+          .into(db.merchantCategoriesTable)
+          .insert(
+            MerchantCategoriesTableCompanion.insert(merchantKey: 'uber', categoryId: transport),
+          );
+      await db
+          .into(db.trustedSendersTable)
+          .insert(TrustedSendersTableCompanion.insert(sender: 'BANQUEMIS', trusted: true));
+      await db
+          .into(db.smsImportsTable)
+          .insert(
+            SmsImportsTableCompanion.insert(
+              smsKey: 'abc',
+              sender: 'EGBANK',
+              receivedAt: DateTime.utc(2026, 10, 9, 12),
+              kind: 'expense',
+              amountMinor: 500,
+              currency: 'EGP',
+              categoryId: Value(transport),
+              date: LocalDate(2026, 10, 9),
+              status: 'added',
+              expenseId: Value(expenseId),
+            ),
+          );
+      await db
+          .into(db.smsImportsTable)
+          .insert(
+            SmsImportsTableCompanion.insert(
+              smsKey: 'def',
+              sender: 'EGBANK',
+              receivedAt: DateTime.utc(2026, 10, 9, 13),
+              kind: 'expense',
+              amountMinor: 700,
+              currency: 'EGP',
+              date: LocalDate(2026, 10, 9),
+              status: 'pending',
+            ),
+          );
+
+      right(await repository.clearAllData());
+
+      expect(await db.select(db.smsImportsTable).get(), isEmpty);
+      expect(await db.select(db.merchantCategoriesTable).get(), isEmpty);
+      expect(await db.select(db.trustedSendersTable).get(), isEmpty);
+      expect(await db.select(db.expensesTable).get(), isEmpty);
     });
 
     test('keeps the preferences and App Lock', () async {

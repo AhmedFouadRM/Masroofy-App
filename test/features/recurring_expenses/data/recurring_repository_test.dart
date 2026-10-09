@@ -95,6 +95,14 @@ void main() {
     );
   });
 
+  test('generated expenses are marked as recurring', () async {
+    final id = await add(today);
+
+    final row = await (db.select(db.expensesTable)..where((e) => e.recurringExpenseId.equals(id))).getSingle();
+
+    expect(row.source, 'recurring');
+  });
+
   test('generated expenses go to the wallet of the template', () async {
     final son = await addWallet(db, 'Son');
     right(

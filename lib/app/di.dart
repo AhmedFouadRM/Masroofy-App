@@ -2,6 +2,7 @@ import 'package:flutter/services.dart' show rootBundle;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:get_it/get_it.dart';
 import 'package:local_auth/local_auth.dart';
+import 'package:masroofy/app/sms_import_services.dart';
 import 'package:masroofy/core/database/app_database.dart';
 import 'package:masroofy/features/analytics/data/datasources/analytics_local_datasource.dart';
 import 'package:masroofy/features/analytics/data/repositories/analytics_repository_impl.dart';
@@ -58,6 +59,10 @@ import 'package:masroofy/features/settings/domain/usecases/pick_backup.dart';
 import 'package:masroofy/features/settings/domain/usecases/restore_backup.dart';
 import 'package:masroofy/features/settings/presentation/cubits/data_management_cubit.dart';
 import 'package:masroofy/features/settings/presentation/cubits/wallet_count_cubit.dart';
+import 'package:masroofy/features/sms_import/domain/repositories/i_sms_import_repository.dart';
+import 'package:masroofy/features/sms_import/domain/repositories/i_sms_permissions.dart';
+import 'package:masroofy/features/sms_import/domain/repositories/i_sms_settings.dart';
+import 'package:masroofy/features/sms_import/presentation/cubits/sms_import_cubit.dart';
 import 'package:masroofy/features/wallets/data/datasources/wallet_local_datasource.dart';
 import 'package:masroofy/features/wallets/data/repositories/transfer_repository_impl.dart';
 import 'package:masroofy/features/wallets/data/repositories/wallet_repository_impl.dart';
@@ -106,6 +111,7 @@ Future<void> configureDependencies({AppDatabase Function() openDatabase = AppDat
   _registerRecurring();
   _registerBudgets();
   _registerAnalytics();
+  _registerSmsImport();
 }
 
 void _registerAuth() {
@@ -192,6 +198,8 @@ void _registerExpenses() {
         getIt(),
         fractionDigits: fractionDigits,
         expenseId: expenseId,
+        smsImports: getIt(),
+        smsActions: getIt(),
       ),
     );
 }
@@ -227,6 +235,31 @@ void _registerAnalytics() {
     ..registerFactoryParam<AnalyticsCubit, int, int?>(
       (firstWeekday, walletId) =>
           AnalyticsCubit(getIt(), getIt(), getIt(), getIt(), firstWeekday: firstWeekday, walletId: walletId),
+    );
+}
+
+/// SMS Import is Android only, but its objects are cheap to build and nothing
+/// reads SMS until the user turns the feature on, so they are registered on
+/// every platform. They come from [SmsImportServices], the same wiring the
+/// headless engine uses when an SMS arrives with the app closed.
+void _registerSmsImport() {
+  getIt
+    ..registerLazySingleton(() => SmsImportServices(database: getIt(), preferences: getIt()))
+    ..registerLazySingleton<ISmsImportRepository>(() => getIt<SmsImportServices>().repository)
+    ..registerLazySingleton<ISmsSettings>(() => getIt<SmsImportServices>().settings)
+    ..registerLazySingleton<ISmsPermissions>(() => SmsImportServices.permissions)
+    ..registerLazySingleton(() => getIt<SmsImportServices>().actions)
+    ..registerFactory(
+      () => SmsImportCubit(
+        settings: getIt(),
+        permissions: getIt(),
+        imports: getIt(),
+        categories: getIt(),
+        listSenders: getIt<SmsImportServices>().listSenders,
+        importRecent: getIt<SmsImportServices>().importRecent,
+        addCatchUp: getIt<SmsImportServices>().addCatchUpSelection,
+        actions: getIt(),
+      ),
     );
 }
 

@@ -5,8 +5,11 @@ import 'package:masroofy/core/database/converters.dart';
 import 'package:masroofy/core/database/tables/budgets_table.dart';
 import 'package:masroofy/core/database/tables/categories_table.dart';
 import 'package:masroofy/core/database/tables/expenses_table.dart';
+import 'package:masroofy/core/database/tables/merchant_categories_table.dart';
 import 'package:masroofy/core/database/tables/recurring_expenses_table.dart';
+import 'package:masroofy/core/database/tables/sms_imports_table.dart';
 import 'package:masroofy/core/database/tables/transfers_table.dart';
+import 'package:masroofy/core/database/tables/trusted_senders_table.dart';
 import 'package:masroofy/core/database/tables/wallets_table.dart';
 import 'package:masroofy/core/domain/local_date.dart';
 import 'package:masroofy/core/domain/money.dart';
@@ -116,17 +119,33 @@ abstract final class DefaultCategories {
     RecurringExpensesTable,
     WalletsTable,
     TransfersTable,
+    SmsImportsTable,
+    MerchantCategoriesTable,
+    TrustedSendersTable,
   ],
 )
 class AppDatabase extends _$AppDatabase {
   /// Pass an [executor] in tests (e.g. `NativeDatabase.memory()`).
-  AppDatabase([QueryExecutor? executor]) : super(executor ?? driftDatabase(name: 'masroofy_db'));
+  AppDatabase([QueryExecutor? executor]) : super(executor ?? _openDefault());
+
+  /// The app's database file. WAL with a busy timeout, because SMS Import's
+  /// background engine opens the same file while the app may be running.
+  static QueryExecutor _openDefault() => driftDatabase(
+    name: 'masroofy_db',
+    native: DriftNativeOptions(
+      setup: (database) {
+        database
+          ..execute('PRAGMA journal_mode = WAL')
+          ..execute('PRAGMA busy_timeout = 5000');
+      },
+    ),
+  );
 
   /// Bump on every schema change and add a step in [migration]. Run
   /// `dart run drift_dev make-migrations` to snapshot the new version and
   /// generate its migration test. Never destructive after the first release.
   @override
-  int get schemaVersion => 3;
+  int get schemaVersion => 4;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -183,6 +202,19 @@ class AppDatabase extends _$AppDatabase {
           ),
         );
         await m.createIndex(schema.idxExpensesWalletDate);
+      },
+      from3To4: (m, schema) async {
+        await m.addColumn(schema.expenses, schema.expenses.source);
+        // Rows generated from a template (or that were, before it was
+        // deleted) are `recurring`; everything else keeps the default `manual`.
+        await m.database.customStatement(
+          "UPDATE expenses SET source = 'recurring' WHERE recurring_expense_id IS NOT NULL OR occurrence_date IS NOT NULL",
+        );
+        await m.createTable(schema.smsImports);
+        await m.createIndex(schema.idxSmsImportsReceivedAt);
+        await m.createIndex(schema.idxSmsImportsExpense);
+        await m.createTable(schema.merchantCategories);
+        await m.createTable(schema.trustedSenders);
       },
     ),
     beforeOpen: (details) async {
