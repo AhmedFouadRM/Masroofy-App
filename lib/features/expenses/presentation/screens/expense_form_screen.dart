@@ -16,6 +16,7 @@ import 'package:masroofy/shared/categories/category_picker_sheet.dart';
 import 'package:masroofy/shared/formatting/display_format.dart';
 import 'package:masroofy/shared/widgets/aura_background.dart';
 import 'package:masroofy/shared/widgets/glass_app_bar.dart';
+import 'package:masroofy/shared/widgets/glass_bottom_bar.dart';
 import 'package:masroofy/shared/widgets/segmented_pills.dart';
 import 'package:masroofy/shared/widgets/select_field.dart';
 import 'package:material_symbols_icons/symbols.dart';
@@ -76,6 +77,7 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
           child: Scaffold(
             backgroundColor: Colors.transparent,
             extendBodyBehindAppBar: true,
+            extendBody: true,
             appBar: GlassAppBar(
               leading: IconButton(
                 icon: const Icon(Symbols.close_rounded),
@@ -97,8 +99,7 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
             bottomNavigationBar:
                 state.status == ExpenseFormStatus.loading || state.status == ExpenseFormStatus.loadFailure
                 ? null
-                : SafeArea(
-                    minimum: const EdgeInsets.all(AppSpacing.lg),
+                : GlassBottomBar(
                     child: FilledButton(
                       onPressed: state.canSave ? cubit.save : null,
                       child: state.status == ExpenseFormStatus.saving
@@ -180,7 +181,7 @@ class _Fields extends StatelessWidget {
         AppSpacing.screen,
         MediaQuery.paddingOf(context).top + AppSpacing.sm,
         AppSpacing.screen,
-        AppSpacing.xl,
+        MediaQuery.paddingOf(context).bottom + AppSpacing.xl,
       ),
       children: [
         SegmentedPills(
