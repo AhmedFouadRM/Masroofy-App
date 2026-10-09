@@ -6,10 +6,13 @@ import 'package:masroofy/core/strings/string_manager.dart';
 import 'package:masroofy/core/theme/app_dimensions.dart';
 import 'package:masroofy/core/theme/masroofy_colors.dart';
 import 'package:masroofy/shared/widgets/glass_surface.dart';
+import 'package:masroofy/shared/widgets/glowing_fab.dart';
 import 'package:material_symbols_icons/symbols.dart';
 
-/// Tab scaffold: the tab's page with the floating glass tab bar and, on the
-/// Expenses tab, the add button beside it (Figma "Navigation Bar" + "FAB").
+/// Tab scaffold: the tab's page with the floating glass tab bar, always
+/// centred, and on the Expenses tab the add button floating above the bar's
+/// trailing end (Figma "Navigation Bar" + "FAB"). The bar never moves; the
+/// Scaffold scales the button in and out, and lifts it above snackbars.
 class AppShell extends StatelessWidget {
   const AppShell({required this.child, super.key});
 
@@ -18,6 +21,10 @@ class AppShell extends StatelessWidget {
   /// Height the floating bar covers; pages pad their scroll views by this.
   static const bottomInset = 104.0;
 
+  /// Extra room on the Expenses tab so the last row scrolls clear of the add
+  /// button (56) and its gap (16).
+  static const fabInset = 72.0;
+
   static const List<String> _tabs = [RoutePaths.expenses, RoutePaths.analytics, RoutePaths.settings];
 
   @override
@@ -25,57 +32,25 @@ class AppShell extends StatelessWidget {
     final location = GoRouterState.of(context).uri.path;
     final index = _tabs.indexWhere(location.startsWith).clamp(0, _tabs.length - 1);
 
-    final showAdd = index == 0;
-
     return Scaffold(
       extendBody: true,
       body: child,
+      floatingActionButton: index == 0
+          ? GlowingFab(tooltip: StringManager.addExpense, onPressed: () => context.push(RoutePaths.newExpense))
+          : null,
       bottomNavigationBar: SafeArea(
         minimum: const EdgeInsets.fromLTRB(AppSpacing.lg, 0, AppSpacing.lg, AppSpacing.lg),
         child: SizedBox(
           height: _barHeight,
-          child: Stack(
-            children: [
-              // With the add button the bar sits at the start (iOS 26 tab bar +
-              // action); without it, the bar glides to the centre.
-              AnimatedAlign(
-                alignment: showAdd ? AlignmentDirectional.centerStart : AlignmentDirectional.center,
-                duration: _motion,
-                curve: Curves.easeOutCubic,
-                child: _TabBar(selected: index, onSelected: (i) => context.go(_tabs[i])),
-              ),
-              PositionedDirectional(
-                end: 0,
-                top: 0,
-                bottom: 0,
-                child: IgnorePointer(
-                  ignoring: !showAdd,
-                  child: AnimatedScale(
-                    scale: showAdd ? 1 : 0.6,
-                    duration: _motion,
-                    curve: showAdd ? Curves.easeOutBack : Curves.easeInCubic,
-                    child: AnimatedOpacity(
-                      opacity: showAdd ? 1 : 0,
-                      duration: _motion,
-                      curve: Curves.easeOut,
-                      child: ExcludeSemantics(
-                        excluding: !showAdd,
-                        child: _AddButton(onPressed: () => context.push(RoutePaths.newExpense)),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ],
+          child: Center(
+            child: _TabBar(selected: index, onSelected: (i) => context.go(_tabs[i])),
           ),
         ),
       ),
     );
   }
 
-  /// The glass tab bar's height; the add button matches it.
   static const _barHeight = 64.0;
-  static const _motion = Duration(milliseconds: 380);
 }
 
 /// Figma "Navigation Bar" as an iOS 26 liquid glass tab bar: the selected
@@ -115,41 +90,6 @@ class _TabBar extends StatelessWidget {
         selectedLabelStyle: label.copyWith(color: colors.textAccent),
         unselectedLabelStyle: label.copyWith(color: colors.textSecondary),
         iconSize: 22,
-      ),
-    );
-  }
-}
-
-/// The emerald add button, a circle as tall as the tab bar, with its glow.
-class _AddButton extends StatelessWidget {
-  const _AddButton({required this.onPressed});
-
-  final VoidCallback onPressed;
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = MasroofyColors.of(context);
-    return Tooltip(
-      message: StringManager.addExpense,
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          boxShadow: [
-            BoxShadow(color: colors.primary.withValues(alpha: 0.32), blurRadius: 24, offset: const Offset(0, 10)),
-          ],
-        ),
-        child: Material(
-          color: colors.primary,
-          shape: const CircleBorder(),
-          clipBehavior: Clip.antiAlias,
-          child: InkWell(
-            onTap: onPressed,
-            child: SizedBox.square(
-              dimension: AppShell._barHeight,
-              child: Icon(Symbols.add_rounded, size: 28, color: colors.onPrimary),
-            ),
-          ),
-        ),
       ),
     );
   }

@@ -123,7 +123,7 @@ class _ExpenseListScreenState extends State<ExpenseListScreen> {
                   ),
                   SliverToBoxAdapter(child: _CategoryFilter(state: state)),
                   ..._content(context, state),
-                  const SliverPadding(padding: EdgeInsets.only(bottom: AppShell.bottomInset)),
+                  const SliverPadding(padding: EdgeInsets.only(bottom: AppShell.bottomInset + AppShell.fabInset)),
                 ],
               ),
             ),
