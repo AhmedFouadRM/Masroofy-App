@@ -14,6 +14,8 @@ abstract final class PreferenceKeys {
   static const currencyCode = 'currency_code';
   static const themeMode = 'theme_mode';
   static const westernDigits = 'western_digits';
+  static const authEnabled = 'auth_enabled';
+  static const biometricEnabled = 'biometric_enabled';
 }
 
 /// App-wide settings, provided above `MaterialApp` in `main()`. The initial
@@ -24,25 +26,19 @@ class SettingsCubit extends Cubit<SettingsState> {
     required this._database,
     int? firstWeekday,
   }) : _preferences = preferences,
-       super(
-         SettingsState(
-           themeMode:
-               ThemeMode.values.asNameMap()[preferences.getString(
-                 PreferenceKeys.themeMode,
-               )] ??
-               ThemeMode.system,
-           currency:
-               CurrencyUtils.byCode(
-                 preferences.getString(PreferenceKeys.currencyCode) ?? '',
-               ) ??
-               CurrencyUtils.defaultCurrency,
-           westernDigits: preferences.getBool(PreferenceKeys.westernDigits) ?? false,
-           firstWeekday: firstWeekday ?? _deviceFirstWeekday(),
-         ),
-       );
+       super(_read(preferences, firstWeekday: firstWeekday ?? _deviceFirstWeekday()));
 
   final SharedPreferences _preferences;
   final AppDatabase _database;
+
+  static SettingsState _read(SharedPreferences preferences, {required int firstWeekday}) => SettingsState(
+    themeMode: ThemeMode.values.asNameMap()[preferences.getString(PreferenceKeys.themeMode)] ?? ThemeMode.system,
+    currency:
+        CurrencyUtils.byCode(preferences.getString(PreferenceKeys.currencyCode) ?? '') ?? CurrencyUtils.defaultCurrency,
+    currencyChosen: preferences.containsKey(PreferenceKeys.currencyCode),
+    westernDigits: preferences.getBool(PreferenceKeys.westernDigits) ?? false,
+    firstWeekday: firstWeekday,
+  );
 
   static int _deviceFirstWeekday() {
     final deviceLocale = PlatformDispatcher.instance.locale;
@@ -71,6 +67,20 @@ class SettingsCubit extends Cubit<SettingsState> {
     await _preferences.setString(PreferenceKeys.currencyCode, currency.code);
     emit(state.copyWith(currency: currency));
   }
+
+  /// First launch: stores the chosen currency and ends the first-launch step.
+  /// The database is still empty, but this goes through [setCurrency] anyway
+  /// so a restored or pre-seeded database is rescaled too.
+  Future<void> completeFirstLaunch(Currency currency) async {
+    await setCurrency(currency);
+    await _preferences.setString(PreferenceKeys.currencyCode, currency.code);
+    emit(state.copyWith(currencyChosen: true));
+  }
+
+  /// Re-reads the stored preferences, e.g. after a backup restore replaced them.
+  /// `SharedPreferences` caches, so the restore must have written through the
+  /// same instance (it does).
+  void reload() => emit(_read(_preferences, firstWeekday: state.firstWeekday));
 
   Future<void> setWesternDigits({required bool enabled}) async {
     emit(state.copyWith(westernDigits: enabled));

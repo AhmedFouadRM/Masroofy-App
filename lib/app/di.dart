@@ -1,10 +1,18 @@
 import 'package:flutter/services.dart' show rootBundle;
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:get_it/get_it.dart';
+import 'package:local_auth/local_auth.dart';
 import 'package:masroofy/core/database/app_database.dart';
 import 'package:masroofy/features/analytics/data/datasources/analytics_local_datasource.dart';
 import 'package:masroofy/features/analytics/data/repositories/analytics_repository_impl.dart';
 import 'package:masroofy/features/analytics/domain/repositories/i_analytics_repository.dart';
 import 'package:masroofy/features/analytics/presentation/cubits/analytics_cubit.dart';
+import 'package:masroofy/features/auth/data/datasources/pin_secure_datasource.dart';
+import 'package:masroofy/features/auth/data/pin_hasher.dart';
+import 'package:masroofy/features/auth/data/repositories/auth_repository_impl.dart';
+import 'package:masroofy/features/auth/data/services/local_auth_service.dart';
+import 'package:masroofy/features/auth/domain/repositories/i_auth_repository.dart';
+import 'package:masroofy/features/auth/presentation/cubits/pin_setup_cubit.dart';
 import 'package:masroofy/features/budgets/data/datasources/budget_local_datasource.dart';
 import 'package:masroofy/features/budgets/data/repositories/budget_repository_impl.dart';
 import 'package:masroofy/features/budgets/domain/repositories/i_budget_repository.dart';
@@ -37,7 +45,21 @@ import 'package:masroofy/features/recurring_expenses/domain/usecases/save_recurr
 import 'package:masroofy/features/recurring_expenses/domain/usecases/set_recurring_active.dart';
 import 'package:masroofy/features/recurring_expenses/presentation/cubits/recurring_form_cubit.dart';
 import 'package:masroofy/features/recurring_expenses/presentation/cubits/recurring_list_cubit.dart';
+import 'package:masroofy/features/settings/data/datasources/data_management_local_datasource.dart';
+import 'package:masroofy/features/settings/data/repositories/data_management_repository_impl.dart';
+import 'package:masroofy/features/settings/data/services/file_services.dart';
+import 'package:masroofy/features/settings/domain/entities/app_info.dart';
+import 'package:masroofy/features/settings/domain/repositories/i_data_management_repository.dart';
+import 'package:masroofy/features/settings/domain/repositories/i_file_services.dart';
+import 'package:masroofy/features/settings/domain/usecases/clear_all_data.dart';
+import 'package:masroofy/features/settings/domain/usecases/export_backup.dart';
+import 'package:masroofy/features/settings/domain/usecases/export_expenses_csv.dart';
+import 'package:masroofy/features/settings/domain/usecases/pick_backup.dart';
+import 'package:masroofy/features/settings/domain/usecases/restore_backup.dart';
+import 'package:masroofy/features/settings/presentation/cubits/data_management_cubit.dart';
+import 'package:masroofy/shared/auth/auth_cubit.dart';
 import 'package:masroofy/shared/settings/settings_cubit.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 /// The composition root. `getIt` is only called here, in `main()`, in the
@@ -52,10 +74,12 @@ final GetIt getIt = GetIt.instance;
 /// [openDatabase] lets the DI smoke test use an in-memory database.
 Future<void> configureDependencies({AppDatabase Function() openDatabase = AppDatabase.new}) async {
   final sharedPreferences = await SharedPreferences.getInstance();
+  final packageInfo = await PackageInfo.fromPlatform();
 
   getIt
     // Core
     ..registerSingleton<SharedPreferences>(sharedPreferences)
+    ..registerSingleton(AppInfo(version: packageInfo.version, buildNumber: packageInfo.buildNumber))
     ..registerLazySingleton<AppDatabase>(openDatabase, dispose: (database) => database.close())
     // App-wide cubits
     ..registerLazySingleton<SettingsCubit>(
@@ -63,11 +87,44 @@ Future<void> configureDependencies({AppDatabase Function() openDatabase = AppDat
       dispose: (cubit) => cubit.close(),
     );
 
+  _registerAuth();
+  _registerSettings();
   _registerCategories();
   _registerExpenses();
   _registerRecurring();
   _registerBudgets();
   _registerAnalytics();
+}
+
+void _registerAuth() {
+  getIt
+    ..registerLazySingleton(() => PinSecureDatasource(const FlutterSecureStorage()))
+    ..registerLazySingleton(() => LocalAuthService(LocalAuthentication()))
+    ..registerLazySingleton<IAuthRepository>(
+      () => AuthRepositoryImpl(
+        preferences: getIt(),
+        secure: getIt(),
+        hasher: const PinHasher(),
+        biometrics: getIt(),
+      ),
+    )
+    // App-wide: provided above `MaterialApp` and read by the router redirect.
+    ..registerLazySingleton<AuthCubit>(() => AuthCubit(getIt()), dispose: (cubit) => cubit.close())
+    ..registerFactory(PinSetupCubit.new);
+}
+
+void _registerSettings() {
+  getIt
+    ..registerLazySingleton(() => DataManagementLocalDatasource(getIt()))
+    ..registerLazySingleton<IDataManagementRepository>(() => DataManagementRepositoryImpl(getIt(), getIt()))
+    ..registerLazySingleton<IFileSharer>(ShareFileService.new)
+    ..registerLazySingleton<IBackupFilePicker>(BackupFilePickerService.new)
+    ..registerLazySingleton(() => ExportExpensesCsv(getIt(), getIt()))
+    ..registerLazySingleton(() => ExportBackup(getIt(), getIt()))
+    ..registerLazySingleton(() => PickBackup(getIt(), getIt()))
+    ..registerLazySingleton(() => RestoreBackup(getIt()))
+    ..registerLazySingleton(() => ClearAllData(getIt()))
+    ..registerFactory(() => DataManagementCubit(getIt(), getIt(), getIt(), getIt(), getIt()));
 }
 
 void _registerCategories() {

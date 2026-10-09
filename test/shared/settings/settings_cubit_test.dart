@@ -123,4 +123,47 @@ void main() {
     expect(reloaded.state.themeMode, ThemeMode.dark);
     expect(reloaded.state.westernDigits, isTrue);
   });
+
+  group('first launch', () {
+    test('no stored currency means the first-launch step is pending', () async {
+      expect((await makeCubit()).state.currencyChosen, isFalse);
+      expect((await makeCubit({PreferenceKeys.currencyCode: 'USD'})).state.currencyChosen, isTrue);
+    });
+
+    test('completing it stores the choice, even the preselected EGP', () async {
+      final cubit = await makeCubit();
+
+      await cubit.completeFirstLaunch(CurrencyUtils.defaultCurrency);
+
+      expect(cubit.state.currencyChosen, isTrue);
+      expect(cubit.state.currency.code, 'EGP');
+      expect((await SharedPreferences.getInstance()).getString(PreferenceKeys.currencyCode), 'EGP');
+    });
+
+    test('a different choice is stored and applied', () async {
+      final cubit = await makeCubit();
+
+      await cubit.completeFirstLaunch(CurrencyUtils.byCode('KWD')!);
+
+      expect(cubit.state.currency.code, 'KWD');
+      expect(cubit.state.currencyChosen, isTrue);
+      expect((await SharedPreferences.getInstance()).getString(PreferenceKeys.currencyCode), 'KWD');
+    });
+  });
+
+  test('reload re-reads the stored preferences (after a restore)', () async {
+    final cubit = await makeCubit();
+    final preferences = await SharedPreferences.getInstance();
+    await preferences.setString(PreferenceKeys.currencyCode, 'BHD');
+    await preferences.setString(PreferenceKeys.themeMode, 'dark');
+    await preferences.setBool(PreferenceKeys.westernDigits, true);
+
+    cubit.reload();
+
+    expect(cubit.state.currency.code, 'BHD');
+    expect(cubit.state.themeMode, ThemeMode.dark);
+    expect(cubit.state.westernDigits, isTrue);
+    expect(cubit.state.currencyChosen, isTrue);
+    expect(cubit.state.firstWeekday, DateTime.saturday);
+  });
 }

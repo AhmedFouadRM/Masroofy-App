@@ -11,6 +11,7 @@ import 'package:masroofy/features/budgets/domain/repositories/i_budget_repositor
 import 'package:masroofy/features/budgets/domain/usecases/take_new_budget_alerts.dart';
 import 'package:masroofy/features/categories/domain/entities/category.dart';
 import 'package:masroofy/features/categories/domain/repositories/i_category_repository.dart';
+import 'package:masroofy/shared/auth/auth_cubit.dart';
 import 'package:masroofy/shared/categories/category_display.dart';
 import 'package:masroofy/shared/formatting/display_format.dart';
 import 'package:masroofy/shared/settings/settings_cubit.dart';
@@ -27,6 +28,7 @@ class BudgetAlertListener extends StatefulWidget {
     required this.takeAlerts,
     required this.navigatorKey,
     required this.child,
+    this.auth,
     super.key,
   });
 
@@ -37,6 +39,9 @@ class BudgetAlertListener extends StatefulWidget {
   /// The app's root navigator, which hosts the dialog.
   final GlobalKey<NavigatorState> navigatorKey;
   final Widget child;
+
+  /// App Lock: while locked, alerts wait so they never show over the lock screen.
+  final AuthCubit? auth;
 
   @override
   State<BudgetAlertListener> createState() => _BudgetAlertListenerState();
@@ -95,7 +100,11 @@ class _BudgetAlertListenerState extends State<BudgetAlertListener> {
         for (final progress in await widget.takeAlerts(snapshot))
           if (_shown.add((progress.budget.id, progress.periodStart))) progress,
       ];
-      if (fresh.isNotEmpty && mounted) await _show(fresh);
+      if (fresh.isEmpty) continue;
+      if (widget.auth case final auth? when auth.state.isLocked) {
+        await auth.stream.firstWhere((state) => !state.isLocked);
+      }
+      if (mounted) await _show(fresh);
     }
     _busy = false;
   }

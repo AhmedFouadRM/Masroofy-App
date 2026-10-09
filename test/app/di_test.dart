@@ -3,19 +3,33 @@ import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:masroofy/app/di.dart';
 import 'package:masroofy/core/database/app_database.dart';
+import 'package:masroofy/features/auth/presentation/cubits/pin_setup_cubit.dart';
 import 'package:masroofy/features/budgets/presentation/cubits/budget_form_cubit.dart';
 import 'package:masroofy/features/budgets/presentation/cubits/budget_list_cubit.dart';
 import 'package:masroofy/features/categories/presentation/cubits/categories_cubit.dart';
 import 'package:masroofy/features/categories/presentation/cubits/category_form_cubit.dart';
 import 'package:masroofy/features/recurring_expenses/presentation/cubits/recurring_form_cubit.dart';
 import 'package:masroofy/features/recurring_expenses/presentation/cubits/recurring_list_cubit.dart';
+import 'package:masroofy/features/settings/domain/entities/app_info.dart';
+import 'package:masroofy/features/settings/presentation/cubits/data_management_cubit.dart';
+import 'package:masroofy/shared/auth/auth_cubit.dart';
 import 'package:masroofy/shared/settings/settings_cubit.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  setUp(() => SharedPreferences.setMockInitialValues({}));
+  setUp(() {
+    SharedPreferences.setMockInitialValues({});
+    PackageInfo.setMockInitialValues(
+      appName: 'Masroofy',
+      packageName: 'com.masroofy.masroofy',
+      version: '1.2.3',
+      buildNumber: '45',
+      buildSignature: '',
+    );
+  });
   tearDown(getIt.reset);
 
   test('registers app-lifetime singletons', () async {
@@ -25,6 +39,12 @@ void main() {
     expect(getIt<SettingsCubit>(), same(getIt<SettingsCubit>()));
     expect(getIt<AppDatabase>(), same(getIt<AppDatabase>()));
     expect(getIt<SettingsCubit>().state.currency.code, 'EGP');
+
+    expect(getIt<AuthCubit>(), same(getIt<AuthCubit>()));
+    expect(getIt<AuthCubit>().state.isEnabled, isFalse);
+    expect(getIt<AppInfo>().label, '1.2.3 (45)');
+    await getIt<PinSetupCubit>().close();
+    await getIt<DataManagementCubit>().close();
 
     final categories = getIt<CategoriesCubit>();
     expect(categories, isNot(same(getIt<CategoriesCubit>())));

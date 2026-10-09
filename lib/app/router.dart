@@ -3,10 +3,16 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:masroofy/app/app_redirect.dart';
 import 'package:masroofy/app/di.dart';
 import 'package:masroofy/app/routes.dart';
+import 'package:masroofy/app/streams_listenable.dart';
 import 'package:masroofy/features/analytics/presentation/cubits/analytics_cubit.dart';
 import 'package:masroofy/features/analytics/presentation/screens/analytics_screen.dart';
+import 'package:masroofy/features/auth/presentation/cubits/pin_setup_cubit.dart';
+import 'package:masroofy/features/auth/presentation/screens/lock_screen.dart';
+import 'package:masroofy/features/auth/presentation/screens/pin_setup_screen.dart';
+import 'package:masroofy/features/auth/presentation/screens/pin_verify_screen.dart';
 import 'package:masroofy/features/budgets/presentation/cubits/budget_form_cubit.dart';
 import 'package:masroofy/features/budgets/presentation/cubits/budget_list_cubit.dart';
 import 'package:masroofy/features/budgets/presentation/screens/budget_form_screen.dart';
@@ -23,32 +29,32 @@ import 'package:masroofy/features/recurring_expenses/presentation/cubits/recurri
 import 'package:masroofy/features/recurring_expenses/presentation/cubits/recurring_list_cubit.dart';
 import 'package:masroofy/features/recurring_expenses/presentation/screens/recurring_form_screen.dart';
 import 'package:masroofy/features/recurring_expenses/presentation/screens/recurring_list_screen.dart';
+import 'package:masroofy/features/settings/presentation/cubits/data_management_cubit.dart';
+import 'package:masroofy/features/settings/presentation/screens/currency_picker_screen.dart';
+import 'package:masroofy/features/settings/presentation/screens/first_launch_screen.dart';
 import 'package:masroofy/features/settings/presentation/screens/settings_screen.dart';
+import 'package:masroofy/shared/auth/auth_cubit.dart';
+import 'package:masroofy/shared/auth/pin_flow.dart';
 import 'package:masroofy/shared/settings/settings_cubit.dart';
 import 'package:masroofy/shared/widgets/app_shell.dart';
 
 export 'package:masroofy/app/routes.dart';
 
-// Temporary placeholder until each tab's feature is built.
-class DummyScreen extends StatelessWidget {
-  const DummyScreen({required this.title, super.key});
-
-  final String title;
-
-  @override
-  Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(title: Text(title)),
-    body: Center(child: Text(title)),
-  );
-}
-
 /// The root navigator; app-wide dialogs (the budget alert) open on it.
 final rootNavigatorKey = GlobalKey<NavigatorState>();
 final _shellNavigatorKey = GlobalKey<NavigatorState>();
 
-final appRouter = GoRouter(
+/// The app's router, built on first use (after `configureDependencies`).
+final GoRouter appRouter = buildRouter(auth: getIt(), settings: getIt());
+
+/// Builds the router. The redirect re-runs whenever the lock or settings
+/// state changes, so locking, unlocking and finishing first launch navigate
+/// by themselves.
+GoRouter buildRouter({required AuthCubit auth, required SettingsCubit settings}) => GoRouter(
   navigatorKey: rootNavigatorKey,
   initialLocation: RoutePaths.expenses,
+  refreshListenable: StreamsListenable([auth.stream, settings.stream]),
+  redirect: (context, state) => appRedirect(auth: auth.state, settings: settings.state, location: state.uri),
   routes: [
     ShellRoute(
       navigatorKey: _shellNavigatorKey,
@@ -119,9 +125,30 @@ final appRouter = GoRouter(
         ),
         GoRoute(
           path: RoutePaths.settings,
-          builder: (context, state) => const SettingsScreen(),
+          builder: (context, state) => BlocProvider(
+            create: (_) => getIt<DataManagementCubit>(),
+            child: SettingsScreen(appInfo: getIt()),
+          ),
           routes: [
             // Full-screen pages above the tab bar (root navigator).
+            GoRoute(
+              path: 'currency',
+              parentNavigatorKey: rootNavigatorKey,
+              builder: (context, state) => const CurrencyPickerScreen(),
+            ),
+            GoRoute(
+              path: 'pin/set',
+              parentNavigatorKey: rootNavigatorKey,
+              builder: (context, state) => BlocProvider(
+                create: (_) => getIt<PinSetupCubit>(),
+                child: PinSetupScreen(mode: state.extra as PinSetupMode? ?? PinSetupMode.enable),
+              ),
+            ),
+            GoRoute(
+              path: 'pin/verify',
+              parentNavigatorKey: rootNavigatorKey,
+              builder: (context, state) => PinVerifyScreen(purpose: state.extra as PinPurpose? ?? PinPurpose.changePin),
+            ),
             GoRoute(
               path: 'budgets',
               parentNavigatorKey: rootNavigatorKey,
@@ -179,10 +206,8 @@ final appRouter = GoRouter(
         ),
       ],
     ),
-    GoRoute(
-      path: RoutePaths.lock,
-      builder: (context, state) => const DummyScreen(title: 'Lock Screen'),
-    ),
+    GoRoute(path: RoutePaths.lock, builder: (context, state) => const LockScreen()),
+    GoRoute(path: RoutePaths.firstLaunch, builder: (context, state) => const FirstLaunchScreen()),
   ],
 );
 

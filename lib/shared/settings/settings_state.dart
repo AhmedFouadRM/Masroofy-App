@@ -18,5 +18,9 @@ abstract class SettingsState with _$SettingsState {
     /// First day of the week as a `DateTime.weekday` value, from the device
     /// region (not the app language): Saturday in Egypt, Sunday in Saudi Arabia.
     required int firstWeekday,
+
+    /// False until the user has picked a currency on first launch. Defaults to
+    /// true so a state built without it (tests) skips the first-launch step.
+    @Default(true) bool currencyChosen,
   }) = _SettingsState;
 }

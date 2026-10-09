@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:masroofy/app/router.dart';
 import 'package:masroofy/core/constants/app_constants.dart';
 import 'package:masroofy/core/theme/app_theme.dart';
+import 'package:masroofy/features/auth/presentation/widgets/auth_lifecycle_gate.dart';
 import 'package:masroofy/shared/settings/settings_cubit.dart';
 
 class MasroofyApp extends StatelessWidget {
@@ -24,6 +25,8 @@ class MasroofyApp extends StatelessWidget {
       supportedLocales: context.supportedLocales,
       locale: context.locale,
       routerConfig: appRouter,
+      // Inside the theme; relocks after the grace period and hides the app switcher snapshot.
+      builder: (context, child) => AuthLifecycleGate(child: child!),
     );
   }
 }

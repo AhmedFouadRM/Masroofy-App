@@ -18,6 +18,7 @@ import 'package:masroofy/features/budgets/presentation/screens/budget_list_scree
 import 'package:masroofy/features/budgets/presentation/widgets/budget_alert_listener.dart';
 import 'package:masroofy/features/categories/domain/entities/category.dart';
 import 'package:masroofy/features/categories/domain/repositories/i_category_repository.dart';
+import 'package:masroofy/shared/auth/auth_cubit.dart';
 import 'package:mocktail/mocktail.dart';
 
 import '../../../helpers/pump_app.dart';
@@ -31,6 +32,8 @@ class _MockSave extends Mock implements SaveBudget {}
 class _MockAlerts extends Mock implements TakeNewBudgetAlerts {}
 
 class _MockList extends MockCubit<BudgetListState> implements BudgetListCubit {}
+
+class _MockAuth extends MockCubit<AuthState> implements AuthCubit {}
 
 final _epoch = DateTime.utc(2026);
 final _monthStart = LocalDate(2026, 10, 1);
@@ -233,6 +236,40 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.text('Over budget'), findsNothing);
       verify(() => alerts(any())).called(1);
+    });
+
+    testWidgets('waits for the app to be unlocked before showing', (tester) async {
+      when(
+        () => alerts(any()),
+      ).thenAnswer((invocation) async => invocation.positionalArguments.single as List<BudgetProgress>);
+      final auth = _MockAuth();
+      const locked = AuthState(isEnabled: true, isLocked: true);
+      whenListen(
+        auth,
+        Stream.fromFuture(Future.delayed(const Duration(seconds: 1), () => locked.copyWith(isLocked: false))),
+        initialState: locked,
+      );
+      final navigatorKey = GlobalKey<NavigatorState>();
+      await pumpApp(
+        tester,
+        BudgetAlertListener(
+          budgets: budgets,
+          categories: categories,
+          takeAlerts: alerts,
+          navigatorKey: navigatorKey,
+          auth: auth,
+          child: Navigator(
+            key: navigatorKey,
+            onGenerateRoute: (_) => MaterialPageRoute<void>(builder: (_) => const SizedBox()),
+          ),
+        ),
+      );
+      await tester.pump();
+      expect(find.text('Over budget'), findsNothing);
+
+      await tester.pump(const Duration(seconds: 1));
+      await tester.pumpAndSettle();
+      expect(find.text('Over budget'), findsOneWidget);
     });
   });
 }

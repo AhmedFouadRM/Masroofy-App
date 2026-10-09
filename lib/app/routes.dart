@@ -9,6 +9,11 @@ abstract final class RoutePaths {
   static const newRecurring = '/expenses/recurring/new';
   static String editRecurring(int id) => '/expenses/recurring/$id';
   static const lock = '/lock';
+  static const firstLaunch = '/welcome';
+
+  static const currency = '/settings/currency';
+  static const setPin = '/settings/pin/set';
+  static const verifyPin = '/settings/pin/verify';
 
   static const categories = '/settings/categories';
   static const newCategory = '/settings/categories/new';

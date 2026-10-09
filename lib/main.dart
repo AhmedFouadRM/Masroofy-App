@@ -11,6 +11,7 @@ import 'package:masroofy/app/router.dart';
 import 'package:masroofy/core/theme/thmanyah_font_loader.dart';
 import 'package:masroofy/features/budgets/presentation/widgets/budget_alert_listener.dart';
 import 'package:masroofy/features/recurring_expenses/presentation/widgets/recurring_auto_generator.dart';
+import 'package:masroofy/shared/auth/auth_cubit.dart';
 import 'package:masroofy/shared/settings/settings_cubit.dart';
 
 Future<void> main() async {
@@ -18,6 +19,8 @@ Future<void> main() async {
   await EasyLocalization.ensureInitialized();
   await initializeDateFormatting();
   await configureDependencies();
+  // The persisted lockout and biometric support, so the lock screen is right at the first frame.
+  await getIt<AuthCubit>().load();
   await ThmanyahFontLoader.load();
   // Loads the liquid glass shaders off the UI thread before the first frame.
   await LiquidGlassWidgets.initialize(enablePerformanceMonitor: false);
@@ -28,8 +31,11 @@ Future<void> main() async {
   runApp(
     // App-wide cubits are owned by get_it, so they are provided with `.value`
     // (BlocProvider must not close them). Screen cubits are provided by routes.
-    BlocProvider<SettingsCubit>.value(
-      value: getIt<SettingsCubit>(),
+    MultiBlocProvider(
+      providers: [
+        BlocProvider<SettingsCubit>.value(value: getIt<SettingsCubit>()),
+        BlocProvider<AuthCubit>.value(value: getIt<AuthCubit>()),
+      ],
       child: EasyLocalization(
         supportedLocales: const [Locale('en'), Locale('ar')],
         path: 'assets/translations',
@@ -48,6 +54,7 @@ Future<void> main() async {
               categories: getIt(),
               takeAlerts: getIt(),
               navigatorKey: rootNavigatorKey,
+              auth: getIt(),
               child: const MasroofyApp(),
             ),
           ),

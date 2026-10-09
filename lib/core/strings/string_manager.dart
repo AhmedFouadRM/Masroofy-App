@@ -17,6 +17,8 @@ class StringManager {
   static String get search => 'general.search'.tr();
   static String get noResults => 'general.no_results'.tr();
   static String get loading => 'general.loading'.tr();
+  static String get close => 'general.close'.tr();
+  static String get continueLabel => 'general.continue'.tr();
 
   // ── Dates ──
   static String get today => 'date.today'.tr();
@@ -175,41 +177,115 @@ class StringManager {
 
   // ── Settings ──
   static String get settingsTitle => 'settings.title'.tr();
+  static String get sectionGeneral => 'settings.section_general'.tr();
+  static String get sectionSecurity => 'settings.section_security'.tr();
+  static String get sectionData => 'settings.section_data'.tr();
+  static String get sectionAbout => 'settings.section_about'.tr();
   static String get currency => 'settings.currency'.tr();
   static String get language => 'settings.language'.tr();
+
+  /// Language names are shown in their own language, in both locales.
+  static String get languageEnglish => 'settings.language_en'.tr();
+  static String get languageArabic => 'settings.language_ar'.tr();
   static String get theme => 'settings.theme'.tr();
+  static String get themeLight => 'settings.theme_light'.tr();
+  static String get themeDark => 'settings.theme_dark'.tr();
+  static String get themeSystem => 'settings.theme_system'.tr();
+  static String get westernDigits => 'settings.western_digits'.tr();
   static String get appLock => 'settings.app_lock'.tr();
+  static String get appLockOff => 'settings.app_lock_off'.tr();
+  static String get appLockPin => 'settings.app_lock_pin'.tr();
+  static String get appLockPinAndFingerprint => 'settings.app_lock_pin_fingerprint'.tr();
+  static String get unlockWithFingerprint => 'settings.fingerprint'.tr();
+  static String get changePin => 'settings.change_pin'.tr();
+  static String get pinChanged => 'settings.pin_changed'.tr();
+  static String get biometricFailed => 'settings.biometric_failed'.tr();
   static String get manageCategories => 'settings.categories'.tr();
   static String get manageBudgets => 'settings.budgets'.tr();
-  static String get exportData => 'settings.export'.tr();
+  static String get exportCsv => 'settings.export_csv'.tr();
+  static String get exportBackup => 'settings.export_backup'.tr();
+  static String get restoreBackup => 'settings.restore_backup'.tr();
   static String get clearData => 'settings.clear_data'.tr();
-  static String get clearDataConfirm => 'settings.clear_confirm'.tr();
-  static String get currencyWarning => 'settings.currency_warning'.tr();
-  static String get westernDigits => 'settings.western_digits'.tr();
+  static String get clearTitle => 'settings.clear_title'.tr();
+  static String get clearBody => 'settings.clear_body'.tr();
+  static String get holdTitle => 'settings.hold_title'.tr();
+  static String get holdBody => 'settings.hold_body'.tr();
+  static String get holdToDelete => 'settings.hold_button'.tr();
+  static String get cleared => 'settings.cleared'.tr();
+  static String get restoreTitle => 'settings.restore_title'.tr();
+  static String get restore => 'settings.restore'.tr();
+  static String get restored => 'settings.restored'.tr();
+  static String get backupFailed => 'settings.backup_failed'.tr();
+  static String get appVersion => 'settings.version'.tr();
+  static String get licenses => 'settings.licenses'.tr();
+  static String get searchCurrencies => 'settings.search_currencies'.tr();
+  static String get clearSearch => 'settings.clear_search'.tr();
+
+  /// `3 decimals`; [number] is already shaped for the locale.
+  static String decimals(String number) => 'settings.decimals'.tr(args: [number]);
+  static String changeCurrencyTitle(String name) => 'settings.change_currency_title'.tr(args: [name]);
+
+  /// [from] and [to] are the same face value in each currency, e.g. `EGP 12.50`.
+  static String changeCurrencyBody(String from, String to) => 'settings.change_currency_body'.tr(args: [from, to]);
+  static String get change => 'settings.change'.tr();
+  static String get firstLaunchTitle => 'settings.first_launch_title'.tr();
+  static String get firstLaunchHint => 'settings.first_launch_hint'.tr();
+
+  /// Body of the restore confirmation: `…backup from Oct 9, 2026 (1,284 expenses, 6 budgets).`
+  /// The counts take their number already shaped for the locale.
+  static String restoreBody(String date, int expenses, String expensesNumber, int budgets, String budgetsNumber) =>
+      'settings.restore_body'.tr(
+        args: [
+          date,
+          'settings.backup_expenses'.plural(expenses, args: [expensesNumber]),
+          'settings.backup_budgets'.plural(budgets, args: [budgetsNumber]),
+        ],
+      );
 
   /// Localized currency name by ISO 4217 code (e.g. `EGP`).
   static String currencyName(String code) => 'currencies.$code'.tr();
-  static String get appVersion => 'settings.version'.tr();
 
   // ── Auth ──
   static String get enterPin => 'auth.enter_pin'.tr();
-  static String get setPin => 'auth.set_pin'.tr();
-  static String get confirmPin => 'auth.confirm_pin'.tr();
   static String get wrongPin => 'auth.wrong_pin'.tr();
   static String get biometricPrompt => 'auth.biometric_prompt'.tr();
-  static String get enableBiometric => 'auth.enable_biometric'.tr();
+  static String get useBiometric => 'auth.use_biometric'.tr();
+  static String get createPin => 'auth.create_pin'.tr();
+  static String get createNewPin => 'auth.create_new_pin'.tr();
+  static String get createPinHint => 'auth.create_pin_hint'.tr();
+  static String get confirmPin => 'auth.confirm_pin'.tr();
+  static String get confirmPinHint => 'auth.confirm_pin_hint'.tr();
+  static String get pinMismatch => 'auth.pin_mismatch'.tr();
+  static String get forgotPinNote => 'auth.forgot_note'.tr();
+  static String get unlockHint => 'auth.unlock_hint'.tr();
+  static String get lockedOutTitle => 'auth.locked_title'.tr();
+
+  /// [time] is the remaining delay as `m:ss`, already shaped for the locale.
+  static String lockedOutBody(String time) => 'auth.locked_body'.tr(args: [time]);
+  static String get confirmWithPin => 'auth.confirm_with_pin'.tr();
+  static String get verifyForChange => 'auth.verify_change'.tr();
+  static String get verifyForDisable => 'auth.verify_disable'.tr();
+  static String get verifyForClear => 'auth.verify_clear'.tr();
+  static String get biometricOptInTitle => 'auth.biometric_opt_in_title'.tr();
+  static String get biometricOptInBody => 'auth.biometric_opt_in_body'.tr();
+  static String get turnOn => 'auth.turn_on'.tr();
+  static String get notNow => 'auth.not_now'.tr();
 
   // ── Errors ──
   /// Localized message for any [Failure]. Raw exception text never reaches the UI.
   static String failure(Failure failure) => switch (failure) {
+    // A backup file that can't be restored (Settings → Restore backup).
+    ValidationFailure(field: 'backup') => 'errors.invalid_backup'.tr(),
     ValidationFailure(:final reason) => validation(reason),
     NotFoundFailure() => 'errors.not_found'.tr(),
     ConstraintFailure() => 'errors.constraint'.tr(),
     StorageFailure() => 'errors.storage'.tr(),
-    SecureStorageFailure() => 'errors.secure_storage'.tr(),
+    SecureStorageFailure() => failureSecureStorage,
     ExportFailure() => 'errors.export'.tr(),
     UnexpectedFailure() => 'errors.unexpected'.tr(),
   };
+
+  static String get failureSecureStorage => 'errors.secure_storage'.tr();
 
   static String validation(ValidationReason reason) => switch (reason) {
     ValidationReason.required => 'validation.required'.tr(),
