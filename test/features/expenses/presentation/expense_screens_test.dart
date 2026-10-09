@@ -513,7 +513,7 @@ void main() {
           tester,
           inMe.copyWith(
             loaded: [_transfer(12, 50000, wallet: 1), ...all.loaded],
-            totals: const PeriodTotals(income: Money(500000), spent: Money(23550), transfersNet: Money(-50000)),
+            totals: const PeriodTotals(income: Money(500000), spent: Money(23550), transfersOut: Money(50000)),
           ),
         );
 

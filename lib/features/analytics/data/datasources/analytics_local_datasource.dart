@@ -9,14 +9,17 @@ import 'package:masroofy/core/domain/transaction_kind.dart';
 
 part 'analytics_local_datasource.g.dart';
 
-/// Income and spending in minor units.
-typedef MinorTotals = ({int income, int spent});
+/// Income and spending in minor units, and the transfers in and out (both
+/// positive). The by-category and daily queries never count transfers, so
+/// theirs are 0.
+typedef MinorTotals = ({int income, int spent, int transfersIn, int transfersOut});
 
 /// Aggregate queries over expenses, in minor units, for one wallet or (with a
-/// null `walletId`) all of them. Every one joins the category: its kind
-/// decides whether a row is income or spending, and a transfer leg has none,
-/// so transfers are never counted. Throws database errors; the repository maps
-/// them to failures.
+/// null `walletId`) all of them. The category's kind decides whether a row is
+/// income or spending, and a transfer leg has none, so transfers are never
+/// part of income or spending: the totals queries report them apart, and the
+/// category and daily queries leave them out. Throws database errors; the
+/// repository maps them to failures.
 @DriftAccessor(tables: [ExpensesTable, CategoriesTable])
 class AnalyticsLocalDatasource extends DatabaseAccessor<AppDatabase> with _$AnalyticsLocalDatasourceMixin {
   AnalyticsLocalDatasource(super.attachedDatabase);
@@ -25,6 +28,10 @@ class AnalyticsLocalDatasource extends DatabaseAccessor<AppDatabase> with _$Anal
 
   Join<HasResultSet, dynamic> get _joinCategory =>
       innerJoin(categoriesTable, categoriesTable.id.equalsExp(expensesTable.categoryId));
+
+  /// Keeps transfer legs (no category) in the result, for the transfer sums.
+  Join<HasResultSet, dynamic> get _joinCategoryKeepingTransfers =>
+      leftOuterJoin(categoriesTable, categoriesTable.id.equalsExp(expensesTable.categoryId));
 
   /// Dates are `YYYY-MM-DD` text, so string comparison is chronological and
   /// uses `idx_expenses_date`.
@@ -39,13 +46,28 @@ class AnalyticsLocalDatasource extends DatabaseAccessor<AppDatabase> with _$Anal
     orElse: const Constant(0),
   ).sum();
 
+  /// `SUM(amount)` of the transfer legs going [direction] (`in` or `out`).
+  Expression<int> _sumOfTransfers(String direction) => CaseWhenExpression<int>(
+    cases: [CaseWhen(expensesTable.direction.equals(direction), then: expensesTable.amountMinor)],
+    orElse: const Constant(0),
+  ).sum();
+
   Stream<MinorTotals> watchTotals(DateRange range, {int? walletId}) {
     final income = _sumOf(TransactionKind.income);
     final spent = _sumOf(TransactionKind.expense);
-    final query = selectOnly(expensesTable).join([_joinCategory])
-      ..addColumns([income, spent])
+    final transfersIn = _sumOfTransfers('in');
+    final transfersOut = _sumOfTransfers('out');
+    final query = selectOnly(expensesTable).join([_joinCategoryKeepingTransfers])
+      ..addColumns([income, spent, transfersIn, transfersOut])
       ..where(_inRange(range, walletId));
-    return query.watchSingle().map((row) => (income: row.read(income) ?? 0, spent: row.read(spent) ?? 0));
+    return query.watchSingle().map(
+      (row) => (
+        income: row.read(income) ?? 0,
+        spent: row.read(spent) ?? 0,
+        transfersIn: row.read(transfersIn) ?? 0,
+        transfersOut: row.read(transfersOut) ?? 0,
+      ),
+    );
   }
 
   Stream<Map<int, int>> watchTotalsByCategory(DateRange range, TransactionKind kind, {int? walletId}) {
@@ -59,18 +81,26 @@ class AnalyticsLocalDatasource extends DatabaseAccessor<AppDatabase> with _$Anal
     );
   }
 
-  /// Income and spending per wallet; wallets without transactions are absent.
+  /// Income, spending and transfers per wallet; wallets without any of them
+  /// are absent.
   Stream<Map<int, MinorTotals>> watchTotalsByWallet(DateRange range) {
     final income = _sumOf(TransactionKind.income);
     final spent = _sumOf(TransactionKind.expense);
-    final query = selectOnly(expensesTable).join([_joinCategory])
-      ..addColumns([expensesTable.walletId, income, spent])
+    final transfersIn = _sumOfTransfers('in');
+    final transfersOut = _sumOfTransfers('out');
+    final query = selectOnly(expensesTable).join([_joinCategoryKeepingTransfers])
+      ..addColumns([expensesTable.walletId, income, spent, transfersIn, transfersOut])
       ..where(_inRange(range, null))
       ..groupBy([expensesTable.walletId]);
     return query.watch().map(
       (rows) => {
         for (final row in rows)
-          row.read(expensesTable.walletId)!: (income: row.read(income) ?? 0, spent: row.read(spent) ?? 0),
+          row.read(expensesTable.walletId)!: (
+            income: row.read(income) ?? 0,
+            spent: row.read(spent) ?? 0,
+            transfersIn: row.read(transfersIn) ?? 0,
+            transfersOut: row.read(transfersOut) ?? 0,
+          ),
       },
     );
   }
@@ -88,6 +118,8 @@ class AnalyticsLocalDatasource extends DatabaseAccessor<AppDatabase> with _$Anal
           _converter.fromSql(row.read(expensesTable.date)!): (
             income: row.read(income) ?? 0,
             spent: row.read(spent) ?? 0,
+            transfersIn: 0,
+            transfersOut: 0,
           ),
       },
     );

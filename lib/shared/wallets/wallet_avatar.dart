@@ -5,11 +5,14 @@ import 'package:masroofy/shared/wallets/wallet_icon_registry.dart';
 /// The wallet glyph on a 16% tint of its colour: the icon and colour together
 /// tell wallets apart, never the colour alone.
 class WalletAvatar extends StatelessWidget {
-  const WalletAvatar({required this.icon, required this.color, this.size = 40, super.key});
+  const WalletAvatar({required this.icon, required this.color, this.size = 40, this.iconSize, super.key});
 
   final String icon;
   final int color;
   final double size;
+
+  /// The glyph size; defaults to 55% of [size].
+  final double? iconSize;
 
   @override
   Widget build(BuildContext context) {
@@ -21,7 +24,7 @@ class WalletAvatar extends StatelessWidget {
         shape: BoxShape.circle,
         color: tint.withValues(alpha: AppColors.categoryTintOpacity),
       ),
-      child: Icon(WalletIconRegistry.of(icon), color: tint, size: size * 0.55),
+      child: Icon(WalletIconRegistry.of(icon), color: tint, size: iconSize ?? size * 0.55),
     );
   }
 }

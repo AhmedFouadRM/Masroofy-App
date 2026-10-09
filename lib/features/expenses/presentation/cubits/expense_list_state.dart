@@ -85,7 +85,7 @@ abstract class ExpenseListState with _$ExpenseListState {
           break;
       }
     }
-    return PeriodTotals(
+    return PeriodTotals.withTransfersNet(
       income: totals.income - income,
       spent: totals.spent - spent,
       transfersNet: totals.transfersNet - transfers,

@@ -91,7 +91,7 @@ class ExpenseRepositoryImpl implements IExpenseRepository {
   static Either<Failure, Unit> _oneRowChanged(int rows) =>
       rows == 1 ? const Right(unit) : const Left(Failure.notFound());
 
-  static PeriodTotals _toTotals(MinorTotals totals) => PeriodTotals(
+  static PeriodTotals _toTotals(MinorTotals totals) => PeriodTotals.withTransfersNet(
     income: Money(totals.income),
     spent: Money(totals.spent),
     transfersNet: Money(totals.transfersNet),

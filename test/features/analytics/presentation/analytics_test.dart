@@ -8,9 +8,12 @@ import 'package:masroofy/core/domain/local_date.dart';
 import 'package:masroofy/core/domain/money.dart';
 import 'package:masroofy/core/domain/period_totals.dart';
 import 'package:masroofy/core/domain/transaction_kind.dart';
+import 'package:masroofy/core/theme/masroofy_colors.dart';
 import 'package:masroofy/features/analytics/domain/repositories/i_analytics_repository.dart';
 import 'package:masroofy/features/analytics/presentation/cubits/analytics_cubit.dart';
 import 'package:masroofy/features/analytics/presentation/screens/analytics_screen.dart';
+import 'package:masroofy/features/analytics/presentation/widgets/spending_bar_chart.dart';
+import 'package:masroofy/features/analytics/presentation/widgets/spending_pie_chart.dart';
 import 'package:masroofy/features/budgets/domain/entities/budget.dart';
 import 'package:masroofy/features/budgets/domain/entities/budget_period.dart';
 import 'package:masroofy/features/budgets/domain/entities/budget_progress.dart';
@@ -21,6 +24,7 @@ import 'package:masroofy/features/wallets/domain/entities/wallet.dart';
 import 'package:masroofy/features/wallets/domain/entities/wallet_summary.dart';
 import 'package:masroofy/features/wallets/domain/repositories/i_wallet_repository.dart';
 import 'package:masroofy/shared/widgets/segmented_pills.dart';
+import 'package:material_symbols_icons/symbols.dart';
 import 'package:mocktail/mocktail.dart';
 
 import '../../../helpers/pump_app.dart';
@@ -271,6 +275,43 @@ void main() {
     );
   });
 
+  group('AnalyticsState', () {
+    final base = AnalyticsState(
+      period: AnalyticsPeriod.month,
+      range: DateRange(LocalDate(2026, 10, 1), LocalDate(2026, 10, 9)),
+      firstWeekday: DateTime.saturday,
+    );
+
+    test('transfers never count as spending, and a transfers-only period is not empty', () {
+      final state = base.copyWith(
+        totals: const PeriodTotals(income: Money.zero, spent: Money.zero, transfersIn: Money(50000)),
+      );
+
+      expect(state.total, Money.zero);
+      expect(state.totals.income, Money.zero);
+      expect(state.isEmpty, isFalse);
+      expect(state.totals.balance, const Money(50000));
+      expect(state.totals.savingsRate, isNull);
+    });
+
+    test('a period with nothing at all is empty', () {
+      expect(base.isEmpty, isTrue);
+    });
+
+    test('balance is income - spent + in - out', () {
+      const totals = PeriodTotals(
+        income: Money(500000),
+        spent: Money(100000),
+        transfersIn: Money(50000),
+        transfersOut: Money(20000),
+      );
+
+      expect(totals.balance, const Money(430000));
+      expect(totals.transfersNet, const Money(30000));
+      expect(totals.savingsRate, 0.8);
+    });
+  });
+
   group('AnalyticsScreen', () {
     late _MockCubit cubit;
     final today = LocalDate.today();
@@ -431,6 +472,165 @@ void main() {
       expect(Directionality.of(tester.element(find.text('حسب الفئة'))), TextDirection.rtl);
     });
 
+    group('transfers in one wallet', () {
+      final withTransfers = loaded.copyWith(
+        walletId: 2,
+        totals: const PeriodTotals(
+          income: Money(500000),
+          spent: Money(100000),
+          transfersIn: Money(50000),
+          transfersOut: Money(20000),
+        ),
+      );
+      // Only transfers: no income, no spending.
+      final transfersOnly = loaded.copyWith(
+        walletId: 2,
+        totals: const PeriodTotals(income: Money.zero, spent: Money.zero, transfersIn: Money(50000)),
+        previousTotal: Money.zero,
+        byCategory: {},
+        daily: {},
+      );
+
+      testWidgets('the Income vs spending card gets a Transfers row and a Balance that includes them', (tester) async {
+        await pump(tester, withTransfers);
+
+        expect(find.text('Transfers'), findsOneWidget);
+        expect(find.text('In +EGP 500 · Out EGP 200'), findsOneWidget);
+        // 5,000 - 1,000 + 500 - 200: what Transactions calls Left this month.
+        expect(find.text('EGP 4,300'), findsOneWidget);
+        // Income, spending and the savings rate ignore transfers.
+        expect(find.text('EGP 5,000'), findsOneWidget);
+        expect(find.text('EGP 1,000'), findsWidgets);
+        expect(find.text('80%'), findsOneWidget);
+        final colors = MasroofyColors.of(tester.element(find.text('Transfers')));
+        final style = tester.widget<Text>(find.text('In +EGP 500 · Out EGP 200')).style!;
+        expect(style.color, colors.textSecondary);
+        expect(style.fontSize, 12);
+        // Order: Income, Spent, Transfers, Balance, Savings rate.
+        final card = find.ancestor(of: find.text('Transfers'), matching: find.byType(Card)).first;
+        double y(String text) => tester.getTopLeft(find.descendant(of: card, matching: find.text(text))).dy;
+        expect(y('Income'), lessThan(y('Spent')));
+        expect(y('Spent'), lessThan(y('Transfers')));
+        expect(y('Transfers'), lessThan(y('Balance')));
+        expect(y('Balance'), lessThan(y('Savings rate')));
+      });
+
+      testWidgets('the rows are 56 high with a 32 avatar, split by 1 px dividers', (tester) async {
+        await pump(tester, withTransfers);
+
+        final card = find.ancestor(of: find.text('Transfers'), matching: find.byType(Card)).first;
+        // 5 rows + 4 dividers.
+        expect(tester.getSize(card).height, 5 * 56 + 4);
+        final avatars = find.descendant(
+          of: card,
+          matching: find.byWidgetPredicate((w) => w is Container && w.constraints?.maxWidth == 32),
+        );
+        expect(avatars, findsNWidgets(5));
+        expect(find.descendant(of: card, matching: find.byIcon(Symbols.sync_alt_rounded)), findsOneWidget);
+      });
+
+      testWidgets('a wallet without transfers has no Transfers row', (tester) async {
+        await pump(tester, loaded.copyWith(walletId: 2));
+
+        expect(find.text('Transfers'), findsNothing);
+      });
+
+      testWidgets('a negative balance after transfers out shows the minus sign', (tester) async {
+        await pump(
+          tester,
+          withTransfers.copyWith(
+            totals: const PeriodTotals(income: Money(20000), spent: Money(100000), transfersOut: Money(50000)),
+          ),
+        );
+
+        expect(find.text('In EGP 0 · Out EGP 500'), findsOneWidget);
+        expect(find.text('−EGP 1,300'), findsOneWidget);
+      });
+
+      testWidgets('Arabic: التحويلات, وارد / صادر and الرصيد, with the sign kept on the number', (tester) async {
+        await pump(tester, withTransfers, locale: const Locale('ar'));
+
+        expect(find.text('التحويلات'), findsOneWidget);
+        expect(find.text('وارد \u2066+٥٠٠\u2069 ج.م. · صادر ٢٠٠ ج.م.'), findsOneWidget);
+        expect(find.text('الرصيد'), findsOneWidget);
+        expect(find.text('٤٬٣٠٠ ج.م.'), findsOneWidget);
+        expect(find.text('الإنفاق'), findsWidgets);
+        expect(Directionality.of(tester.element(find.text('التحويلات'))), TextDirection.rtl);
+      });
+
+      testWidgets('a wallet with only transfers shows the page, not the empty state', (tester) async {
+        await pump(tester, transfersOnly);
+
+        expect(find.text('No spending data for this period'), findsNothing);
+        expect(find.text('Income vs spending'), findsOneWidget);
+        expect(find.text('In +EGP 500 · Out EGP 0'), findsOneWidget);
+        // The balance is the transfer alone; nothing to save from.
+        expect(find.text('EGP 500'), findsOneWidget);
+        expect(find.text('Savings rate'), findsNothing);
+        expect(find.text('EGP 0'), findsWidgets);
+      });
+
+      testWidgets('sections without data show an inline No spending in this period', (tester) async {
+        await pump(tester, transfersOnly);
+
+        expect(find.text('By category'), findsOneWidget);
+        expect(find.text('Spending over time'), findsOneWidget);
+        expect(find.text('No spending in this period'), findsNWidgets(2));
+        // 16 / 32 padding around one 20 high line.
+        final cards = find.ancestor(of: find.text('No spending in this period'), matching: find.byType(Card));
+        expect(cards, findsNWidgets(2));
+        for (final card in cards.evaluate()) {
+          expect(tester.getSize(find.byWidget(card.widget)).height, 84);
+        }
+        // The Spending | Income control stays above the By category card.
+        expect(find.descendant(of: find.byType(SegmentedPills), matching: find.text('Spending')), findsOneWidget);
+        expect(find.byType(SpendingBarChart), findsNothing);
+        expect(find.byType(SpendingPieChart), findsNothing);
+      });
+
+      testWidgets('the Income side of By category keeps its own empty line', (tester) async {
+        await pump(tester, transfersOnly.copyWith(breakdownKind: TransactionKind.income));
+
+        expect(find.text('No income in this period'), findsOneWidget);
+        expect(find.text('No spending in this period'), findsOneWidget, reason: 'over time');
+      });
+
+      testWidgets('the summary reads No change when there was no spending in either period', (tester) async {
+        await pump(tester, transfersOnly);
+
+        expect(find.text('No change vs last month'), findsOneWidget);
+        expect(find.byIcon(Symbols.trending_flat_rounded), findsOneWidget);
+      });
+
+      testWidgets('Arabic: لا يوجد إنفاق في هذه الفترة and لا تغيير عن الشهر الماضي', (tester) async {
+        await pump(tester, transfersOnly, locale: const Locale('ar'));
+
+        expect(find.text('لا يوجد إنفاق في هذه الفترة'), findsNWidgets(2));
+        expect(find.text('لا تغيير عن الشهر الماضي'), findsOneWidget);
+      });
+
+      testWidgets('a wholly empty wallet still shows the empty state, with no comparison', (tester) async {
+        await pump(tester, transfersOnly.copyWith(totals: PeriodTotals.zero));
+
+        expect(find.text('No spending data for this period'), findsOneWidget);
+        expect(find.textContaining('No change'), findsNothing);
+      });
+
+      testWidgets('income without spending also gets the inline over-time card', (tester) async {
+        await pump(
+          tester,
+          loaded.copyWith(
+            totals: const PeriodTotals(income: Money(500000), spent: Money.zero),
+            byCategory: {},
+            previousTotal: Money.zero,
+          ),
+        );
+
+        expect(find.text('No spending in this period'), findsNWidgets(2));
+        expect(find.text('No change vs last month'), findsOneWidget);
+      });
+    });
+
     group('By wallet', () {
       testWidgets("in All wallets: each wallet's spending and income, with a thin bar for its share", (tester) async {
         await pump(tester, withWallets);
@@ -441,18 +641,15 @@ void main() {
         final card = find.ancestor(of: find.text('Me'), matching: find.byType(Card));
         expect(find.descendant(of: card, matching: find.text('EGP 750')), findsOneWidget);
         expect(find.descendant(of: card, matching: find.text('EGP 250')), findsOneWidget);
-        expect(find.text('Income +EGP 5,000'), findsOneWidget);
-        expect(find.text('Income +EGP 200'), findsOneWidget);
-        final bars = tester
-            .widgetList<LinearProgressIndicator>(
-              find.descendant(
-                of: find.ancestor(of: find.text('Me'), matching: find.byType(Card)),
-                matching: find.byType(LinearProgressIndicator),
-              ),
-            )
-            .toList();
-        expect(bars.map((b) => b.value), [0.75, 0.25]);
-        expect(bars.every((b) => b.minHeight == 4), isTrue, reason: 'thin');
+        expect(find.text('In +EGP 5,000'), findsOneWidget);
+        expect(find.text('In +EGP 200'), findsOneWidget);
+        // A 120 x 6 track per wallet; the fill is its share of the spending.
+        final fills = find.descendant(of: card, matching: find.byType(FractionallySizedBox));
+        expect(tester.widgetList<FractionallySizedBox>(fills).map((b) => b.widthFactor), [0.75, 0.25]);
+        for (final fill in fills.evaluate()) {
+          final track = fill.findAncestorWidgetOfExactType<Container>()!;
+          expect(track.constraints, const BoxConstraints.tightFor(width: 120, height: 6), reason: 'thin');
+        }
         // Between the income card and the categories.
         final income = tester.getTopLeft(find.text('Income vs spending')).dy;
         final byWallet = tester.getTopLeft(find.text('By wallet')).dy;
@@ -461,7 +658,7 @@ void main() {
         expect(byWallet, lessThan(byCategory));
       });
 
-      testWidgets('a wallet without income shows no income line', (tester) async {
+      testWidgets('a wallet without income says In EGP 0, unsigned and in secondary text', (tester) async {
         await pump(
           tester,
           withWallets.copyWith(
@@ -472,7 +669,105 @@ void main() {
           ),
         );
 
-        expect(find.textContaining('Income +'), findsOneWidget);
+        expect(find.textContaining('In +'), findsOneWidget);
+        final colors = MasroofyColors.of(tester.element(find.text('In EGP 0')));
+        expect(tester.widget<Text>(find.text('In EGP 0')).style!.color, colors.textPrimary);
+        expect(tester.widget<Text>(find.text('In +EGP 5,000')).style!.color, colors.textPositive);
+      });
+
+      testWidgets('transfers show as a small line under the wallet, left out when there are none', (tester) async {
+        await pump(
+          tester,
+          withWallets.copyWith(
+            wallets: [
+              _me,
+              _son,
+              _wallet(3, name: 'Wife'),
+            ],
+            byWallet: const {
+              1: PeriodTotals(income: Money(500000), spent: Money(75000), transfersOut: Money(50000)),
+              2: PeriodTotals(income: Money.zero, spent: Money(25000), transfersIn: Money(50000)),
+              3: PeriodTotals(income: Money(10000), spent: Money(5000)),
+            },
+          ),
+        );
+
+        expect(find.text('Transfers out −EGP 500'), findsOneWidget);
+        expect(find.text('Transfers in +EGP 500'), findsOneWidget);
+        expect(find.textContaining('Transfers'), findsNWidgets(2));
+        // End-aligned, 12, secondary.
+        final line = tester.widget<Text>(find.text('Transfers out −EGP 500'));
+        final colors = MasroofyColors.of(tester.element(find.text('Transfers out −EGP 500')));
+        expect(line.textAlign, TextAlign.end);
+        expect(line.style!.color, colors.textSecondary);
+        expect(line.style!.fontSize, 12);
+        // The line lifts a row to 88; a row without one is 70.
+        double rowHeight(String name) => tester
+            .getSize(
+              find
+                  .ancestor(
+                    of: find.text(name),
+                    matching: find.byWidgetPredicate((w) => w is ConstrainedBox && w.constraints.minHeight == 70),
+                  )
+                  .first,
+            )
+            .height;
+        expect(rowHeight('Me'), 88);
+        expect(rowHeight('Wife'), 70);
+      });
+
+      testWidgets('with transfers in and out, both lines show', (tester) async {
+        await pump(
+          tester,
+          withWallets.copyWith(
+            byWallet: const {
+              1: PeriodTotals(
+                income: Money(500000),
+                spent: Money(75000),
+                transfersIn: Money(2000),
+                transfersOut: Money(50000),
+              ),
+              2: PeriodTotals(income: Money.zero, spent: Money(25000)),
+            },
+          ),
+        );
+
+        expect(find.text('Transfers in +EGP 20'), findsOneWidget);
+        expect(find.text('Transfers out −EGP 500'), findsOneWidget);
+      });
+
+      testWidgets('Arabic transfer lines keep the sign on the number', (tester) async {
+        await pump(
+          tester,
+          withWallets.copyWith(
+            byWallet: const {
+              1: PeriodTotals(income: Money(500000), spent: Money(75000), transfersOut: Money(50000)),
+              2: PeriodTotals(income: Money.zero, spent: Money(25000), transfersIn: Money(50000)),
+            },
+          ),
+          locale: const Locale('ar'),
+        );
+
+        expect(find.text('تحويلات صادرة \u2066−٥٠٠\u2069 ج.م.'), findsOneWidget);
+        expect(find.text('تحويلات واردة \u2066+٥٠٠\u2069 ج.م.'), findsOneWidget);
+        expect(find.text('وارد \u2066+٥٬٠٠٠\u2069 ج.م.'), findsOneWidget);
+      });
+
+      testWidgets('All wallets has no Transfers row: they cancel out', (tester) async {
+        await pump(
+          tester,
+          withWallets.copyWith(
+            totals: const PeriodTotals(
+              income: Money(500000),
+              spent: Money(100000),
+              transfersIn: Money(50000),
+              transfersOut: Money(50000),
+            ),
+          ),
+        );
+
+        expect(find.text('Transfers'), findsNothing);
+        expect(find.text('EGP 4,000'), findsOneWidget, reason: 'Balance = income - spent');
       });
 
       testWidgets('a single wallet has no By wallet card', (tester) async {

@@ -453,7 +453,7 @@ void main() {
         stubData(rows: [_transfer(12, 50000, wallet: 2), ...page]);
         when(() => expenses.watchTotals(any())).thenAnswer(
           (_) => Stream.value(
-            const Right(PeriodTotals(income: Money(300000), spent: Money(47550), transfersNet: Money(50000))),
+            const Right(PeriodTotals(income: Money(300000), spent: Money(47550), transfersIn: Money(50000))),
           ),
         );
         final cubit = build(walletId: 2)..load();

@@ -45,8 +45,8 @@ abstract class AnalyticsState with _$AnalyticsState {
     /// Every category (hidden ones too), by id.
     @Default(<int, Category>{}) Map<int, Category> categories,
 
-    /// Income and spending per wallet id, for the By wallet card (All wallets
-    /// only).
+    /// Income, spending and transfers per wallet id, for the By wallet card
+    /// (All wallets only).
     @Default(<int, PeriodTotals>{}) Map<int, PeriodTotals> byWallet,
 
     /// Every wallet in display order.
@@ -68,8 +68,9 @@ abstract class AnalyticsState with _$AnalyticsState {
   /// Spending in the period (income never counts).
   Money get total => totals.spent;
 
-  /// Nothing came in and nothing went out.
-  bool get isEmpty => totals.income == Money.zero && totals.spent == Money.zero;
+  /// No activity at all: nothing came in, nothing went out and nothing was
+  /// transferred. A period with only transfers is not empty.
+  bool get isEmpty => totals.income == Money.zero && totals.spent == Money.zero && !totals.hasTransfers;
 
   /// What the breakdown card adds up to.
   Money get breakdownTotal => Money.sum(byCategory.values);

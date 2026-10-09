@@ -6,6 +6,7 @@ import 'package:masroofy/core/domain/money.dart';
 import 'package:masroofy/core/domain/period_totals.dart';
 import 'package:masroofy/core/domain/transaction_kind.dart';
 import 'package:masroofy/core/strings/string_manager.dart';
+import 'package:masroofy/core/theme/app_colors.dart';
 import 'package:masroofy/core/theme/app_dimensions.dart';
 import 'package:masroofy/core/theme/masroofy_colors.dart';
 import 'package:masroofy/features/analytics/presentation/cubits/analytics_cubit.dart';
@@ -62,7 +63,7 @@ class AnalyticsScreen extends StatelessWidget {
               ),
               children: [
                 _Summary(state: state),
-                const SizedBox(height: AppSpacing.lg),
+                const SizedBox(height: AppSpacing.sm),
                 _PeriodPills(state: state),
                 ...switch (state.status) {
                   AnalyticsStatus.loading => [
@@ -86,26 +87,34 @@ class AnalyticsScreen extends StatelessWidget {
                     ..._budgetSection(state),
                   ],
                   AnalyticsStatus.loaded => [
-                    SectionHeader(title: StringManager.incomeVsSpending),
-                    _IncomeVsSpending(totals: state.totals),
-                    if (state.showsByWallet && state.wallets.length > 1) ...[
-                      SectionHeader(title: StringManager.byWallet),
-                      _WalletBreakdown(state: state),
-                    ],
-                    SectionHeader(title: StringManager.byCategory),
-                    _CategoryBreakdown(state: state),
-                    SectionHeader(title: StringManager.spendingOverTime),
-                    Card(
-                      child: Padding(
-                        padding: const EdgeInsets.fromLTRB(AppSpacing.md, AppSpacing.xl, AppSpacing.md, AppSpacing.md),
-                        child: SpendingBarChart(
-                          bars: state.bars,
-                          bucket: state.bucket,
-                          range: state.range,
-                          weekdayLabels: state.period == AnalyticsPeriod.week,
-                        ),
-                      ),
-                    ),
+                    ..._titled(StringManager.incomeVsSpending, [
+                      _IncomeVsSpending(totals: state.totals, showsTransfers: !state.showsByWallet),
+                    ]),
+                    if (state.showsByWallet && state.wallets.length > 1)
+                      ..._titled(StringManager.byWallet, [_WalletBreakdown(state: state)]),
+                    ..._titled(StringManager.byCategory, [_CategoryBreakdown(state: state)]),
+                    ..._titled(StringManager.spendingOverTime, [
+                      // Income and transfers never show up as spending bars.
+                      if (state.total.isPositive)
+                        Card(
+                          child: Padding(
+                            padding: const EdgeInsets.fromLTRB(
+                              AppSpacing.md,
+                              AppSpacing.xl,
+                              AppSpacing.md,
+                              AppSpacing.md,
+                            ),
+                            child: SpendingBarChart(
+                              bars: state.bars,
+                              bucket: state.bucket,
+                              range: state.range,
+                              weekdayLabels: state.period == AnalyticsPeriod.week,
+                            ),
+                          ),
+                        )
+                      else
+                        _InlineEmptyCard(message: StringManager.noSpendingInPeriod),
+                    ]),
                     ..._budgetSection(state),
                   ],
                 },
@@ -118,26 +127,34 @@ class AnalyticsScreen extends StatelessWidget {
   }
 }
 
+/// A section: its header, the 8 gap the Figma column puts between a header and
+/// what it titles, then [children].
+List<Widget> _titled(String title, List<Widget> children) => [
+  SectionHeader(title: title),
+  const SizedBox(height: AppSpacing.sm),
+  ...children,
+];
+
 /// Budget progress (Analytics PRD → flow step 2d): each budget in its own
 /// current week or month, whatever range is selected. Hidden when there are
 /// no budgets.
 List<Widget> _budgetSection(AnalyticsState state) => [
-  if (state.budgets.isNotEmpty) ...[
-    SectionHeader(title: StringManager.budgetsTitle),
-    GroupedCard(
-      children: [
-        for (final progress in state.budgets)
-          BudgetProgressRow(
-            progress: progress,
-            category: state.categories[progress.budget.categoryId],
-            periodLabel: switch (progress.budget.period) {
-              BudgetPeriod.weekly => StringManager.thisWeek,
-              BudgetPeriod.monthly => StringManager.thisMonth,
-            },
-          ),
-      ],
-    ),
-  ],
+  if (state.budgets.isNotEmpty)
+    ..._titled(StringManager.budgetsTitle, [
+      GroupedCard(
+        children: [
+          for (final progress in state.budgets)
+            BudgetProgressRow(
+              progress: progress,
+              category: state.categories[progress.budget.categoryId],
+              periodLabel: switch (progress.budget.period) {
+                BudgetPeriod.weekly => StringManager.thisWeek,
+                BudgetPeriod.monthly => StringManager.thisMonth,
+              },
+            ),
+        ],
+      ),
+    ]),
 ];
 
 String _rangeLabel(BuildContext context, DateRange range) =>
@@ -150,13 +167,26 @@ class _Summary extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final (label, comparison) = switch (state.period) {
-      AnalyticsPeriod.week => (StringManager.spentThisWeek, StringManager.vsLastWeek),
-      AnalyticsPeriod.month => (StringManager.spentThisMonth, StringManager.vsLastMonth),
-      AnalyticsPeriod.lastMonth => (StringManager.spentLastMonth, StringManager.vsMonthBefore),
+    final (label, comparison, noChange) = switch (state.period) {
+      AnalyticsPeriod.week => (
+        StringManager.spentThisWeek,
+        StringManager.vsLastWeek,
+        StringManager.noChangeVsLastWeek,
+      ),
+      AnalyticsPeriod.month => (
+        StringManager.spentThisMonth,
+        StringManager.vsLastMonth,
+        StringManager.noChangeVsLastMonth,
+      ),
+      AnalyticsPeriod.lastMonth => (
+        StringManager.spentLastMonth,
+        StringManager.vsMonthBefore,
+        StringManager.noChangeVsMonthBefore,
+      ),
       AnalyticsPeriod.custom => (
         StringManager.spentInRange(_rangeLabel(context, state.range)),
         StringManager.vsPreviousPeriod,
+        StringManager.noChangeVsPreviousPeriod,
       ),
     };
     return SummaryCard(
@@ -164,6 +194,9 @@ class _Summary extends StatelessWidget {
       total: state.total,
       previousTotal: state.previousTotal,
       comparisonLabel: comparison,
+      // A period with activity but unchanged spending reads "No change"
+      // (Figma); a wholly empty one shows no comparison (Analytics PRD).
+      noChangeLabel: state.isEmpty ? null : noChange,
     );
   }
 }
@@ -204,11 +237,17 @@ class _PeriodPills extends StatelessWidget {
   }
 }
 
-/// Income, spending, the balance and the savings rate for the selected period.
+/// Income, spending, (in one wallet) transfers, the balance and the savings
+/// rate for the selected period: one row each on a grouped card, split by
+/// 1 px dividers (Figma "Income vs spending card").
 class _IncomeVsSpending extends StatelessWidget {
-  const _IncomeVsSpending({required this.totals});
+  const _IncomeVsSpending({required this.totals, required this.showsTransfers});
 
   final PeriodTotals totals;
+
+  /// One wallet: its transfers in and out get a row. Over all wallets they
+  /// cancel out, so there is nothing to show.
+  final bool showsTransfers;
 
   @override
   Widget build(BuildContext context) {
@@ -216,58 +255,109 @@ class _IncomeVsSpending extends StatelessWidget {
     final text = Theme.of(context).textTheme;
     final balance = totals.balance;
     final rate = totals.savingsRate;
-
-    Widget stat(String label, Widget value) => Expanded(
+    return Card(
+      clipBehavior: Clip.antiAlias,
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label, style: text.labelMedium!.copyWith(color: colors.textSecondary)),
-          const SizedBox(height: AppSpacing.xs),
-          FittedBox(fit: BoxFit.scaleDown, alignment: AlignmentDirectional.centerStart, child: value),
+          _StatRow(
+            icon: Symbols.south_west_rounded,
+            color: AppColors.walletEmerald,
+            label: StringManager.analyticsIncome,
+            value: Text(context.money(totals.income), style: text.titleMedium!.copyWith(color: colors.textPositive)),
+          ),
+          const Divider(),
+          _StatRow(
+            icon: Symbols.north_east_rounded,
+            color: AppColors.categoryHealth,
+            label: StringManager.analyticsSpent,
+            value: Text(context.money(totals.spent), style: text.titleMedium),
+          ),
+          if (showsTransfers && totals.hasTransfers) ...[
+            const Divider(),
+            _StatRow(
+              icon: Symbols.sync_alt_rounded,
+              color: AppColors.categoryEducation,
+              label: StringManager.analyticsTransfers,
+              value: Text(
+                StringManager.transfersInOut(
+                  context.signedMoney(totals.transfersIn),
+                  context.money(totals.transfersOut),
+                ),
+                style: text.labelMedium!.copyWith(color: colors.textSecondary),
+              ),
+            ),
+          ],
+          const Divider(),
+          _StatRow(
+            icon: Symbols.account_balance_wallet_rounded,
+            color: AppColors.categoryTransport,
+            label: StringManager.analyticsBalance,
+            value: Text(
+              context.signedMoney(balance, plus: false),
+              style: text.titleMedium!.copyWith(color: balance.isNegative ? colors.textNegative : null),
+            ),
+          ),
+          // Hidden when nothing came in: there is nothing to save from.
+          if (rate != null) ...[
+            const Divider(),
+            _StatRow(
+              icon: Symbols.savings_rounded,
+              color: AppColors.categoryEducation,
+              label: StringManager.savingsRate,
+              value: Text(
+                '${rate < 0 ? '−' : ''}${context.count((rate.abs() * 100).round())}%',
+                textDirection: TextDirection.ltr,
+                style: text.titleMedium,
+              ),
+            ),
+          ],
         ],
       ),
     );
+  }
+}
 
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.lg),
-        child: Column(
+/// A row of the Income vs spending card: a 32 avatar with an 18 glyph, the
+/// label, and the amount at the end. 12 / 16 padding and 12 between the parts
+/// make it 56 high.
+class _StatRow extends StatelessWidget {
+  const _StatRow({required this.icon, required this.color, required this.label, required this.value});
+
+  final IconData icon;
+  final Color color;
+  final String label;
+  final Widget value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg, vertical: AppSpacing.md),
+      child: LayoutBuilder(
+        builder: (context, constraints) => Row(
           children: [
-            Row(
-              children: [
-                stat(
-                  StringManager.analyticsIncome,
-                  Text(
-                    context.money(totals.income),
-                    style: text.titleLarge!.copyWith(color: colors.textPositive),
-                  ),
-                ),
-                stat(StringManager.analyticsSpent, Text(context.money(totals.spent), style: text.titleLarge)),
-              ],
+            Container(
+              width: 32,
+              height: 32,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: color.withValues(alpha: AppColors.categoryTintOpacity),
+              ),
+              child: Icon(icon, size: 18, color: color),
             ),
-            const SizedBox(height: AppSpacing.lg),
-            Row(
-              children: [
-                stat(
-                  StringManager.analyticsBalance,
-                  Text(
-                    context.signedMoney(balance, plus: false),
-                    style: text.titleLarge!.copyWith(color: balance.isNegative ? colors.textNegative : null),
-                  ),
-                ),
-                // Hidden when nothing came in: there is nothing to save from.
-                if (rate != null)
-                  stat(
-                    StringManager.savingsRate,
-                    Text(
-                      '${rate < 0 ? '−' : ''}${context.count((rate.abs() * 100).round())}%',
-                      textDirection: TextDirection.ltr,
-                      style: text.titleLarge,
-                    ),
-                  )
-                else
-                  const Spacer(),
-              ],
+            const SizedBox(width: AppSpacing.md),
+            Expanded(
+              child: Text(
+                label,
+                style: Theme.of(context).textTheme.bodyLarge,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            const SizedBox(width: AppSpacing.md),
+            // A long amount scales down rather than crowding the label out.
+            ConstrainedBox(
+              constraints: BoxConstraints(maxWidth: constraints.maxWidth * 0.6),
+              child: FittedBox(fit: BoxFit.scaleDown, alignment: AlignmentDirectional.centerEnd, child: value),
             ),
           ],
         ),
@@ -276,8 +366,35 @@ class _IncomeVsSpending extends StatelessWidget {
   }
 }
 
+/// A section without data: one line, centred, on its own card (16 / 32
+/// padding, so 84 high).
+class _InlineEmptyCard extends StatelessWidget {
+  const _InlineEmptyCard({required this.message});
+
+  final String message;
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg, vertical: AppSpacing.xxl),
+        child: SizedBox(
+          width: double.infinity,
+          child: Text(
+            message,
+            textAlign: TextAlign.center,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: Theme.of(context).textTheme.bodyMedium!.copyWith(color: MasroofyColors.of(context).textSecondary),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 /// All wallets: each wallet's spending and income for the period, with a thin
-/// bar for its share of the spending.
+/// bar for its share of the spending, and its transfers.
 class _WalletBreakdown extends StatelessWidget {
   const _WalletBreakdown({required this.state});
 
@@ -291,7 +408,7 @@ class _WalletBreakdown extends StatelessWidget {
       child: Column(
         children: [
           for (final (index, wallet) in state.wallets.indexed) ...[
-            if (index > 0) const Divider(indent: 72),
+            if (index > 0) const Divider(),
             _WalletRow(
               wallet: wallet,
               totals: state.byWallet[wallet.id] ?? PeriodTotals.zero,
@@ -304,6 +421,9 @@ class _WalletBreakdown extends StatelessWidget {
   }
 }
 
+/// Figma "Legend Row" of the By wallet card: a 40 avatar (24 glyph), then the
+/// name and spending, a 120 × 6 share bar with the income at the end, and a
+/// small line per direction of transfer. 70 high, 88 with one transfers line.
 class _WalletRow extends StatelessWidget {
   const _WalletRow({required this.wallet, required this.totals, required this.share});
 
@@ -317,57 +437,94 @@ class _WalletRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = MasroofyColors.of(context);
     final text = Theme.of(context).textTheme;
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg, vertical: AppSpacing.md),
-      child: Row(
-        children: [
-          WalletAvatar(icon: wallet.icon, color: wallet.color),
-          const SizedBox(width: AppSpacing.md),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        wallet.displayName,
-                        textDirection: wallet.nameDirection,
-                        style: text.bodyLarge,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
+    final income = totals.income;
+
+    Widget transferLine(String line) => Padding(
+      padding: const EdgeInsets.only(top: AppSpacing.xs),
+      child: SizedBox(
+        width: double.infinity,
+        child: Text(
+          line,
+          textAlign: TextAlign.end,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: text.bodySmall!.copyWith(color: colors.textSecondary),
+        ),
+      ),
+    );
+
+    return ConstrainedBox(
+      constraints: const BoxConstraints(minHeight: 70),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg, vertical: AppSpacing.md),
+        child: Row(
+          children: [
+            WalletAvatar(icon: wallet.icon, color: wallet.color, iconSize: 24),
+            const SizedBox(width: AppSpacing.md),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          wallet.displayName,
+                          textDirection: wallet.nameDirection,
+                          style: text.bodyLarge,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
                       ),
-                    ),
-                    Text(context.money(totals.spent), style: text.titleMedium),
-                  ],
-                ),
-                const SizedBox(height: AppSpacing.xs),
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(AppRadius.full),
-                  child: LinearProgressIndicator(
-                    value: share,
-                    minHeight: 4,
-                    color: Color(wallet.color),
-                    backgroundColor: colors.track,
+                      Text(context.money(totals.spent), style: text.titleMedium),
+                    ],
                   ),
-                ),
-                if (totals.income.isPositive) ...[
                   const SizedBox(height: AppSpacing.xs),
-                  Text(
-                    '${StringManager.analyticsIncome} ${context.signedMoney(totals.income)}',
-                    style: text.labelMedium!.copyWith(color: colors.textPositive),
+                  Row(
+                    children: [
+                      Container(
+                        width: 120,
+                        height: 6,
+                        decoration: ShapeDecoration(shape: const StadiumBorder(), color: colors.track),
+                        child: FractionallySizedBox(
+                          alignment: AlignmentDirectional.centerStart,
+                          widthFactor: share.clamp(0, 1).toDouble(),
+                          child: DecoratedBox(
+                            decoration: ShapeDecoration(shape: const StadiumBorder(), color: Color(wallet.color)),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: AppSpacing.sm),
+                      Expanded(
+                        child: Text(
+                          StringManager.walletIn(context.signedMoney(income)),
+                          textAlign: TextAlign.end,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: text.labelMedium!.copyWith(
+                            color: income.isPositive ? colors.textPositive : colors.textPrimary,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
+                  if (totals.transfersIn.isPositive)
+                    transferLine(StringManager.walletTransfersIn(context.signedMoney(totals.transfersIn))),
+                  if (totals.transfersOut.isPositive)
+                    transferLine(StringManager.walletTransfersOut(context.signedMoney(-totals.transfersOut))),
                 ],
-              ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
 }
 
-/// The donut, then every category with its share, largest first.
+/// The Spending | Income control, then the donut with every category and its
+/// share, largest first, on one card; or one inline line when there is none.
 class _CategoryBreakdown extends StatelessWidget {
   const _CategoryBreakdown({required this.state});
 
@@ -377,43 +534,38 @@ class _CategoryBreakdown extends StatelessWidget {
   Widget build(BuildContext context) {
     final cubit = context.read<AnalyticsCubit>();
     final total = state.breakdownTotal;
-    return Card(
-      clipBehavior: Clip.antiAlias,
-      child: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(AppSpacing.lg, AppSpacing.lg, AppSpacing.lg, 0),
-            child: SegmentedPills(
-              labels: [StringManager.analyticsSpending, StringManager.analyticsIncome],
-              selected: state.breakdownKind.index,
-              onSelected: (i) => cubit.selectBreakdown(TransactionKind.values[i]),
+    // Figma: the control sits above the card, not inside it.
+    return Column(
+      children: [
+        SegmentedPills(
+          labels: [StringManager.analyticsSpending, StringManager.analyticsIncome],
+          selected: state.breakdownKind.index,
+          onSelected: (i) => cubit.selectBreakdown(TransactionKind.values[i]),
+        ),
+        const SizedBox(height: AppSpacing.sm),
+        if (state.byCategory.isEmpty)
+          _InlineEmptyCard(
+            message: state.breakdownKind == TransactionKind.income
+                ? StringManager.noIncomeData
+                : StringManager.noSpendingInPeriod,
+          )
+        else
+          Card(
+            clipBehavior: Clip.antiAlias,
+            child: Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: AppSpacing.lg),
+                  child: SpendingPieChart(slices: state.slices, categories: state.categories, total: total),
+                ),
+                for (final (category, amount) in state.legend) ...[
+                  const Divider(indent: 72),
+                  _LegendRow(category: category, amount: amount, total: total),
+                ],
+              ],
             ),
           ),
-          if (state.byCategory.isEmpty)
-            Padding(
-              padding: const EdgeInsets.all(AppSpacing.xxl),
-              child: Text(
-                state.breakdownKind == TransactionKind.income
-                    ? StringManager.noIncomeData
-                    : StringManager.noAnalyticsData,
-                textAlign: TextAlign.center,
-                style: Theme.of(
-                  context,
-                ).textTheme.bodyMedium!.copyWith(color: MasroofyColors.of(context).textSecondary),
-              ),
-            )
-          else ...[
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: AppSpacing.lg),
-              child: SpendingPieChart(slices: state.slices, categories: state.categories, total: total),
-            ),
-            for (final (category, amount) in state.legend) ...[
-              const Divider(indent: 72),
-              _LegendRow(category: category, amount: amount, total: total),
-            ],
-          ],
-        ],
-      ),
+      ],
     );
   }
 }

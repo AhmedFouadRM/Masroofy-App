@@ -140,20 +140,27 @@ void main() {
       );
     });
 
-    test('transfers are in no total, in any view', () async {
+    test('transfers are in neither income nor spending, in any view', () async {
       await addTransferRows(db, from: me, to: son, amountMinor: 50000, date: LocalDate(2026, 10, 4));
 
+      // Both legs sit in All wallets: they are counted apart, and cancel out.
       expect(
         first(await repository.watchTotals(october).first),
-        const PeriodTotals(income: Money(560000), spent: Money(2500)),
+        const PeriodTotals(
+          income: Money(560000),
+          spent: Money(2500),
+          transfersIn: Money(50000),
+          transfersOut: Money(50000),
+        ),
       );
+      expect(first(await repository.watchTotals(october).first).transfersNet, Money.zero);
       expect(
         first(await repository.watchTotals(october, walletId: me).first),
-        const PeriodTotals(income: Money(520000), spent: Money(1800)),
+        const PeriodTotals(income: Money(520000), spent: Money(1800), transfersOut: Money(50000)),
       );
       expect(
         first(await repository.watchTotals(october, walletId: son).first),
-        const PeriodTotals(income: Money(40000), spent: Money(700)),
+        const PeriodTotals(income: Money(40000), spent: Money(700), transfersIn: Money(50000)),
       );
       expect(first(await repository.watchTotalsByCategory(october, TransactionKind.expense).first), {
         food: const Money(2200),
@@ -162,12 +169,43 @@ void main() {
       expect(first(await repository.watchDailyTotals(october).first).containsKey(LocalDate(2026, 10, 4)), isFalse);
     });
 
-    test('totals by wallet carry income and spending per wallet', () async {
+    test('transfers in and out are summed per wallet, and the balance follows', () async {
+      await addTransferRows(db, from: me, to: son, amountMinor: 50000, date: LocalDate(2026, 10, 4));
+      await addTransferRows(db, from: son, to: me, amountMinor: 12000, date: LocalDate(2026, 10, 5));
+      await addTransferRows(db, from: me, to: son, amountMinor: 99900, date: LocalDate(2026, 9, 30)); // outside
+
+      final mine = first(await repository.watchTotals(october, walletId: me).first);
+      expect(mine.transfersIn, const Money(12000));
+      expect(mine.transfersOut, const Money(50000));
+      expect(mine.transfersNet, const Money(-38000));
+      expect(mine.balance, const Money(520000 - 1800 - 38000));
+      final his = first(await repository.watchTotals(october, walletId: son).first);
+      expect(his.transfersIn, const Money(50000));
+      expect(his.transfersOut, const Money(12000));
+      expect(his.balance, const Money(40000 - 700 + 38000));
+      // Neither income, spending nor the savings rate moved.
+      expect(mine.income, const Money(520000));
+      expect(mine.spent, const Money(1800));
+      expect(mine.savingsRate, (520000 - 1800) / 520000);
+    });
+
+    test('a wallet with only transfers is not left out of the totals', () async {
+      final empty = await addWallet(db, 'Empty');
+      await addTransferRows(db, from: me, to: empty, amountMinor: 700, date: LocalDate(2026, 10, 4));
+
+      expect(
+        first(await repository.watchTotals(october, walletId: empty).first),
+        const PeriodTotals(income: Money.zero, spent: Money.zero, transfersIn: Money(700)),
+      );
+      expect(first(await repository.watchTotalsByWallet(october).first)[empty], isNotNull);
+    });
+
+    test('totals by wallet carry income, spending and transfers per wallet', () async {
       await addTransferRows(db, from: me, to: son, amountMinor: 50000, date: LocalDate(2026, 10, 4));
 
       expect(first(await repository.watchTotalsByWallet(october).first), {
-        me: const PeriodTotals(income: Money(520000), spent: Money(1800)),
-        son: const PeriodTotals(income: Money(40000), spent: Money(700)),
+        me: const PeriodTotals(income: Money(520000), spent: Money(1800), transfersOut: Money(50000)),
+        son: const PeriodTotals(income: Money(40000), spent: Money(700), transfersIn: Money(50000)),
       });
     });
   });

@@ -9,8 +9,9 @@ import 'package:masroofy/core/error/failures.dart';
 /// Read-only aggregates over transactions (Analytics PRD → Data Queries). All
 /// streams re-emit when a transaction is added, edited or deleted. Spending
 /// is the sum over expense categories only, so income never changes it, and
-/// transfers between wallets are never counted. A null `walletId` is All
-/// wallets.
+/// transfers between wallets are never part of income or spending: the totals
+/// report them apart (`transfersIn` / `transfersOut`), the category and daily
+/// queries leave them out. A null `walletId` is All wallets.
 abstract interface class IAnalyticsRepository {
   Stream<Either<Failure, PeriodTotals>> watchTotals(DateRange range, {int? walletId});
 
@@ -22,7 +23,8 @@ abstract interface class IAnalyticsRepository {
     int? walletId,
   });
 
-  /// Income and spending per wallet id; wallets without transactions are absent.
+  /// Income, spending and transfers per wallet id; wallets without any are
+  /// absent.
   Stream<Either<Failure, Map<int, PeriodTotals>>> watchTotalsByWallet(DateRange range);
 
   /// Income and spending per day; days without transactions are absent.

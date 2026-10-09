@@ -41,6 +41,10 @@ class AnalyticsRepositoryImpl implements IAnalyticsRepository {
           .map((totals) => totals.map((date, minor) => MapEntry(date, _toTotals(minor))))
           .guarded();
 
-  static PeriodTotals _toTotals(MinorTotals totals) =>
-      PeriodTotals(income: Money(totals.income), spent: Money(totals.spent));
+  static PeriodTotals _toTotals(MinorTotals totals) => PeriodTotals(
+    income: Money(totals.income),
+    spent: Money(totals.spent),
+    transfersIn: Money(totals.transfersIn),
+    transfersOut: Money(totals.transfersOut),
+  );
 }

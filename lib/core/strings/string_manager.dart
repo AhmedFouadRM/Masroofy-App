@@ -270,6 +270,26 @@ class StringManager {
 
   /// Bar tooltip; both amounts are already formatted.
   static String incomeAndSpent(String income, String spent) => 'analytics.tooltip'.tr(args: [income, spent]);
+
+  static String get analyticsTransfers => 'analytics.transfers'.tr();
+
+  /// "In +EGP 500 · Out EGP 0"; both amounts already formatted.
+  static String transfersInOut(String inAmount, String outAmount) =>
+      'analytics.transfers_in_out'.tr(args: [inAmount, outAmount]);
+
+  /// A wallet's income on its By wallet row: "In +EGP 5,000".
+  static String walletIn(String amount) => 'analytics.wallet_in'.tr(args: [amount]);
+  static String walletTransfersIn(String amount) => 'analytics.wallet_transfers_in'.tr(args: [amount]);
+  static String walletTransfersOut(String amount) => 'analytics.wallet_transfers_out'.tr(args: [amount]);
+
+  /// The inline empty card of a section with no spending to show.
+  static String get noSpendingInPeriod => 'analytics.no_spending'.tr();
+
+  /// The summary chip when spending is the same as in the comparison period.
+  static String get noChangeVsLastWeek => 'analytics.no_change_week'.tr();
+  static String get noChangeVsLastMonth => 'analytics.no_change_month'.tr();
+  static String get noChangeVsMonthBefore => 'analytics.no_change_month_before'.tr();
+  static String get noChangeVsPreviousPeriod => 'analytics.no_change_previous'.tr();
   static String get noAnalyticsData => 'analytics.no_data'.tr();
   static String get noAnalyticsDataHint => 'analytics.no_data_hint'.tr();
 

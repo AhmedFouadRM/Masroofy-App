@@ -265,6 +265,16 @@
     "smaller_categories": "Smaller categories",
     "no_data": "No spending data for this period",
     "no_data_hint": "Expenses you add in this period will show up here.",
+    "transfers": "Transfers",
+    "transfers_in_out": "In {} · Out {}",
+    "wallet_in": "In {}",
+    "wallet_transfers_in": "Transfers in {}",
+    "wallet_transfers_out": "Transfers out {}",
+    "no_spending": "No spending in this period",
+    "no_change_week": "No change vs last week",
+    "no_change_month": "No change vs last month",
+    "no_change_month_before": "No change vs the month before",
+    "no_change_previous": "No change vs previous period",
     "of_total": "{}% of total"
   },
   "budgets": {

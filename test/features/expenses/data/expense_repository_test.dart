@@ -356,7 +356,7 @@ void main() {
 
     test('daily totals count transfers in the net, and a kind or category filter leaves them out', () async {
       final daily = right(await repository.watchDailyTotals(october.copyWith(walletId: son)).first);
-      expect(daily[today], const PeriodTotals(income: Money.zero, spent: Money.zero, transfersNet: Money(50000)));
+      expect(daily[today], const PeriodTotals(income: Money.zero, spent: Money.zero, transfersIn: Money(50000)));
       expect(right(await repository.watchDailyTotals(october).first)[today]?.transfersNet, Money.zero);
 
       expect(await entries(october.copyWith(kind: TransactionKind.expense)), hasLength(1));

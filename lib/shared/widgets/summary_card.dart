@@ -10,13 +10,16 @@ import 'package:material_symbols_icons/symbols.dart';
 /// Figma "Summary Card": the period total on an emerald card, with the
 /// change against the comparison period (Analytics PRD comparison rules), or
 /// as the balance card (Income PRD): a signed [total] with [details] (In and
-/// Out) below it.
+/// Out) below it. With a [noChangeLabel], a period spending the same as the
+/// comparison one (zero included) shows that label with a flat trend glyph
+/// instead of no comparison.
 class SummaryCard extends StatelessWidget {
   const SummaryCard({
     required this.label,
     required this.total,
     this.previousTotal,
     this.comparisonLabel = '',
+    this.noChangeLabel,
     this.details = const [],
     this.signed = false,
     super.key,
@@ -28,6 +31,10 @@ class SummaryCard extends StatelessWidget {
   /// Null while loading, and for a card without a comparison.
   final Money? previousTotal;
   final String comparisonLabel;
+
+  /// Shown when [total] equals [previousTotal]; without it that case shows
+  /// nothing (both 0) or "0% (+0)".
+  final String? noChangeLabel;
 
   /// Labelled amounts under the total (the balance card's In and Out).
   final List<({String label, Money amount})> details;
@@ -121,7 +128,11 @@ class SummaryCard extends StatelessWidget {
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             Icon(
-                              total >= previousTotal! ? Symbols.trending_up_rounded : Symbols.trending_down_rounded,
+                              total == previousTotal
+                                  ? Symbols.trending_flat_rounded
+                                  : total > previousTotal!
+                                  ? Symbols.trending_up_rounded
+                                  : Symbols.trending_down_rounded,
                               size: 16,
                               color: onCard,
                             ),
@@ -148,10 +159,13 @@ class SummaryCard extends StatelessWidget {
   }
 
   /// "12% (+EGP 520) vs last month"; only the amount when the previous total
-  /// is 0; nothing when both are 0 or the comparison hasn't loaded.
+  /// is 0; nothing when both are 0 (unless [noChangeLabel] is set) or the
+  /// comparison hasn't loaded.
   String? _comparison(BuildContext context) {
     final previous = previousTotal;
-    if (previous == null || (previous == Money.zero && total == Money.zero)) return null;
+    if (previous == null) return null;
+    if (total == previous && noChangeLabel != null) return noChangeLabel;
+    if (previous == Money.zero && total == Money.zero) return null;
     final change = total - previous;
     final sign = change.isNegative ? '−' : '+';
     final amount = '$sign${context.money(change.isNegative ? -change : change)}';
