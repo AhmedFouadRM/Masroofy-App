@@ -189,6 +189,7 @@
     "western_digits": "Use Western digits (123)",
     "app_lock": "App lock",
     "app_lock_off": "Off",
+    "app_lock_turned_off": "App lock turned off",
     "app_lock_pin": "PIN",
     "app_lock_pin_fingerprint": "PIN and fingerprint",
     "fingerprint": "Unlock with fingerprint",

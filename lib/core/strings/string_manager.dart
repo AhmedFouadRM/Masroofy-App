@@ -194,6 +194,7 @@ class StringManager {
   static String get westernDigits => 'settings.western_digits'.tr();
   static String get appLock => 'settings.app_lock'.tr();
   static String get appLockOff => 'settings.app_lock_off'.tr();
+  static String get appLockTurnedOff => 'settings.app_lock_turned_off'.tr();
   static String get appLockPin => 'settings.app_lock_pin'.tr();
   static String get appLockPinAndFingerprint => 'settings.app_lock_pin_fingerprint'.tr();
   static String get unlockWithFingerprint => 'settings.fingerprint'.tr();

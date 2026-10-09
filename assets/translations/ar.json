@@ -189,6 +189,7 @@
     "western_digits": "استخدام الأرقام الغربية (123)",
     "app_lock": "قفل التطبيق",
     "app_lock_off": "متوقف",
+    "app_lock_turned_off": "تم إيقاف قفل التطبيق",
     "app_lock_pin": "الرمز السري",
     "app_lock_pin_fingerprint": "الرمز السري والبصمة",
     "fingerprint": "الفتح بالبصمة",

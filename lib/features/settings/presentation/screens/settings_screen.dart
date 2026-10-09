@@ -84,7 +84,7 @@ class SettingsScreen extends StatelessWidget {
     if (confirmed != true || !context.mounted) return;
     (await auth.disable()).match(
       (failure) => _showMessage(context, StringManager.failure(failure)),
-      (_) => _showMessage(context, StringManager.appLockOff),
+      (_) => _showMessage(context, StringManager.appLockTurnedOff),
     );
   }
 

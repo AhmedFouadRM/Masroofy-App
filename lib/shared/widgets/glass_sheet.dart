@@ -7,6 +7,8 @@ import 'package:masroofy/shared/widgets/glass_surface.dart';
 /// card inset from the screen edges, as on iOS 26.
 Future<T?> showGlassSheet<T>(BuildContext context, {required WidgetBuilder builder}) => showModalBottomSheet<T>(
   context: context,
+  // Above the tab bar, so it is dimmed and blocked like the rest of the page.
+  useRootNavigator: true,
   isScrollControlled: true,
   backgroundColor: Colors.transparent,
   elevation: 0,
