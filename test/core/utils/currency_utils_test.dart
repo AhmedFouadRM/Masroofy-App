@@ -57,4 +57,11 @@ void main() {
       expect(CurrencyUtils.formatNumber(const Money(100), egp), '1.00');
     });
   });
+
+  test('formatAmount drops the currency, and the fraction when whole', () {
+    expect(CurrencyUtils.formatAmount(const Money(132000), egp, languageCode: 'en'), '1,320');
+    expect(CurrencyUtils.formatAmount(const Money(132050), egp, languageCode: 'en'), '1,320.50');
+    expect(CurrencyUtils.formatAmount(const Money(132000), egp, languageCode: 'ar'), '١٬٣٢٠');
+    expect(CurrencyUtils.formatAmount(const Money(132000), egp, languageCode: 'ar', westernDigits: true), '1,320');
+  });
 }

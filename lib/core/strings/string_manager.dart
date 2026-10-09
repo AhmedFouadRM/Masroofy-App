@@ -154,9 +154,6 @@ class StringManager {
   static String overBudget(String amount) => 'budgets.over_budget'.tr(args: [amount]);
   static String budgetRemaining(String amount) => 'budgets.remaining'.tr(args: [amount]);
 
-  /// "EGP 1,200 of EGP 2,000".
-  static String budgetOfLimit(String spent, String limit) => 'budgets.of_limit'.tr(args: [spent, limit]);
-
   /// `Weekly` / `Monthly` by period name.
   static String budgetPeriod(String name) => 'budgets.$name'.tr();
   static String get budgetPeriodLabel => 'budgets.period'.tr();

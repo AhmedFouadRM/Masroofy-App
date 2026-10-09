@@ -156,8 +156,9 @@ void main() {
       await pump(tester, loaded);
 
       expect(find.text('Food'), findsOneWidget);
-      expect(find.text('EGP 150 left'), findsOneWidget);
-      expect(find.text('Monthly · EGP 850 of EGP 1,000'), findsOneWidget);
+      expect(find.text('EGP 150 remaining'), findsOneWidget);
+      expect(find.text('850 / 1,000'), findsOneWidget);
+      expect(find.text('Monthly'), findsNWidgets(2));
       expect(find.text('Over by EGP 200'), findsOneWidget);
     });
 

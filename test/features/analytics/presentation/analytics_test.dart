@@ -191,7 +191,8 @@ void main() {
       await pump(tester, loaded.copyWith(budgets: [budget]));
 
       expect(find.text('Budgets'), findsOneWidget);
-      expect(find.text('This week · EGP 250 of EGP 500'), findsOneWidget);
+      expect(find.text('250 / 500'), findsOneWidget);
+      expect(find.text('This week'), findsWidgets);
     });
 
     testWidgets('an empty period shows the empty state', (tester) async {

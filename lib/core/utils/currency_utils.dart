@@ -78,16 +78,25 @@ class CurrencyUtils {
     required String languageCode,
     bool westernDigits = false,
   }) {
+    final number = formatAmount(amount, currency, languageCode: languageCode, westernDigits: westernDigits);
+    if (languageCode == 'ar') return '$number ${currency.symbolAr}';
+    final separator = currency.symbolEn.length == 1 ? '' : ' ';
+    return '${currency.symbolEn}$separator$number';
+  }
+
+  /// [format] without the currency: `1,320` / `١٬٣٢٠`. For figures that sit
+  /// next to each other, e.g. a budget's `1,320 / 2,000`.
+  static String formatAmount(
+    Money amount,
+    Currency currency, {
+    required String languageCode,
+    bool westernDigits = false,
+  }) {
     final full = formatNumber(amount, currency);
     final dot = full.indexOf('.');
     final isWhole = dot != -1 && full.substring(dot + 1).split('').every((digit) => digit == '0');
     final number = isWhole ? full.substring(0, dot) : full;
-    if (languageCode == 'ar') {
-      final shaped = westernDigits ? number : toEasternArabicNumber(number);
-      return '$shaped ${currency.symbolAr}';
-    }
-    final separator = currency.symbolEn.length == 1 ? '' : ' ';
-    return '${currency.symbolEn}$separator$number';
+    return languageCode == 'ar' && !westernDigits ? toEasternArabicNumber(number) : number;
   }
 
   /// Grouped number with Western digits, every fraction digit and no

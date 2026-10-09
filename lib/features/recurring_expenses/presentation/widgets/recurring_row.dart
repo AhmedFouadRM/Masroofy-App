@@ -8,7 +8,7 @@ import 'package:masroofy/features/recurring_expenses/domain/entities/recurring_e
 import 'package:masroofy/shared/categories/category_avatar.dart';
 import 'package:masroofy/shared/formatting/display_format.dart';
 
-/// Figma "List Item / Trailing=Switch": category avatar, title, frequency
+/// Figma "Recurring Row": category avatar, title, frequency
 /// and next due date, the amount, and the active switch.
 class RecurringRow extends StatelessWidget {
   const RecurringRow({
@@ -48,7 +48,7 @@ class RecurringRow extends StatelessWidget {
                 opacity: active ? 1 : 0.5,
                 child: CategoryAvatar(icon: category.icon, color: category.color),
               ),
-            const SizedBox(width: AppSpacing.md),
+            const SizedBox(width: AppSpacing.sm),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -73,7 +73,7 @@ class RecurringRow extends StatelessWidget {
               context.money(template.amount),
               style: text.titleMedium!.copyWith(color: active ? null : colors.textSecondary),
             ),
-            const SizedBox(width: AppSpacing.xs),
+            const SizedBox(width: AppSpacing.sm),
             Semantics(
               label: StringManager.recurringActiveToggle(template.title),
               child: Switch(value: active, onChanged: onActiveChanged),

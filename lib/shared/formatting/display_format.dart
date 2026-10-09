@@ -34,6 +34,10 @@ extension DisplayFormat on BuildContext {
   String money(Money amount) =>
       CurrencyUtils.format(amount, currency, languageCode: locale.languageCode, westernDigits: _westernDigits);
 
+  /// An amount without the currency: `1,320` / `١٬٣٢٠`.
+  String amount(Money amount) =>
+      CurrencyUtils.formatAmount(amount, currency, languageCode: locale.languageCode, westernDigits: _westernDigits);
+
   /// `Oct 8` / `٨ أكتوبر`.
   String shortDate(LocalDate date) =>
       DateUtilsHelper.formatShortDate(date, languageCode: locale.languageCode, westernDigits: _westernDigits);

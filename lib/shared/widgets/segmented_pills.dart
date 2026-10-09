@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:masroofy/core/theme/app_dimensions.dart';
 import 'package:masroofy/core/theme/masroofy_colors.dart';
 
-/// Figma "Segmented Control": equal pills on a track; the selected one is a
+/// Figma "Segmented Control" (and "Segmented Control 4"): equal pills on a track; the selected one is a
 /// raised surface.
 class SegmentedPills extends StatelessWidget {
   const SegmentedPills({required this.labels, required this.selected, required this.onSelected, super.key});
@@ -15,6 +15,8 @@ class SegmentedPills extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = MasroofyColors.of(context);
     final text = Theme.of(context).textTheme;
+    // Four options use Label/Medium so every label fits (Figma "Segmented Control 4").
+    final labelStyle = labels.length > 3 ? text.labelMedium! : text.labelLarge!;
     return Container(
       padding: const EdgeInsets.all(AppSpacing.xs),
       decoration: ShapeDecoration(shape: const StadiumBorder(), color: colors.surfaceVariant),
@@ -38,7 +40,7 @@ class SegmentedPills extends StatelessWidget {
                         textAlign: TextAlign.center,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: text.labelLarge!.copyWith(
+                        style: labelStyle.copyWith(
                           color: i == selected ? colors.textPrimary : colors.textSecondary,
                         ),
                       ),
