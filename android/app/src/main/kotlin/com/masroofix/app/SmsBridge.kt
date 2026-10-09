@@ -1,4 +1,4 @@
-package com.masroofy.masroofy
+package com.masroofix.app
 
 import android.content.Context
 import android.os.Handler

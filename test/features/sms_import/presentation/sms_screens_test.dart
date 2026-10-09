@@ -557,7 +557,7 @@ void main() {
       expect(find.text('Read bank messages?'), findsOneWidget);
       expect(
         find.text(
-          'To add your transactions for you, Masroofy reads messages from your bank and wallet. Here is how it works:',
+          'To add your transactions for you, Masroofix reads messages from your bank and wallet. Here is how it works:',
         ),
         findsOneWidget,
       );

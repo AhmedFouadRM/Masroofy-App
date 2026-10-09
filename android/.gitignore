@@ -12,3 +12,9 @@ GeneratedPluginRegistrant.java
 key.properties
 **/*.keystore
 **/*.jks
+
+# Release signing and Dart symbols: never commit
+key.properties
+*.jks
+*.keystore
+build/symbols/

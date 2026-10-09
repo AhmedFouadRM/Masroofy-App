@@ -1,4 +1,4 @@
-package com.masroofy.masroofy
+package com.masroofix.app
 
 import android.view.WindowManager
 import io.flutter.embedding.android.FlutterFragmentActivity

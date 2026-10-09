@@ -7,7 +7,7 @@ import 'package:masroofy/core/error/failures.dart';
 import 'package:masroofy/features/settings/domain/repositories/i_data_management_repository.dart';
 import 'package:masroofy/features/settings/domain/repositories/i_file_services.dart';
 
-/// Writes `masroofy_backup_YYYY-MM-DD.json` and opens the share sheet.
+/// Writes `masroofix_backup_YYYY-MM-DD.json` and opens the share sheet.
 class ExportBackup {
   ExportBackup(this._repository, this._sharer, {LocalDate Function()? today}) : _today = today ?? LocalDate.today;
 
@@ -20,7 +20,7 @@ class ExportBackup {
     return created.match(
       (failure) async => Left(failure),
       (json) => _sharer.share(
-        fileName: 'masroofy_backup_${_today().toIso()}.json',
+        fileName: 'masroofix_backup_${_today().toIso()}.json',
         bytes: Uint8List.fromList(utf8.encode(json)),
         mimeType: 'application/json',
       ),

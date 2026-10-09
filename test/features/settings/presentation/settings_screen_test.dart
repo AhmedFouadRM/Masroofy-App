@@ -450,7 +450,7 @@ void main() {
       );
       await tester.pump();
 
-      expect(find.text("This file isn't a valid Masroofy backup. Nothing was changed."), findsOneWidget);
+      expect(find.text("This file isn't a valid Masroofix backup. Nothing was changed."), findsOneWidget);
       expect(find.text('Restore this backup?'), findsNothing);
     });
 

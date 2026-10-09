@@ -1,3 +1,4 @@
+import 'dart:ui' show Color;
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:masroofy/core/domain/transaction_kind.dart';
 import 'package:masroofy/features/sms_import/data/notifications/sms_notification_payload.dart';
@@ -19,13 +20,14 @@ class SmsNotifier {
   static const sendersChannelId = 'sms_senders';
   static const groupKey = 'masroofy_sms_transactions';
   static const _summaryId = 3000000;
+  static const _accent = Color(0xFF047857);
 
   /// From this many review notifications on, they are grouped under a summary.
   static const groupFrom = 3;
 
-  /// Android settings: the small icon is the launcher icon.
+  /// Android settings: the small icon is a white silhouette.
   static const initializationSettings = InitializationSettings(
-    android: AndroidInitializationSettings('@mipmap/ic_launcher'),
+    android: AndroidInitializationSettings('@drawable/ic_stat_masroofix'),
   );
 
   /// Posts the notification [outcome] calls for, if any.
@@ -83,6 +85,8 @@ class SmsNotifier {
           transactionsChannelId,
           texts.t('sms.notification.channel_transactions'),
           channelDescription: texts.t('sms.notification.channel_transactions_desc'),
+          icon: '@drawable/ic_stat_masroofix',
+          color: _accent,
           groupKey: groupKey,
           styleInformation: BigTextStyleInformation(body),
           category: AndroidNotificationCategory.status,
@@ -119,6 +123,8 @@ class SmsNotifier {
           transactionsChannelId,
           texts.t('sms.notification.channel_transactions'),
           channelDescription: texts.t('sms.notification.channel_transactions_desc'),
+          icon: '@drawable/ic_stat_masroofix',
+          color: _accent,
           styleInformation: BigTextStyleInformation(body),
           actions: [
             AndroidNotificationAction(SmsNotificationActions.remove, texts.t('sms.notification.remove')),
@@ -144,6 +150,8 @@ class SmsNotifier {
           sendersChannelId,
           texts.t('sms.notification.channel_senders'),
           channelDescription: texts.t('sms.notification.channel_senders_desc'),
+          icon: '@drawable/ic_stat_masroofix',
+          color: _accent,
           actions: [
             AndroidNotificationAction(SmsNotificationActions.trust, texts.t('sms.notification.trust')),
             AndroidNotificationAction(SmsNotificationActions.distrust, texts.t('sms.notification.ignore')),
@@ -171,6 +179,8 @@ class SmsNotifier {
           transactionsChannelId,
           texts.t('sms.notification.channel_transactions'),
           channelDescription: texts.t('sms.notification.channel_transactions_desc'),
+          icon: '@drawable/ic_stat_masroofix',
+          color: _accent,
           groupKey: groupKey,
           setAsGroupSummary: true,
           onlyAlertOnce: true,

@@ -40,7 +40,7 @@ void main() {
   setUp(() {
     SharedPreferences.setMockInitialValues({});
     PackageInfo.setMockInitialValues(
-      appName: 'Masroofy',
+      appName: 'Masroofix',
       packageName: 'com.masroofy.masroofy',
       version: '1.2.3',
       buildNumber: '45',

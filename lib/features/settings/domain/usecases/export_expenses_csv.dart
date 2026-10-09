@@ -11,7 +11,7 @@ import 'package:masroofy/features/settings/domain/entities/expense_export_row.da
 import 'package:masroofy/features/settings/domain/repositories/i_data_management_repository.dart';
 import 'package:masroofy/features/settings/domain/repositories/i_file_services.dart';
 
-/// Builds `masroofy_expenses_YYYY-MM-DD.csv` and opens the share sheet.
+/// Builds `masroofix_expenses_YYYY-MM-DD.csv` and opens the share sheet.
 class ExportExpensesCsv {
   ExportExpensesCsv(this._repository, this._sharer, {LocalDate Function()? today}) : _today = today ?? LocalDate.today;
 
@@ -48,7 +48,7 @@ class ExportExpensesCsv {
           ? await Isolate.run(() => CsvExport.encode(records))
           : CsvExport.encode(records);
       return _sharer.share(
-        fileName: 'masroofy_expenses_${_today().toIso()}.csv',
+        fileName: 'masroofix_expenses_${_today().toIso()}.csv',
         bytes: Uint8List.fromList([...CsvExport.bom, ...utf8.encode(text)]),
         mimeType: 'text/csv',
       );

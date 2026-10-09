@@ -10,6 +10,7 @@ class StringManager {
   StringManager._();
 
   // ── General ──
+  static String get appName => 'general.app_name'.tr();
   static String get save => 'general.save'.tr();
   static String get cancel => 'general.cancel'.tr();
   static String get delete => 'general.delete'.tr();

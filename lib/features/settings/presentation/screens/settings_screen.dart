@@ -6,7 +6,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:masroofy/app/routes.dart';
-import 'package:masroofy/core/constants/app_constants.dart';
 import 'package:masroofy/core/domain/digits.dart';
 import 'package:masroofy/core/domain/local_date.dart';
 import 'package:masroofy/core/strings/string_manager.dart';
@@ -368,7 +367,7 @@ class SettingsScreen extends StatelessWidget {
                     title: StringManager.licenses,
                     onTap: () => showLicensePage(
                       context: context,
-                      applicationName: AppConstants.appName,
+                      applicationName: StringManager.appName,
                       applicationVersion: appInfo.label,
                     ),
                   ),

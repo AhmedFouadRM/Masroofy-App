@@ -8,6 +8,7 @@ import 'package:masroofy/core/domain/local_date.dart';
 import 'package:masroofy/core/domain/money.dart';
 import 'package:masroofy/core/domain/transaction_kind.dart';
 import 'package:masroofy/core/error/failures.dart';
+import 'package:masroofy/core/utils/currency_utils.dart';
 import 'package:masroofy/features/categories/domain/repositories/i_category_repository.dart';
 import 'package:masroofy/features/expenses/domain/entities/expense_draft.dart';
 import 'package:masroofy/features/expenses/domain/entities/list_entry.dart';
@@ -117,13 +118,16 @@ class ExpenseFormCubit extends Cubit<ExpenseFormState> {
     );
   }
 
-  /// Fills type, amount, category, title, date and note from the SMS import,
-  /// if there is one. A missing import leaves the form blank.
-  String _amountText(Money amount) {
-    final text = amount.toDecimalString(state.fractionDigits);
+  /// [amount] in [currency]'s own minor units as typed text. An SMS in
+  /// another currency keeps its value ("143.37"), not the app currency's
+  /// scaling of the same minor units.
+  String _amountText(Money amount, String currency) {
+    final text = amount.toDecimalString(CurrencyUtils.byCode(currency)?.fractionDigits ?? state.fractionDigits);
     return RegExp(r'\.0+$').hasMatch(text) ? text.substring(0, text.indexOf('.')) : text;
   }
 
+  /// Fills type, amount, category, title, date and note from the SMS import,
+  /// if there is one. A missing import leaves the form blank.
   Future<void> _prefillFromSms() async {
     final importId = state.smsImportId;
     final imports = _smsImports;
@@ -134,7 +138,7 @@ class ExpenseFormCubit extends Cubit<ExpenseFormState> {
       state.copyWith(
         kind: import.kind,
         // Whole amounts as typed ("200", not "200.00"), as in the SMS.
-        amountText: _amountText(import.amount),
+        amountText: _amountText(import.amount, import.currency),
         categoryId: import.categoryId,
         title: import.merchant ?? '',
         note: import.note ?? '',

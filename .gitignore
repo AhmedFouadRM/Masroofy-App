@@ -48,3 +48,9 @@ app.*.map.json
 # are never committed. Install locally with `dart run tool/install_thmanyah.dart <dir>`.
 /assets/fonts/thmanyah/*
 !/assets/fonts/thmanyah/.gitkeep
+
+# Release signing and Dart symbols: never commit
+/android/key.properties
+*.jks
+*.keystore
+build/symbols/

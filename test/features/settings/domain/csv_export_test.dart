@@ -221,7 +221,7 @@ void main() {
       ).thenAnswer((_) async => const Right(unit));
     });
 
-    test('shares masroofy_expenses_<date>.csv, UTF-8 with a BOM', () async {
+    test('shares masroofix_expenses_<date>.csv, UTF-8 with a BOM', () async {
       when(() => repository.loadExpenseExport()).thenAnswer(
         (_) async => Right([
           ExpenseExportRow(
@@ -245,7 +245,7 @@ void main() {
           mimeType: captureAny(named: 'mimeType'),
         ),
       ).captured;
-      expect(captured[0], 'masroofy_expenses_2026-10-09.csv');
+      expect(captured[0], 'masroofix_expenses_2026-10-09.csv');
       expect(captured[2], 'text/csv');
       final bytes = captured[1] as Uint8List;
       expect(bytes.take(3), CsvExport.bom);

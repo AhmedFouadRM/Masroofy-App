@@ -1,0 +1,6 @@
+# Copy to android/key.properties (gitignored) and fill in real values.
+# The keystore lives OUTSIDE the repo. Back it up in two places.
+storeFile=C:/Users/you/keys/upload-keystore.jks
+storePassword=CHANGE_ME
+keyAlias=upload
+keyPassword=CHANGE_ME

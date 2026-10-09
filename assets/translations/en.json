@@ -1,5 +1,6 @@
 {
   "general": {
+    "app_name": "Masroofix",
     "save": "Save",
     "cancel": "Cancel",
     "delete": "Delete",
@@ -229,7 +230,7 @@
     "section_paused": "Paused",
     "paused": "Paused",
     "empty": "No recurring expenses",
-    "empty_hint": "Add rent, subscriptions and bills once. Masroofy logs each one when it's due.",
+    "empty_hint": "Add rent, subscriptions and bills once. Masroofix logs each one when it's due.",
     "add_first": "Add a recurring expense",
     "title_label": "Title",
     "title_hint": "e.g. Rent",
@@ -400,7 +401,7 @@
     "recent_empty": "Transactions from your bank messages will appear here.",
     "other_currency": "{}: tap to review",
     "disclosure_title": "Read bank messages?",
-    "disclosure_body": "To add your transactions for you, Masroofy reads messages from your bank and wallet. Here is how it works:",
+    "disclosure_body": "To add your transactions for you, Masroofix reads messages from your bank and wallet. Here is how it works:",
     "disclosure_banks": "Only messages from banks and wallets",
     "disclosure_otp": "OTP codes and personal messages are ignored",
     "disclosure_local": "Everything stays on this phone",
@@ -462,12 +463,12 @@
     "use_biometric": "Use fingerprint",
     "create_pin": "Create a PIN",
     "create_new_pin": "Create a new PIN",
-    "create_pin_hint": "4 digits. You'll enter it each time you open Masroofy.",
+    "create_pin_hint": "4 digits. You'll enter it each time you open Masroofix.",
     "confirm_pin": "Enter it again",
     "confirm_pin_hint": "Type the same PIN once more.",
     "pin_mismatch": "PINs don't match. Try again.",
     "forgot_note": "Forgot it? Without fingerprint unlock, the only way back in is reinstalling, which deletes all your data.",
-    "unlock_hint": "Enter your PIN to open Masroofy.",
+    "unlock_hint": "Enter your PIN to open Masroofix.",
     "locked_title": "Too many tries",
     "locked_body": "Try again in {}. Your data is safe.",
     "confirm_with_pin": "Confirm with your PIN",
@@ -503,7 +504,7 @@
     "secure_storage": "Couldn't access secure storage on this device",
     "export": "Couldn't create the export. Try again.",
     "unexpected": "Something went wrong",
-    "invalid_backup": "This file isn't a valid Masroofy backup. Nothing was changed."
+    "invalid_backup": "This file isn't a valid Masroofix backup. Nothing was changed."
   },
   "currencies": {
     "EGP": "Egyptian Pound",

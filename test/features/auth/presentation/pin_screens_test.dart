@@ -72,7 +72,7 @@ void main() {
       await pumpLock(tester);
 
       expect(find.text('Enter PIN'), findsOneWidget);
-      expect(find.text('Enter your PIN to open Masroofy.'), findsOneWidget);
+      expect(find.text('Enter your PIN to open Masroofix.'), findsOneWidget);
       for (final digit in '0123456789'.split('')) {
         expect(find.byKey(ValueKey('pin-key-$digit')), findsOneWidget);
       }
@@ -96,7 +96,7 @@ void main() {
 
       await typePin(tester, '1');
       expect(find.text('Incorrect PIN. Try again.'), findsNothing);
-      expect(find.text('Enter your PIN to open Masroofy.'), findsOneWidget);
+      expect(find.text('Enter your PIN to open Masroofix.'), findsOneWidget);
     });
 
     testWidgets('after 5 wrong PINs: a countdown, a dimmed pad, then back to normal', (tester) async {
@@ -183,7 +183,7 @@ void main() {
       await pumpLock(tester, locale: const Locale('ar'));
 
       expect(find.text('أدخل الرمز السري'), findsOneWidget);
-      expect(find.text('أدخل الرمز السري لفتح مصروفي.'), findsOneWidget);
+      expect(find.text('أدخل الرمز السري لفتح مصروفكس.'), findsOneWidget);
       expect(find.text('٥'), findsOneWidget);
       expect(find.text('5'), findsNothing);
 
@@ -362,7 +362,7 @@ void main() {
 
       expect(find.text('App lock'), findsOneWidget);
       expect(find.text('Create a PIN'), findsOneWidget);
-      expect(find.text("4 digits. You'll enter it each time you open Masroofy."), findsOneWidget);
+      expect(find.text("4 digits. You'll enter it each time you open Masroofix."), findsOneWidget);
       expect(
         find.text(
           'Forgot it? Without fingerprint unlock, the only way back in is reinstalling, which deletes all your data.',

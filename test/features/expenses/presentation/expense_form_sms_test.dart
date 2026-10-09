@@ -85,6 +85,27 @@ void main() {
     expect(state.isEditing, isFalse);
   });
 
+  test('an SMS in another currency keeps its value, not the app currency scaling', () async {
+    final import = await pending(EgBankSamples.purchaseGeidea);
+    // App currency with 3 decimals (e.g. JOD); the SMS is EGP 143.37.
+    final jod = ExpenseFormCubit(
+      kit.expenses,
+      CategoryRepositoryImpl(CategoryLocalDatasource(kit.database)),
+      WalletRepositoryImpl(WalletLocalDatasource(kit.database)),
+      kit.saveExpense,
+      SaveTransfer(TransferRepositoryImpl(WalletLocalDatasource(kit.database)), today: () => today),
+      fractionDigits: 3,
+      today: () => today,
+      smsImports: kit.imports,
+      smsActions: kit.actions,
+    );
+    addTearDown(jod.close);
+    jod.fromSms(import.id);
+    await loadForm(jod);
+
+    expect(jod.state.amountText, '143.37');
+  });
+
   test('an income import opens on Income, dated by the text', () async {
     final import = await pending(EgBankSamples.instaPayCredit);
 

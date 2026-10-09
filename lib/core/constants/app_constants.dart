@@ -1,8 +1,8 @@
 class AppConstants {
   AppConstants._();
   
-  static const String appName = 'Masroofy';
-  static const String appNameAr = 'مصروفي';
+  static const String appName = 'Masroofix';
+  static const String appNameAr = 'مصروفكس';
   static const int pinLength = 4;
   static const int maxTitleLength = 100;
   static const int maxNoteLength = 500;

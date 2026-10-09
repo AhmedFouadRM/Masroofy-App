@@ -1,4 +1,4 @@
-package com.masroofy.masroofy
+package com.masroofix.app
 
 import android.content.BroadcastReceiver
 import android.content.Context
