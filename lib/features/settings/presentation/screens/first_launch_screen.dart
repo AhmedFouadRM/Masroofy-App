@@ -34,20 +34,23 @@ class _FirstLaunchScreenState extends State<FirstLaunchScreen> {
         extendBody: true,
         body: SafeArea(
           bottom: false,
-          child: ListView(
-            padding: EdgeInsets.fromLTRB(
-              AppSpacing.screen,
-              AppSpacing.xxl,
-              AppSpacing.screen,
-              MediaQuery.paddingOf(context).bottom + AppSpacing.lg,
+          // Inside the Scaffold, so the bottom padding includes the bar.
+          child: Builder(
+            builder: (context) => ListView(
+              padding: EdgeInsets.fromLTRB(
+                AppSpacing.screen,
+                AppSpacing.xxl,
+                AppSpacing.screen,
+                MediaQuery.paddingOf(context).bottom + AppSpacing.lg,
+              ),
+              children: [
+                Text(StringManager.firstLaunchTitle, style: text.headlineMedium),
+                const SizedBox(height: AppSpacing.sm),
+                Text(StringManager.firstLaunchHint, style: text.bodyMedium!.copyWith(color: colors.textSecondary)),
+                const SizedBox(height: AppSpacing.lg),
+                CurrencyList(selected: _selected, onSelected: (currency) => setState(() => _selected = currency)),
+              ],
             ),
-            children: [
-              Text(StringManager.firstLaunchTitle, style: text.headlineMedium),
-              const SizedBox(height: AppSpacing.sm),
-              Text(StringManager.firstLaunchHint, style: text.bodyMedium!.copyWith(color: colors.textSecondary)),
-              const SizedBox(height: AppSpacing.lg),
-              CurrencyList(selected: _selected, onSelected: (currency) => setState(() => _selected = currency)),
-            ],
           ),
         ),
         bottomNavigationBar: GlassBottomBar(

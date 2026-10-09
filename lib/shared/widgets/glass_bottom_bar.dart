@@ -49,6 +49,8 @@ class _GlassBottomBarState extends State<GlassBottomBar> {
   Widget build(BuildContext context) {
     final colors = MasroofyColors.of(context);
     return Stack(
+      // Keeps the full width the Scaffold gives, so the button stretches.
+      fit: StackFit.passthrough,
       children: [
         Positioned.fill(
           child: IgnorePointer(
