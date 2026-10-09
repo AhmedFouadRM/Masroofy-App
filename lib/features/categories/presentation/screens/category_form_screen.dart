@@ -15,7 +15,9 @@ import 'package:masroofy/shared/categories/category_avatar.dart';
 import 'package:masroofy/shared/categories/category_icon_registry.dart';
 import 'package:masroofy/shared/formatting/display_format.dart';
 import 'package:masroofy/shared/widgets/aura_background.dart';
+import 'package:masroofy/shared/widgets/color_option.dart';
 import 'package:masroofy/shared/widgets/glass_app_bar.dart';
+import 'package:masroofy/shared/widgets/icon_option.dart';
 import 'package:masroofy/shared/widgets/segmented_pills.dart';
 import 'package:material_symbols_icons/symbols.dart';
 
@@ -178,8 +180,8 @@ class _Form extends StatelessWidget {
           physics: const NeverScrollableScrollPhysics(),
           children: [
             for (final key in CategoryIcons.keys)
-              _IconOption(
-                icon: key,
+              IconOption(
+                icon: CategoryIconRegistry.of(key),
                 selected: key == state.icon,
                 accent: Color(state.color),
                 onTap: () => cubit.iconSelected(key),
@@ -192,7 +194,7 @@ class _Form extends StatelessWidget {
           runSpacing: AppSpacing.sm,
           children: [
             for (final color in AppColors.categoryPalette)
-              _ColorSwatch(
+              ColorOption(
                 color: color,
                 selected: color.toARGB32() == state.color,
                 onTap: () => cubit.colorSelected(color.toARGB32()),
@@ -230,73 +232,4 @@ class _Heading extends StatelessWidget {
     padding: const EdgeInsetsDirectional.only(top: AppSpacing.xl, bottom: AppSpacing.md),
     child: Text(title, style: Theme.of(context).textTheme.titleMedium),
   );
-}
-
-/// A selectable icon tile (Figma local component "Icon Option").
-class _IconOption extends StatelessWidget {
-  const _IconOption({required this.icon, required this.selected, required this.accent, required this.onTap});
-
-  final String icon;
-  final bool selected;
-  final Color accent;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = MasroofyColors.of(context);
-    final shape = RoundedSuperellipseBorder(
-      borderRadius: BorderRadius.circular(AppRadius.input),
-      side: selected ? BorderSide(color: colors.primary, width: 2) : BorderSide.none,
-    );
-    return Semantics(
-      selected: selected,
-      button: true,
-      child: Material(
-        color: selected ? colors.primarySubtle : colors.surfaceVariant,
-        shape: shape,
-        clipBehavior: Clip.antiAlias,
-        child: InkWell(
-          onTap: onTap,
-          child: Icon(
-            CategoryIconRegistry.of(icon),
-            color: selected ? accent : colors.textPrimary,
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-/// A selectable colour dot with a ring when selected (Figma "Color Swatch").
-class _ColorSwatch extends StatelessWidget {
-  const _ColorSwatch({required this.color, required this.selected, required this.onTap});
-
-  final Color color;
-  final bool selected;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = MasroofyColors.of(context);
-    return Semantics(
-      selected: selected,
-      button: true,
-      child: InkResponse(
-        onTap: onTap,
-        radius: 24,
-        child: Container(
-          width: 40,
-          height: 40,
-          padding: const EdgeInsets.all(4),
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            border: Border.all(color: selected ? colors.primary : Colors.transparent, width: 2),
-          ),
-          child: DecoratedBox(
-            decoration: BoxDecoration(shape: BoxShape.circle, color: color),
-          ),
-        ),
-      ),
-    );
-  }
 }

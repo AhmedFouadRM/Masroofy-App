@@ -88,6 +88,81 @@ class StringManager {
   /// "Pick an income category" / "Pick an expense category".
   static String wrongKind(TransactionKind kind) => 'validation.category_wrong_kind.${kind.name}'.tr();
 
+  // ── Wallets ──
+  static String get walletsTitle => 'wallets.title'.tr();
+  static String get walletLabel => 'wallets.wallet'.tr();
+  static String get allWallets => 'wallets.all'.tr();
+  static String get walletDefault => 'wallets.default'.tr();
+  static String get chooseWallet => 'wallets.choose'.tr();
+
+  /// Display name of the pre-seeded wallet, by its `seed_key` (`me`).
+  static String walletName(String seedKey) => 'wallets.$seedKey'.tr();
+
+  /// "EGP 1,200 this month"; [amount] is already formatted.
+  static String walletBalanceThisMonth(String amount) => 'wallets.balance_month'.tr(args: [amount]);
+
+  /// Screen-reader label of the Transactions title: "Wallet: Me, double tap to change".
+  static String walletSwitcherSemantics(String name) => 'wallets.switcher_semantics'.tr(args: [name]);
+  static String walletEmptyTitle(String name) => 'wallets.empty_title'.tr(args: [name]);
+  static String get walletEmptyBody => 'wallets.empty_body'.tr();
+  static String get addWallet => 'wallets.add'.tr();
+  static String get newWallet => 'wallets.new'.tr();
+  static String get editWallet => 'wallets.edit'.tr();
+  static String get walletNameLabel => 'wallets.name'.tr();
+  static String walletNameHelper(String max) => 'wallets.name_helper'.tr(args: [max]);
+  static String get walletIcon => 'wallets.icon'.tr();
+  static String get walletColour => 'wallets.colour'.tr();
+  static String get walletSetDefault => 'wallets.set_default'.tr();
+  static String get walletSetDefaultHelper => 'wallets.set_default_helper'.tr();
+  static String get walletDefaultLocked => 'wallets.default_locked'.tr();
+  static String get walletLast => 'wallets.last'.tr();
+  static String get deleteWallet => 'wallets.delete'.tr();
+  static String deleteWalletTitle(String name) => 'wallets.delete_title'.tr(args: [name]);
+  static String get walletMoveTo => 'wallets.move_to'.tr();
+  static String get walletNewDefault => 'wallets.new_default'.tr();
+  static String get walletDeleteDefault => 'wallets.delete_default'.tr();
+
+  /// Body of the delete confirmation, e.g. "12 transactions and 1 recurring
+  /// template will move to the wallet you choose." Counts take their number
+  /// already shaped for the locale.
+  static String deleteWalletBody({
+    required int transactions,
+    required String transactionsNumber,
+    required int templates,
+    required String templatesNumber,
+    required bool hasTransfers,
+  }) {
+    final moving = [
+      if (transactions > 0) 'wallets.rows_to_move'.plural(transactions, args: [transactionsNumber]),
+      if (templates > 0) 'wallets.templates_to_move'.plural(templates, args: [templatesNumber]),
+    ];
+    return [
+      if (moving.isNotEmpty) 'wallets.delete_moves'.tr(args: [moving.join('wallets.and'.tr())]),
+      if (hasTransfers) 'wallets.delete_transfers'.tr(),
+      if (moving.isEmpty) 'wallets.delete_unused'.tr(),
+    ].join(' ');
+  }
+
+  // ── Transfers ──
+  /// The third option of the Expense | Income | Transfer control.
+  static String get transferKind => 'transfers.title'.tr();
+  static String get addTransfer => 'transfers.add'.tr();
+  static String get editTransfer => 'transfers.edit'.tr();
+  static String get saveTransfer => 'transfers.save'.tr();
+  static String get transferFrom => 'transfers.from'.tr();
+  static String get transferTo => 'transfers.to'.tr();
+
+  /// "To Son" / "From Me" in a single wallet's list.
+  static String transferToName(String name) => 'transfers.to_name'.tr(args: [name]);
+  static String transferFromName(String name) => 'transfers.from_name'.tr(args: [name]);
+  static String get transferNeedsTwo => 'transfers.need_two'.tr();
+
+  /// Screen-reader labels of a transfer row; [amount] is already formatted.
+  static String transferSemanticsOut(String to, String amount) => 'transfers.semantics_out'.tr(args: [to, amount]);
+  static String transferSemanticsIn(String from, String amount) => 'transfers.semantics_in'.tr(args: [from, amount]);
+  static String transferSemanticsBetween(String from, String to, String amount) =>
+      'transfers.semantics_between'.tr(args: [from, to, amount]);
+
   // ── Categories ──
   static String get categoriesTitle => 'categories.title'.tr();
   static String get addCategory => 'categories.add'.tr();
@@ -182,6 +257,7 @@ class StringManager {
   static String get spentLastMonth => 'analytics.spent_last_month'.tr();
   static String get vsMonthBefore => 'analytics.vs_month_before'.tr();
   static String get byCategory => 'analytics.by_category'.tr();
+  static String get byWallet => 'analytics.by_wallet'.tr();
   static String get spendingOverTime => 'analytics.over_time'.tr();
   static String get smallerCategories => 'analytics.smaller_categories'.tr();
   static String get incomeVsSpending => 'analytics.income_vs_spending'.tr();
@@ -349,5 +425,7 @@ class StringManager {
     // Forms pick the wording for their kind with [wrongKind].
     ValidationReason.wrongKind => 'validation.invalid_format'.tr(),
     ValidationReason.inUse => 'categories.kind_in_use'.tr(),
+    ValidationReason.sameWallet => 'validation.same_wallet'.tr(),
+    ValidationReason.lastWallet => 'wallets.last'.tr(),
   };
 }

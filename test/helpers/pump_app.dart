@@ -25,28 +25,34 @@ class _FileAssetLoader extends AssetLoader {
   );
 }
 
-SettingsState testSettings({bool westernDigits = false}) => SettingsState(
+SettingsState testSettings({bool westernDigits = false, int? defaultWalletId, int? viewedWalletId}) => SettingsState(
   themeMode: ThemeMode.light,
   currency: CurrencyUtils.defaultCurrency,
   westernDigits: westernDigits,
   firstWeekday: DateTime.saturday,
+  defaultWalletId: defaultWalletId,
+  viewedWalletId: viewedWalletId,
 );
 
 /// Pumps [child] inside the real theme and translations, in [locale], with
-/// a mocked [SettingsCubit] and any extra [providers].
+/// a mocked [SettingsCubit] (pass your own as [settingsCubit] to verify calls
+/// on it) and any extra [providers].
 Future<void> pumpApp(
   WidgetTester tester,
   Widget child, {
   Locale locale = const Locale('en'),
   List<BlocProvider> providers = const [],
   SettingsState? settings,
+  MockSettingsCubit? settingsCubit,
 }) async {
   SharedPreferences.setMockInitialValues({});
   EasyLocalization.logger.enableBuildModes = [];
   await EasyLocalization.ensureInitialized();
 
-  final settingsCubit = MockSettingsCubit();
-  when(() => settingsCubit.state).thenReturn(settings ?? testSettings());
+  final appSettings = settingsCubit ?? MockSettingsCubit();
+  when(() => appSettings.state).thenReturn(settings ?? testSettings());
+  when(() => appSettings.setViewedWallet(any())).thenAnswer((_) async {});
+  when(() => appSettings.setDefaultWallet(any())).thenAnswer((_) async {});
 
   await tester.pumpWidget(
     EasyLocalization(
@@ -60,7 +66,7 @@ Future<void> pumpApp(
       saveLocale: false,
       child: MultiBlocProvider(
         providers: [
-          BlocProvider<SettingsCubit>.value(value: settingsCubit),
+          BlocProvider<SettingsCubit>.value(value: appSettings),
           ...providers,
         ],
         child: Builder(

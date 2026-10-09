@@ -17,6 +17,8 @@ import 'package:masroofy/features/recurring_expenses/domain/usecases/process_due
 import 'package:masroofy/features/recurring_expenses/domain/usecases/save_recurring.dart';
 import 'package:masroofy/features/recurring_expenses/domain/usecases/set_recurring_active.dart';
 
+import '../../../helpers/db_rows.dart';
+
 void main() {
   late AppDatabase db;
   late RecurringExpenseRepositoryImpl repository;
@@ -25,6 +27,7 @@ void main() {
   late SaveRecurring save;
   late SetRecurringActive setActive;
   late int bills;
+  late int me;
 
   setUp(() async {
     driftRuntimeOptions.dontWarnAboutMultipleDatabases = true;
@@ -35,6 +38,7 @@ void main() {
     save = SaveRecurring(repository, process, today: () => today);
     setActive = SetRecurringActive(repository, process, today: () => today);
     bills = (await (db.select(db.categoriesTable)..where((c) => c.seedKey.equals('bills'))).getSingle()).id;
+    me = await db.seedDefaultWallet();
   });
   tearDown(() => db.close());
 
@@ -49,6 +53,7 @@ void main() {
       RecurringDraft(
         title: title,
         amount: const Money(500000),
+        walletId: me,
         categoryId: bills,
         frequency: frequency,
         startDate: start,
@@ -87,6 +92,73 @@ void main() {
         today,
         today,
       ),
+    );
+  });
+
+  test('generated expenses go to the wallet of the template', () async {
+    final son = await addWallet(db, 'Son');
+    right(
+      await save(
+        RecurringDraft(
+          title: 'Pocket money',
+          amount: const Money(20000),
+          walletId: son,
+          categoryId: bills,
+          frequency: RecurringFrequency.monthly,
+          startDate: today,
+        ),
+      ),
+    );
+    final id = await add(today);
+
+    final rows = await (db.select(db.expensesTable)..orderBy([(e) => OrderingTerm(expression: e.id)])).get();
+    expect(rows.map((e) => (e.title, e.walletId)), [('Pocket money', son), ('Rent', me)]);
+    expect(right(await repository.getById(id)).walletId, me);
+  });
+
+  test('editing the wallet moves future occurrences, not the ones already generated', () async {
+    final son = await addWallet(db, 'Son');
+    final id = await add(LocalDate(2026, 9, 9));
+    final template = right(await repository.getById(id));
+
+    right(
+      await save(
+        RecurringDraft(
+          title: template.title,
+          amount: template.amount,
+          walletId: son,
+          categoryId: bills,
+          frequency: RecurringFrequency.monthly,
+          startDate: template.startDate,
+        ),
+        id: id,
+      ),
+    );
+    expect(right(await repository.getById(id)).walletId, son);
+    final rows = await db.select(db.expensesTable).get();
+    expect(rows.map((e) => e.walletId).toSet(), {me});
+
+    // The next one is generated into the new wallet.
+    today = LocalDate(2026, 11, 9);
+    right(await process());
+    final latest = await (db.select(db.expensesTable)..orderBy([(e) => OrderingTerm.desc(e.id)])).get();
+    expect(latest.first.walletId, son);
+  });
+
+  test('rejects a template without a wallet', () async {
+    final result = await save(
+      RecurringDraft(
+        title: 'Rent',
+        amount: const Money(1),
+        walletId: 0,
+        categoryId: bills,
+        frequency: RecurringFrequency.monthly,
+        startDate: today,
+      ),
+    );
+    expect(
+      result.getLeft().toNullable(),
+      const Failure.validation(field: 'walletId', reason: ValidationReason.required),
     );
   });
 
@@ -129,6 +201,7 @@ void main() {
     final draft = RecurringDraft(
       title: template.title,
       amount: const Money(600000),
+      walletId: me,
       categoryId: bills,
       frequency: RecurringFrequency.monthly,
       startDate: template.startDate,
@@ -154,6 +227,7 @@ void main() {
       RecurringDraft(
         title: 'Salary',
         amount: const Money(1500000),
+        walletId: me,
         categoryId: category ?? salary,
         frequency: RecurringFrequency.monthly,
         startDate: LocalDate(2026, 8, 25),
@@ -209,6 +283,7 @@ void main() {
         RecurringDraft(
           title: 'Gym',
           amount: const Money(1),
+          walletId: me,
           categoryId: custom,
           frequency: RecurringFrequency.monthly,
           startDate: LocalDate(2026, 12, 1),
@@ -225,6 +300,7 @@ void main() {
       RecurringDraft(
         title: '  ',
         amount: const Money(1),
+        walletId: me,
         categoryId: bills,
         frequency: RecurringFrequency.monthly,
         startDate: today,

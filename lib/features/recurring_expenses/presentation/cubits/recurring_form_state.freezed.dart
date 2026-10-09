@@ -18,8 +18,10 @@ mixin _$RecurringFormState {
  int get fractionDigits; RecurringFormStatus get status;/// The Expense | Income switch; the category must be of this kind.
  TransactionKind get kind;/// Null for a new template.
  int? get id;/// As typed: Western or Arabic-Indic digits, `.` or `٫`.
- String get amountText; int? get categoryId; String get title; RecurringFrequency get frequency; bool get isActive;/// Every visible category; the picker offers those of [kind].
- List<Category> get categories;/// Field errors, keyed by `amount`, `categoryId`, `title`.
+ String get amountText;/// The wallet the template's rows go to.
+ int? get walletId; int? get categoryId; String get title; RecurringFrequency get frequency; bool get isActive;/// Every visible category; the picker offers those of [kind].
+ List<Category> get categories;/// Every wallet, for the Wallet field.
+ List<WalletSummary> get wallets;/// Field errors, keyed by `amount`, `walletId`, `categoryId`, `title`.
  Map<String, ValidationReason> get errors;/// A load or save failure other than a field error.
  Failure? get failure;
 /// Create a copy of RecurringFormState
@@ -32,16 +34,16 @@ $RecurringFormStateCopyWith<RecurringFormState> get copyWith => _$RecurringFormS
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is RecurringFormState&&(identical(other.startDate, startDate) || other.startDate == startDate)&&(identical(other.fractionDigits, fractionDigits) || other.fractionDigits == fractionDigits)&&(identical(other.status, status) || other.status == status)&&(identical(other.kind, kind) || other.kind == kind)&&(identical(other.id, id) || other.id == id)&&(identical(other.amountText, amountText) || other.amountText == amountText)&&(identical(other.categoryId, categoryId) || other.categoryId == categoryId)&&(identical(other.title, title) || other.title == title)&&(identical(other.frequency, frequency) || other.frequency == frequency)&&(identical(other.isActive, isActive) || other.isActive == isActive)&&const DeepCollectionEquality().equals(other.categories, categories)&&const DeepCollectionEquality().equals(other.errors, errors)&&(identical(other.failure, failure) || other.failure == failure));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is RecurringFormState&&(identical(other.startDate, startDate) || other.startDate == startDate)&&(identical(other.fractionDigits, fractionDigits) || other.fractionDigits == fractionDigits)&&(identical(other.status, status) || other.status == status)&&(identical(other.kind, kind) || other.kind == kind)&&(identical(other.id, id) || other.id == id)&&(identical(other.amountText, amountText) || other.amountText == amountText)&&(identical(other.walletId, walletId) || other.walletId == walletId)&&(identical(other.categoryId, categoryId) || other.categoryId == categoryId)&&(identical(other.title, title) || other.title == title)&&(identical(other.frequency, frequency) || other.frequency == frequency)&&(identical(other.isActive, isActive) || other.isActive == isActive)&&const DeepCollectionEquality().equals(other.categories, categories)&&const DeepCollectionEquality().equals(other.wallets, wallets)&&const DeepCollectionEquality().equals(other.errors, errors)&&(identical(other.failure, failure) || other.failure == failure));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,startDate,fractionDigits,status,kind,id,amountText,categoryId,title,frequency,isActive,const DeepCollectionEquality().hash(categories),const DeepCollectionEquality().hash(errors),failure);
+int get hashCode => Object.hash(runtimeType,startDate,fractionDigits,status,kind,id,amountText,walletId,categoryId,title,frequency,isActive,const DeepCollectionEquality().hash(categories),const DeepCollectionEquality().hash(wallets),const DeepCollectionEquality().hash(errors),failure);
 
 @override
 String toString() {
-  return 'RecurringFormState(startDate: $startDate, fractionDigits: $fractionDigits, status: $status, kind: $kind, id: $id, amountText: $amountText, categoryId: $categoryId, title: $title, frequency: $frequency, isActive: $isActive, categories: $categories, errors: $errors, failure: $failure)';
+  return 'RecurringFormState(startDate: $startDate, fractionDigits: $fractionDigits, status: $status, kind: $kind, id: $id, amountText: $amountText, walletId: $walletId, categoryId: $categoryId, title: $title, frequency: $frequency, isActive: $isActive, categories: $categories, wallets: $wallets, errors: $errors, failure: $failure)';
 }
 
 
@@ -52,7 +54,7 @@ abstract mixin class $RecurringFormStateCopyWith<$Res>  {
   factory $RecurringFormStateCopyWith(RecurringFormState value, $Res Function(RecurringFormState) _then) = _$RecurringFormStateCopyWithImpl;
 @useResult
 $Res call({
- LocalDate startDate, int fractionDigits, RecurringFormStatus status, TransactionKind kind, int? id, String amountText, int? categoryId, String title, RecurringFrequency frequency, bool isActive, List<Category> categories, Map<String, ValidationReason> errors, Failure? failure
+ LocalDate startDate, int fractionDigits, RecurringFormStatus status, TransactionKind kind, int? id, String amountText, int? walletId, int? categoryId, String title, RecurringFrequency frequency, bool isActive, List<Category> categories, List<WalletSummary> wallets, Map<String, ValidationReason> errors, Failure? failure
 });
 
 
@@ -69,7 +71,7 @@ class _$RecurringFormStateCopyWithImpl<$Res>
 
 /// Create a copy of RecurringFormState
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? startDate = null,Object? fractionDigits = null,Object? status = null,Object? kind = null,Object? id = freezed,Object? amountText = null,Object? categoryId = freezed,Object? title = null,Object? frequency = null,Object? isActive = null,Object? categories = null,Object? errors = null,Object? failure = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? startDate = null,Object? fractionDigits = null,Object? status = null,Object? kind = null,Object? id = freezed,Object? amountText = null,Object? walletId = freezed,Object? categoryId = freezed,Object? title = null,Object? frequency = null,Object? isActive = null,Object? categories = null,Object? wallets = null,Object? errors = null,Object? failure = freezed,}) {
   return _then(_self.copyWith(
 startDate: null == startDate ? _self.startDate : startDate // ignore: cast_nullable_to_non_nullable
 as LocalDate,fractionDigits: null == fractionDigits ? _self.fractionDigits : fractionDigits // ignore: cast_nullable_to_non_nullable
@@ -77,12 +79,14 @@ as int,status: null == status ? _self.status : status // ignore: cast_nullable_t
 as RecurringFormStatus,kind: null == kind ? _self.kind : kind // ignore: cast_nullable_to_non_nullable
 as TransactionKind,id: freezed == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as int?,amountText: null == amountText ? _self.amountText : amountText // ignore: cast_nullable_to_non_nullable
-as String,categoryId: freezed == categoryId ? _self.categoryId : categoryId // ignore: cast_nullable_to_non_nullable
+as String,walletId: freezed == walletId ? _self.walletId : walletId // ignore: cast_nullable_to_non_nullable
+as int?,categoryId: freezed == categoryId ? _self.categoryId : categoryId // ignore: cast_nullable_to_non_nullable
 as int?,title: null == title ? _self.title : title // ignore: cast_nullable_to_non_nullable
 as String,frequency: null == frequency ? _self.frequency : frequency // ignore: cast_nullable_to_non_nullable
 as RecurringFrequency,isActive: null == isActive ? _self.isActive : isActive // ignore: cast_nullable_to_non_nullable
 as bool,categories: null == categories ? _self.categories : categories // ignore: cast_nullable_to_non_nullable
-as List<Category>,errors: null == errors ? _self.errors : errors // ignore: cast_nullable_to_non_nullable
+as List<Category>,wallets: null == wallets ? _self.wallets : wallets // ignore: cast_nullable_to_non_nullable
+as List<WalletSummary>,errors: null == errors ? _self.errors : errors // ignore: cast_nullable_to_non_nullable
 as Map<String, ValidationReason>,failure: freezed == failure ? _self.failure : failure // ignore: cast_nullable_to_non_nullable
 as Failure?,
   ));
@@ -181,10 +185,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( LocalDate startDate,  int fractionDigits,  RecurringFormStatus status,  TransactionKind kind,  int? id,  String amountText,  int? categoryId,  String title,  RecurringFrequency frequency,  bool isActive,  List<Category> categories,  Map<String, ValidationReason> errors,  Failure? failure)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( LocalDate startDate,  int fractionDigits,  RecurringFormStatus status,  TransactionKind kind,  int? id,  String amountText,  int? walletId,  int? categoryId,  String title,  RecurringFrequency frequency,  bool isActive,  List<Category> categories,  List<WalletSummary> wallets,  Map<String, ValidationReason> errors,  Failure? failure)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _RecurringFormState() when $default != null:
-return $default(_that.startDate,_that.fractionDigits,_that.status,_that.kind,_that.id,_that.amountText,_that.categoryId,_that.title,_that.frequency,_that.isActive,_that.categories,_that.errors,_that.failure);case _:
+return $default(_that.startDate,_that.fractionDigits,_that.status,_that.kind,_that.id,_that.amountText,_that.walletId,_that.categoryId,_that.title,_that.frequency,_that.isActive,_that.categories,_that.wallets,_that.errors,_that.failure);case _:
   return orElse();
 
 }
@@ -202,10 +206,10 @@ return $default(_that.startDate,_that.fractionDigits,_that.status,_that.kind,_th
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( LocalDate startDate,  int fractionDigits,  RecurringFormStatus status,  TransactionKind kind,  int? id,  String amountText,  int? categoryId,  String title,  RecurringFrequency frequency,  bool isActive,  List<Category> categories,  Map<String, ValidationReason> errors,  Failure? failure)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( LocalDate startDate,  int fractionDigits,  RecurringFormStatus status,  TransactionKind kind,  int? id,  String amountText,  int? walletId,  int? categoryId,  String title,  RecurringFrequency frequency,  bool isActive,  List<Category> categories,  List<WalletSummary> wallets,  Map<String, ValidationReason> errors,  Failure? failure)  $default,) {final _that = this;
 switch (_that) {
 case _RecurringFormState():
-return $default(_that.startDate,_that.fractionDigits,_that.status,_that.kind,_that.id,_that.amountText,_that.categoryId,_that.title,_that.frequency,_that.isActive,_that.categories,_that.errors,_that.failure);case _:
+return $default(_that.startDate,_that.fractionDigits,_that.status,_that.kind,_that.id,_that.amountText,_that.walletId,_that.categoryId,_that.title,_that.frequency,_that.isActive,_that.categories,_that.wallets,_that.errors,_that.failure);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -222,10 +226,10 @@ return $default(_that.startDate,_that.fractionDigits,_that.status,_that.kind,_th
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( LocalDate startDate,  int fractionDigits,  RecurringFormStatus status,  TransactionKind kind,  int? id,  String amountText,  int? categoryId,  String title,  RecurringFrequency frequency,  bool isActive,  List<Category> categories,  Map<String, ValidationReason> errors,  Failure? failure)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( LocalDate startDate,  int fractionDigits,  RecurringFormStatus status,  TransactionKind kind,  int? id,  String amountText,  int? walletId,  int? categoryId,  String title,  RecurringFrequency frequency,  bool isActive,  List<Category> categories,  List<WalletSummary> wallets,  Map<String, ValidationReason> errors,  Failure? failure)?  $default,) {final _that = this;
 switch (_that) {
 case _RecurringFormState() when $default != null:
-return $default(_that.startDate,_that.fractionDigits,_that.status,_that.kind,_that.id,_that.amountText,_that.categoryId,_that.title,_that.frequency,_that.isActive,_that.categories,_that.errors,_that.failure);case _:
+return $default(_that.startDate,_that.fractionDigits,_that.status,_that.kind,_that.id,_that.amountText,_that.walletId,_that.categoryId,_that.title,_that.frequency,_that.isActive,_that.categories,_that.wallets,_that.errors,_that.failure);case _:
   return null;
 
 }
@@ -237,7 +241,7 @@ return $default(_that.startDate,_that.fractionDigits,_that.status,_that.kind,_th
 
 
 class _RecurringFormState extends RecurringFormState {
-  const _RecurringFormState({required this.startDate, required this.fractionDigits, this.status = RecurringFormStatus.loading, this.kind = TransactionKind.expense, this.id, this.amountText = '', this.categoryId, this.title = '', this.frequency = RecurringFrequency.monthly, this.isActive = true, final  List<Category> categories = const <Category>[], final  Map<String, ValidationReason> errors = const <String, ValidationReason>{}, this.failure}): _categories = categories,_errors = errors,super._();
+  const _RecurringFormState({required this.startDate, required this.fractionDigits, this.status = RecurringFormStatus.loading, this.kind = TransactionKind.expense, this.id, this.amountText = '', this.walletId, this.categoryId, this.title = '', this.frequency = RecurringFrequency.monthly, this.isActive = true, final  List<Category> categories = const <Category>[], final  List<WalletSummary> wallets = const <WalletSummary>[], final  Map<String, ValidationReason> errors = const <String, ValidationReason>{}, this.failure}): _categories = categories,_wallets = wallets,_errors = errors,super._();
   
 
 @override final  LocalDate startDate;
@@ -250,6 +254,8 @@ class _RecurringFormState extends RecurringFormState {
 @override final  int? id;
 /// As typed: Western or Arabic-Indic digits, `.` or `٫`.
 @override@JsonKey() final  String amountText;
+/// The wallet the template's rows go to.
+@override final  int? walletId;
 @override final  int? categoryId;
 @override@JsonKey() final  String title;
 @override@JsonKey() final  RecurringFrequency frequency;
@@ -263,9 +269,18 @@ class _RecurringFormState extends RecurringFormState {
   return EqualUnmodifiableListView(_categories);
 }
 
-/// Field errors, keyed by `amount`, `categoryId`, `title`.
+/// Every wallet, for the Wallet field.
+ final  List<WalletSummary> _wallets;
+/// Every wallet, for the Wallet field.
+@override@JsonKey() List<WalletSummary> get wallets {
+  if (_wallets is EqualUnmodifiableListView) return _wallets;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableListView(_wallets);
+}
+
+/// Field errors, keyed by `amount`, `walletId`, `categoryId`, `title`.
  final  Map<String, ValidationReason> _errors;
-/// Field errors, keyed by `amount`, `categoryId`, `title`.
+/// Field errors, keyed by `amount`, `walletId`, `categoryId`, `title`.
 @override@JsonKey() Map<String, ValidationReason> get errors {
   if (_errors is EqualUnmodifiableMapView) return _errors;
   // ignore: implicit_dynamic_type
@@ -285,16 +300,16 @@ _$RecurringFormStateCopyWith<_RecurringFormState> get copyWith => __$RecurringFo
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _RecurringFormState&&(identical(other.startDate, startDate) || other.startDate == startDate)&&(identical(other.fractionDigits, fractionDigits) || other.fractionDigits == fractionDigits)&&(identical(other.status, status) || other.status == status)&&(identical(other.kind, kind) || other.kind == kind)&&(identical(other.id, id) || other.id == id)&&(identical(other.amountText, amountText) || other.amountText == amountText)&&(identical(other.categoryId, categoryId) || other.categoryId == categoryId)&&(identical(other.title, title) || other.title == title)&&(identical(other.frequency, frequency) || other.frequency == frequency)&&(identical(other.isActive, isActive) || other.isActive == isActive)&&const DeepCollectionEquality().equals(other._categories, _categories)&&const DeepCollectionEquality().equals(other._errors, _errors)&&(identical(other.failure, failure) || other.failure == failure));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _RecurringFormState&&(identical(other.startDate, startDate) || other.startDate == startDate)&&(identical(other.fractionDigits, fractionDigits) || other.fractionDigits == fractionDigits)&&(identical(other.status, status) || other.status == status)&&(identical(other.kind, kind) || other.kind == kind)&&(identical(other.id, id) || other.id == id)&&(identical(other.amountText, amountText) || other.amountText == amountText)&&(identical(other.walletId, walletId) || other.walletId == walletId)&&(identical(other.categoryId, categoryId) || other.categoryId == categoryId)&&(identical(other.title, title) || other.title == title)&&(identical(other.frequency, frequency) || other.frequency == frequency)&&(identical(other.isActive, isActive) || other.isActive == isActive)&&const DeepCollectionEquality().equals(other._categories, _categories)&&const DeepCollectionEquality().equals(other._wallets, _wallets)&&const DeepCollectionEquality().equals(other._errors, _errors)&&(identical(other.failure, failure) || other.failure == failure));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,startDate,fractionDigits,status,kind,id,amountText,categoryId,title,frequency,isActive,const DeepCollectionEquality().hash(_categories),const DeepCollectionEquality().hash(_errors),failure);
+int get hashCode => Object.hash(runtimeType,startDate,fractionDigits,status,kind,id,amountText,walletId,categoryId,title,frequency,isActive,const DeepCollectionEquality().hash(_categories),const DeepCollectionEquality().hash(_wallets),const DeepCollectionEquality().hash(_errors),failure);
 
 @override
 String toString() {
-  return 'RecurringFormState(startDate: $startDate, fractionDigits: $fractionDigits, status: $status, kind: $kind, id: $id, amountText: $amountText, categoryId: $categoryId, title: $title, frequency: $frequency, isActive: $isActive, categories: $categories, errors: $errors, failure: $failure)';
+  return 'RecurringFormState(startDate: $startDate, fractionDigits: $fractionDigits, status: $status, kind: $kind, id: $id, amountText: $amountText, walletId: $walletId, categoryId: $categoryId, title: $title, frequency: $frequency, isActive: $isActive, categories: $categories, wallets: $wallets, errors: $errors, failure: $failure)';
 }
 
 
@@ -305,7 +320,7 @@ abstract mixin class _$RecurringFormStateCopyWith<$Res> implements $RecurringFor
   factory _$RecurringFormStateCopyWith(_RecurringFormState value, $Res Function(_RecurringFormState) _then) = __$RecurringFormStateCopyWithImpl;
 @override @useResult
 $Res call({
- LocalDate startDate, int fractionDigits, RecurringFormStatus status, TransactionKind kind, int? id, String amountText, int? categoryId, String title, RecurringFrequency frequency, bool isActive, List<Category> categories, Map<String, ValidationReason> errors, Failure? failure
+ LocalDate startDate, int fractionDigits, RecurringFormStatus status, TransactionKind kind, int? id, String amountText, int? walletId, int? categoryId, String title, RecurringFrequency frequency, bool isActive, List<Category> categories, List<WalletSummary> wallets, Map<String, ValidationReason> errors, Failure? failure
 });
 
 
@@ -322,7 +337,7 @@ class __$RecurringFormStateCopyWithImpl<$Res>
 
 /// Create a copy of RecurringFormState
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? startDate = null,Object? fractionDigits = null,Object? status = null,Object? kind = null,Object? id = freezed,Object? amountText = null,Object? categoryId = freezed,Object? title = null,Object? frequency = null,Object? isActive = null,Object? categories = null,Object? errors = null,Object? failure = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? startDate = null,Object? fractionDigits = null,Object? status = null,Object? kind = null,Object? id = freezed,Object? amountText = null,Object? walletId = freezed,Object? categoryId = freezed,Object? title = null,Object? frequency = null,Object? isActive = null,Object? categories = null,Object? wallets = null,Object? errors = null,Object? failure = freezed,}) {
   return _then(_RecurringFormState(
 startDate: null == startDate ? _self.startDate : startDate // ignore: cast_nullable_to_non_nullable
 as LocalDate,fractionDigits: null == fractionDigits ? _self.fractionDigits : fractionDigits // ignore: cast_nullable_to_non_nullable
@@ -330,12 +345,14 @@ as int,status: null == status ? _self.status : status // ignore: cast_nullable_t
 as RecurringFormStatus,kind: null == kind ? _self.kind : kind // ignore: cast_nullable_to_non_nullable
 as TransactionKind,id: freezed == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as int?,amountText: null == amountText ? _self.amountText : amountText // ignore: cast_nullable_to_non_nullable
-as String,categoryId: freezed == categoryId ? _self.categoryId : categoryId // ignore: cast_nullable_to_non_nullable
+as String,walletId: freezed == walletId ? _self.walletId : walletId // ignore: cast_nullable_to_non_nullable
+as int?,categoryId: freezed == categoryId ? _self.categoryId : categoryId // ignore: cast_nullable_to_non_nullable
 as int?,title: null == title ? _self.title : title // ignore: cast_nullable_to_non_nullable
 as String,frequency: null == frequency ? _self.frequency : frequency // ignore: cast_nullable_to_non_nullable
 as RecurringFrequency,isActive: null == isActive ? _self.isActive : isActive // ignore: cast_nullable_to_non_nullable
 as bool,categories: null == categories ? _self._categories : categories // ignore: cast_nullable_to_non_nullable
-as List<Category>,errors: null == errors ? _self._errors : errors // ignore: cast_nullable_to_non_nullable
+as List<Category>,wallets: null == wallets ? _self._wallets : wallets // ignore: cast_nullable_to_non_nullable
+as List<WalletSummary>,errors: null == errors ? _self._errors : errors // ignore: cast_nullable_to_non_nullable
 as Map<String, ValidationReason>,failure: freezed == failure ? _self.failure : failure // ignore: cast_nullable_to_non_nullable
 as Failure?,
   ));

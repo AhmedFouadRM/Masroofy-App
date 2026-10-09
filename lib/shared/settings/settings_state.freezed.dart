@@ -19,7 +19,10 @@ mixin _$SettingsState {
 /// region (not the app language): Saturday in Egypt, Sunday in Saudi Arabia.
  int get firstWeekday;/// False until the user has picked a currency on first launch. Defaults to
 /// true so a state built without it (tests) skips the first-launch step.
- bool get currencyChosen;
+ bool get currencyChosen;/// The wallet new transactions go to when All wallets is viewed. Null only
+/// until the app has checked it against the wallets (a fresh install).
+ int? get defaultWalletId;/// The wallet the Transactions list and Analytics show; null is All wallets.
+ int? get viewedWalletId;
 /// Create a copy of SettingsState
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -30,16 +33,16 @@ $SettingsStateCopyWith<SettingsState> get copyWith => _$SettingsStateCopyWithImp
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is SettingsState&&(identical(other.themeMode, themeMode) || other.themeMode == themeMode)&&(identical(other.currency, currency) || other.currency == currency)&&(identical(other.westernDigits, westernDigits) || other.westernDigits == westernDigits)&&(identical(other.firstWeekday, firstWeekday) || other.firstWeekday == firstWeekday)&&(identical(other.currencyChosen, currencyChosen) || other.currencyChosen == currencyChosen));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is SettingsState&&(identical(other.themeMode, themeMode) || other.themeMode == themeMode)&&(identical(other.currency, currency) || other.currency == currency)&&(identical(other.westernDigits, westernDigits) || other.westernDigits == westernDigits)&&(identical(other.firstWeekday, firstWeekday) || other.firstWeekday == firstWeekday)&&(identical(other.currencyChosen, currencyChosen) || other.currencyChosen == currencyChosen)&&(identical(other.defaultWalletId, defaultWalletId) || other.defaultWalletId == defaultWalletId)&&(identical(other.viewedWalletId, viewedWalletId) || other.viewedWalletId == viewedWalletId));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,themeMode,currency,westernDigits,firstWeekday,currencyChosen);
+int get hashCode => Object.hash(runtimeType,themeMode,currency,westernDigits,firstWeekday,currencyChosen,defaultWalletId,viewedWalletId);
 
 @override
 String toString() {
-  return 'SettingsState(themeMode: $themeMode, currency: $currency, westernDigits: $westernDigits, firstWeekday: $firstWeekday, currencyChosen: $currencyChosen)';
+  return 'SettingsState(themeMode: $themeMode, currency: $currency, westernDigits: $westernDigits, firstWeekday: $firstWeekday, currencyChosen: $currencyChosen, defaultWalletId: $defaultWalletId, viewedWalletId: $viewedWalletId)';
 }
 
 
@@ -50,7 +53,7 @@ abstract mixin class $SettingsStateCopyWith<$Res>  {
   factory $SettingsStateCopyWith(SettingsState value, $Res Function(SettingsState) _then) = _$SettingsStateCopyWithImpl;
 @useResult
 $Res call({
- ThemeMode themeMode, Currency currency, bool westernDigits, int firstWeekday, bool currencyChosen
+ ThemeMode themeMode, Currency currency, bool westernDigits, int firstWeekday, bool currencyChosen, int? defaultWalletId, int? viewedWalletId
 });
 
 
@@ -67,14 +70,16 @@ class _$SettingsStateCopyWithImpl<$Res>
 
 /// Create a copy of SettingsState
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? themeMode = null,Object? currency = null,Object? westernDigits = null,Object? firstWeekday = null,Object? currencyChosen = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? themeMode = null,Object? currency = null,Object? westernDigits = null,Object? firstWeekday = null,Object? currencyChosen = null,Object? defaultWalletId = freezed,Object? viewedWalletId = freezed,}) {
   return _then(_self.copyWith(
 themeMode: null == themeMode ? _self.themeMode : themeMode // ignore: cast_nullable_to_non_nullable
 as ThemeMode,currency: null == currency ? _self.currency : currency // ignore: cast_nullable_to_non_nullable
 as Currency,westernDigits: null == westernDigits ? _self.westernDigits : westernDigits // ignore: cast_nullable_to_non_nullable
 as bool,firstWeekday: null == firstWeekday ? _self.firstWeekday : firstWeekday // ignore: cast_nullable_to_non_nullable
 as int,currencyChosen: null == currencyChosen ? _self.currencyChosen : currencyChosen // ignore: cast_nullable_to_non_nullable
-as bool,
+as bool,defaultWalletId: freezed == defaultWalletId ? _self.defaultWalletId : defaultWalletId // ignore: cast_nullable_to_non_nullable
+as int?,viewedWalletId: freezed == viewedWalletId ? _self.viewedWalletId : viewedWalletId // ignore: cast_nullable_to_non_nullable
+as int?,
   ));
 }
 
@@ -159,10 +164,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( ThemeMode themeMode,  Currency currency,  bool westernDigits,  int firstWeekday,  bool currencyChosen)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( ThemeMode themeMode,  Currency currency,  bool westernDigits,  int firstWeekday,  bool currencyChosen,  int? defaultWalletId,  int? viewedWalletId)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _SettingsState() when $default != null:
-return $default(_that.themeMode,_that.currency,_that.westernDigits,_that.firstWeekday,_that.currencyChosen);case _:
+return $default(_that.themeMode,_that.currency,_that.westernDigits,_that.firstWeekday,_that.currencyChosen,_that.defaultWalletId,_that.viewedWalletId);case _:
   return orElse();
 
 }
@@ -180,10 +185,10 @@ return $default(_that.themeMode,_that.currency,_that.westernDigits,_that.firstWe
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( ThemeMode themeMode,  Currency currency,  bool westernDigits,  int firstWeekday,  bool currencyChosen)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( ThemeMode themeMode,  Currency currency,  bool westernDigits,  int firstWeekday,  bool currencyChosen,  int? defaultWalletId,  int? viewedWalletId)  $default,) {final _that = this;
 switch (_that) {
 case _SettingsState():
-return $default(_that.themeMode,_that.currency,_that.westernDigits,_that.firstWeekday,_that.currencyChosen);case _:
+return $default(_that.themeMode,_that.currency,_that.westernDigits,_that.firstWeekday,_that.currencyChosen,_that.defaultWalletId,_that.viewedWalletId);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -200,10 +205,10 @@ return $default(_that.themeMode,_that.currency,_that.westernDigits,_that.firstWe
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( ThemeMode themeMode,  Currency currency,  bool westernDigits,  int firstWeekday,  bool currencyChosen)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( ThemeMode themeMode,  Currency currency,  bool westernDigits,  int firstWeekday,  bool currencyChosen,  int? defaultWalletId,  int? viewedWalletId)?  $default,) {final _that = this;
 switch (_that) {
 case _SettingsState() when $default != null:
-return $default(_that.themeMode,_that.currency,_that.westernDigits,_that.firstWeekday,_that.currencyChosen);case _:
+return $default(_that.themeMode,_that.currency,_that.westernDigits,_that.firstWeekday,_that.currencyChosen,_that.defaultWalletId,_that.viewedWalletId);case _:
   return null;
 
 }
@@ -215,7 +220,7 @@ return $default(_that.themeMode,_that.currency,_that.westernDigits,_that.firstWe
 
 
 class _SettingsState implements SettingsState {
-  const _SettingsState({required this.themeMode, required this.currency, required this.westernDigits, required this.firstWeekday, this.currencyChosen = true});
+  const _SettingsState({required this.themeMode, required this.currency, required this.westernDigits, required this.firstWeekday, this.currencyChosen = true, this.defaultWalletId, this.viewedWalletId});
   
 
 @override final  ThemeMode themeMode;
@@ -228,6 +233,11 @@ class _SettingsState implements SettingsState {
 /// False until the user has picked a currency on first launch. Defaults to
 /// true so a state built without it (tests) skips the first-launch step.
 @override@JsonKey() final  bool currencyChosen;
+/// The wallet new transactions go to when All wallets is viewed. Null only
+/// until the app has checked it against the wallets (a fresh install).
+@override final  int? defaultWalletId;
+/// The wallet the Transactions list and Analytics show; null is All wallets.
+@override final  int? viewedWalletId;
 
 /// Create a copy of SettingsState
 /// with the given fields replaced by the non-null parameter values.
@@ -239,16 +249,16 @@ _$SettingsStateCopyWith<_SettingsState> get copyWith => __$SettingsStateCopyWith
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _SettingsState&&(identical(other.themeMode, themeMode) || other.themeMode == themeMode)&&(identical(other.currency, currency) || other.currency == currency)&&(identical(other.westernDigits, westernDigits) || other.westernDigits == westernDigits)&&(identical(other.firstWeekday, firstWeekday) || other.firstWeekday == firstWeekday)&&(identical(other.currencyChosen, currencyChosen) || other.currencyChosen == currencyChosen));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _SettingsState&&(identical(other.themeMode, themeMode) || other.themeMode == themeMode)&&(identical(other.currency, currency) || other.currency == currency)&&(identical(other.westernDigits, westernDigits) || other.westernDigits == westernDigits)&&(identical(other.firstWeekday, firstWeekday) || other.firstWeekday == firstWeekday)&&(identical(other.currencyChosen, currencyChosen) || other.currencyChosen == currencyChosen)&&(identical(other.defaultWalletId, defaultWalletId) || other.defaultWalletId == defaultWalletId)&&(identical(other.viewedWalletId, viewedWalletId) || other.viewedWalletId == viewedWalletId));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,themeMode,currency,westernDigits,firstWeekday,currencyChosen);
+int get hashCode => Object.hash(runtimeType,themeMode,currency,westernDigits,firstWeekday,currencyChosen,defaultWalletId,viewedWalletId);
 
 @override
 String toString() {
-  return 'SettingsState(themeMode: $themeMode, currency: $currency, westernDigits: $westernDigits, firstWeekday: $firstWeekday, currencyChosen: $currencyChosen)';
+  return 'SettingsState(themeMode: $themeMode, currency: $currency, westernDigits: $westernDigits, firstWeekday: $firstWeekday, currencyChosen: $currencyChosen, defaultWalletId: $defaultWalletId, viewedWalletId: $viewedWalletId)';
 }
 
 
@@ -259,7 +269,7 @@ abstract mixin class _$SettingsStateCopyWith<$Res> implements $SettingsStateCopy
   factory _$SettingsStateCopyWith(_SettingsState value, $Res Function(_SettingsState) _then) = __$SettingsStateCopyWithImpl;
 @override @useResult
 $Res call({
- ThemeMode themeMode, Currency currency, bool westernDigits, int firstWeekday, bool currencyChosen
+ ThemeMode themeMode, Currency currency, bool westernDigits, int firstWeekday, bool currencyChosen, int? defaultWalletId, int? viewedWalletId
 });
 
 
@@ -276,14 +286,16 @@ class __$SettingsStateCopyWithImpl<$Res>
 
 /// Create a copy of SettingsState
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? themeMode = null,Object? currency = null,Object? westernDigits = null,Object? firstWeekday = null,Object? currencyChosen = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? themeMode = null,Object? currency = null,Object? westernDigits = null,Object? firstWeekday = null,Object? currencyChosen = null,Object? defaultWalletId = freezed,Object? viewedWalletId = freezed,}) {
   return _then(_SettingsState(
 themeMode: null == themeMode ? _self.themeMode : themeMode // ignore: cast_nullable_to_non_nullable
 as ThemeMode,currency: null == currency ? _self.currency : currency // ignore: cast_nullable_to_non_nullable
 as Currency,westernDigits: null == westernDigits ? _self.westernDigits : westernDigits // ignore: cast_nullable_to_non_nullable
 as bool,firstWeekday: null == firstWeekday ? _self.firstWeekday : firstWeekday // ignore: cast_nullable_to_non_nullable
 as int,currencyChosen: null == currencyChosen ? _self.currencyChosen : currencyChosen // ignore: cast_nullable_to_non_nullable
-as bool,
+as bool,defaultWalletId: freezed == defaultWalletId ? _self.defaultWalletId : defaultWalletId // ignore: cast_nullable_to_non_nullable
+as int?,viewedWalletId: freezed == viewedWalletId ? _self.viewedWalletId : viewedWalletId // ignore: cast_nullable_to_non_nullable
+as int?,
   ));
 }
 

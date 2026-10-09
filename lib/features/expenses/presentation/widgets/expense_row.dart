@@ -12,14 +12,18 @@ import 'package:material_symbols_icons/symbols.dart';
 
 /// Figma "Expense Row": category avatar, title (or the category name),
 /// category · note, and the amount with an optional recurring badge. Income
-/// shows a `+` and `text/positive`.
+/// shows a `+` and `text/positive`. In All wallets the wallet's name joins
+/// the subtitle ("Food · Wife").
 class ExpenseRow extends StatelessWidget {
-  const ExpenseRow({required this.expense, required this.category, this.onTap, super.key});
+  const ExpenseRow({required this.expense, required this.category, this.walletName, this.onTap, super.key});
 
   final Expense expense;
 
   /// Null only if the category vanished mid-update.
   final Category? category;
+
+  /// The row's wallet; given only when All wallets is viewed.
+  final String? walletName;
   final VoidCallback? onTap;
 
   @override
@@ -31,6 +35,7 @@ class ExpenseRow extends StatelessWidget {
     // Untitled rows already show the category as their title.
     final subtitle = [
       if (expense.title != null) categoryName,
+      ?walletName,
       ?expense.note,
     ].join(' · ');
 

@@ -21,7 +21,8 @@ class BudgetLocalDatasource extends DatabaseAccessor<AppDatabase> with _$BudgetL
   static const _converter = LocalDateConverter();
 
   /// Every budget with the sum of its category's expenses in [week] or
-  /// [month], whichever its period uses. Dates are `YYYY-MM-DD` text, so
+  /// [month], whichever its period uses, across all wallets (budgets are
+  /// global) and never counting transfers. Dates are `YYYY-MM-DD` text, so
   /// BETWEEN is chronological and uses `idx_expenses_category_date`.
   Stream<List<BudgetSpendRow>> watchWithSpend({required DateRange week, required DateRange month}) =>
       customSelect(
@@ -29,6 +30,7 @@ class BudgetLocalDatasource extends DatabaseAccessor<AppDatabase> with _$BudgetL
         SELECT b.*, (
           SELECT COALESCE(SUM(e.amount_minor), 0) FROM expenses e
           WHERE e.category_id = b.category_id
+            AND e.transfer_id IS NULL
             AND e.date BETWEEN
               CASE b.period WHEN 'weekly' THEN ?1 ELSE ?3 END
               AND CASE b.period WHEN 'weekly' THEN ?2 ELSE ?4 END

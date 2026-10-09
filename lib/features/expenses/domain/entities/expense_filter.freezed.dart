@@ -14,7 +14,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$ExpenseFilter {
 
- DateRange get range; TransactionKind? get kind; int? get categoryId; String? get search;
+ DateRange get range; int? get walletId; TransactionKind? get kind; int? get categoryId; String? get search;
 /// Create a copy of ExpenseFilter
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -25,16 +25,16 @@ $ExpenseFilterCopyWith<ExpenseFilter> get copyWith => _$ExpenseFilterCopyWithImp
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is ExpenseFilter&&(identical(other.range, range) || other.range == range)&&(identical(other.kind, kind) || other.kind == kind)&&(identical(other.categoryId, categoryId) || other.categoryId == categoryId)&&(identical(other.search, search) || other.search == search));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ExpenseFilter&&(identical(other.range, range) || other.range == range)&&(identical(other.walletId, walletId) || other.walletId == walletId)&&(identical(other.kind, kind) || other.kind == kind)&&(identical(other.categoryId, categoryId) || other.categoryId == categoryId)&&(identical(other.search, search) || other.search == search));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,range,kind,categoryId,search);
+int get hashCode => Object.hash(runtimeType,range,walletId,kind,categoryId,search);
 
 @override
 String toString() {
-  return 'ExpenseFilter(range: $range, kind: $kind, categoryId: $categoryId, search: $search)';
+  return 'ExpenseFilter(range: $range, walletId: $walletId, kind: $kind, categoryId: $categoryId, search: $search)';
 }
 
 
@@ -45,7 +45,7 @@ abstract mixin class $ExpenseFilterCopyWith<$Res>  {
   factory $ExpenseFilterCopyWith(ExpenseFilter value, $Res Function(ExpenseFilter) _then) = _$ExpenseFilterCopyWithImpl;
 @useResult
 $Res call({
- DateRange range, TransactionKind? kind, int? categoryId, String? search
+ DateRange range, int? walletId, TransactionKind? kind, int? categoryId, String? search
 });
 
 
@@ -62,10 +62,11 @@ class _$ExpenseFilterCopyWithImpl<$Res>
 
 /// Create a copy of ExpenseFilter
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? range = null,Object? kind = freezed,Object? categoryId = freezed,Object? search = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? range = null,Object? walletId = freezed,Object? kind = freezed,Object? categoryId = freezed,Object? search = freezed,}) {
   return _then(_self.copyWith(
 range: null == range ? _self.range : range // ignore: cast_nullable_to_non_nullable
-as DateRange,kind: freezed == kind ? _self.kind : kind // ignore: cast_nullable_to_non_nullable
+as DateRange,walletId: freezed == walletId ? _self.walletId : walletId // ignore: cast_nullable_to_non_nullable
+as int?,kind: freezed == kind ? _self.kind : kind // ignore: cast_nullable_to_non_nullable
 as TransactionKind?,categoryId: freezed == categoryId ? _self.categoryId : categoryId // ignore: cast_nullable_to_non_nullable
 as int?,search: freezed == search ? _self.search : search // ignore: cast_nullable_to_non_nullable
 as String?,
@@ -153,10 +154,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( DateRange range,  TransactionKind? kind,  int? categoryId,  String? search)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( DateRange range,  int? walletId,  TransactionKind? kind,  int? categoryId,  String? search)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _ExpenseFilter() when $default != null:
-return $default(_that.range,_that.kind,_that.categoryId,_that.search);case _:
+return $default(_that.range,_that.walletId,_that.kind,_that.categoryId,_that.search);case _:
   return orElse();
 
 }
@@ -174,10 +175,10 @@ return $default(_that.range,_that.kind,_that.categoryId,_that.search);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( DateRange range,  TransactionKind? kind,  int? categoryId,  String? search)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( DateRange range,  int? walletId,  TransactionKind? kind,  int? categoryId,  String? search)  $default,) {final _that = this;
 switch (_that) {
 case _ExpenseFilter():
-return $default(_that.range,_that.kind,_that.categoryId,_that.search);case _:
+return $default(_that.range,_that.walletId,_that.kind,_that.categoryId,_that.search);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -194,10 +195,10 @@ return $default(_that.range,_that.kind,_that.categoryId,_that.search);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( DateRange range,  TransactionKind? kind,  int? categoryId,  String? search)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( DateRange range,  int? walletId,  TransactionKind? kind,  int? categoryId,  String? search)?  $default,) {final _that = this;
 switch (_that) {
 case _ExpenseFilter() when $default != null:
-return $default(_that.range,_that.kind,_that.categoryId,_that.search);case _:
+return $default(_that.range,_that.walletId,_that.kind,_that.categoryId,_that.search);case _:
   return null;
 
 }
@@ -209,10 +210,11 @@ return $default(_that.range,_that.kind,_that.categoryId,_that.search);case _:
 
 
 class _ExpenseFilter extends ExpenseFilter {
-  const _ExpenseFilter({required this.range, this.kind, this.categoryId, this.search}): super._();
+  const _ExpenseFilter({required this.range, this.walletId, this.kind, this.categoryId, this.search}): super._();
   
 
 @override final  DateRange range;
+@override final  int? walletId;
 @override final  TransactionKind? kind;
 @override final  int? categoryId;
 @override final  String? search;
@@ -227,16 +229,16 @@ _$ExpenseFilterCopyWith<_ExpenseFilter> get copyWith => __$ExpenseFilterCopyWith
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _ExpenseFilter&&(identical(other.range, range) || other.range == range)&&(identical(other.kind, kind) || other.kind == kind)&&(identical(other.categoryId, categoryId) || other.categoryId == categoryId)&&(identical(other.search, search) || other.search == search));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _ExpenseFilter&&(identical(other.range, range) || other.range == range)&&(identical(other.walletId, walletId) || other.walletId == walletId)&&(identical(other.kind, kind) || other.kind == kind)&&(identical(other.categoryId, categoryId) || other.categoryId == categoryId)&&(identical(other.search, search) || other.search == search));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,range,kind,categoryId,search);
+int get hashCode => Object.hash(runtimeType,range,walletId,kind,categoryId,search);
 
 @override
 String toString() {
-  return 'ExpenseFilter(range: $range, kind: $kind, categoryId: $categoryId, search: $search)';
+  return 'ExpenseFilter(range: $range, walletId: $walletId, kind: $kind, categoryId: $categoryId, search: $search)';
 }
 
 
@@ -247,7 +249,7 @@ abstract mixin class _$ExpenseFilterCopyWith<$Res> implements $ExpenseFilterCopy
   factory _$ExpenseFilterCopyWith(_ExpenseFilter value, $Res Function(_ExpenseFilter) _then) = __$ExpenseFilterCopyWithImpl;
 @override @useResult
 $Res call({
- DateRange range, TransactionKind? kind, int? categoryId, String? search
+ DateRange range, int? walletId, TransactionKind? kind, int? categoryId, String? search
 });
 
 
@@ -264,10 +266,11 @@ class __$ExpenseFilterCopyWithImpl<$Res>
 
 /// Create a copy of ExpenseFilter
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? range = null,Object? kind = freezed,Object? categoryId = freezed,Object? search = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? range = null,Object? walletId = freezed,Object? kind = freezed,Object? categoryId = freezed,Object? search = freezed,}) {
   return _then(_ExpenseFilter(
 range: null == range ? _self.range : range // ignore: cast_nullable_to_non_nullable
-as DateRange,kind: freezed == kind ? _self.kind : kind // ignore: cast_nullable_to_non_nullable
+as DateRange,walletId: freezed == walletId ? _self.walletId : walletId // ignore: cast_nullable_to_non_nullable
+as int?,kind: freezed == kind ? _self.kind : kind // ignore: cast_nullable_to_non_nullable
 as TransactionKind?,categoryId: freezed == categoryId ? _self.categoryId : categoryId // ignore: cast_nullable_to_non_nullable
 as int?,search: freezed == search ? _self.search : search // ignore: cast_nullable_to_non_nullable
 as String?,

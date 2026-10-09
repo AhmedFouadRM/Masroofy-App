@@ -7,7 +7,7 @@ import 'package:masroofy/features/expenses/domain/validation/expense_validator.d
 
 void main() {
   final today = LocalDate(2026, 10, 8);
-  final valid = ExpenseDraft(amount: const Money(1250), categoryId: 1, date: today);
+  final valid = ExpenseDraft(amount: const Money(1250), walletId: 1, categoryId: 1, date: today);
 
   ValidationFailure? validate(ExpenseDraft expense) => ExpenseValidator.validate(expense, today: today);
 
@@ -31,6 +31,10 @@ void main() {
   test('amount must be positive', () {
     expectFailure(valid.copyWith(amount: Money.zero), 'amount', ValidationReason.mustBePositive);
     expectFailure(valid.copyWith(amount: const Money(-1)), 'amount', ValidationReason.mustBePositive);
+  });
+
+  test('a wallet is required', () {
+    expectFailure(valid.copyWith(walletId: 0), 'walletId', ValidationReason.required);
   });
 
   test('date may be today or earlier, never later', () {

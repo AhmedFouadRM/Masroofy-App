@@ -25,10 +25,12 @@ void main() {
   late CategoryRepositoryImpl repository;
   late SaveCategory save;
   late DeleteCategory deleteCategory;
+  late int me;
 
-  setUp(() {
+  setUp(() async {
     driftRuntimeOptions.dontWarnAboutMultipleDatabases = true;
     db = AppDatabase(NativeDatabase.memory());
+    me = await db.seedDefaultWallet();
     repository = CategoryRepositoryImpl(CategoryLocalDatasource(db));
     save = SaveCategory(repository, _FakeReservedNames());
     deleteCategory = DeleteCategory(repository);
@@ -45,7 +47,14 @@ void main() {
 
   Future<void> addExpense(int categoryId) => db
       .into(db.expensesTable)
-      .insert(ExpensesTableCompanion.insert(amountMinor: 1000, categoryId: categoryId, date: LocalDate(2026, 10, 8)));
+      .insert(
+        ExpensesTableCompanion.insert(
+          amountMinor: 1000,
+          walletId: me,
+          categoryId: Value(categoryId),
+          date: LocalDate(2026, 10, 8),
+        ),
+      );
 
   Future<void> addTemplate(int categoryId) => db
       .into(db.recurringExpensesTable)
@@ -53,6 +62,7 @@ void main() {
         RecurringExpensesTableCompanion.insert(
           title: 'Membership',
           amountMinor: 30000,
+          walletId: me,
           categoryId: categoryId,
           frequency: 'monthly',
           startDate: LocalDate(2026, 1, 1),

@@ -10,6 +10,7 @@ part 'expense_draft.freezed.dart';
 abstract class ExpenseDraft with _$ExpenseDraft {
   const factory ExpenseDraft({
     required Money amount,
+    required int walletId,
     required int categoryId,
     required LocalDate date,
 

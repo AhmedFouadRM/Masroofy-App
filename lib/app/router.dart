@@ -31,9 +31,15 @@ import 'package:masroofy/features/recurring_expenses/presentation/cubits/recurri
 import 'package:masroofy/features/recurring_expenses/presentation/screens/recurring_form_screen.dart';
 import 'package:masroofy/features/recurring_expenses/presentation/screens/recurring_list_screen.dart';
 import 'package:masroofy/features/settings/presentation/cubits/data_management_cubit.dart';
+import 'package:masroofy/features/settings/presentation/cubits/wallet_count_cubit.dart';
 import 'package:masroofy/features/settings/presentation/screens/currency_picker_screen.dart';
 import 'package:masroofy/features/settings/presentation/screens/first_launch_screen.dart';
 import 'package:masroofy/features/settings/presentation/screens/settings_screen.dart';
+import 'package:masroofy/features/wallets/domain/wallet_preselect.dart';
+import 'package:masroofy/features/wallets/presentation/cubits/wallet_form_cubit.dart';
+import 'package:masroofy/features/wallets/presentation/cubits/wallets_cubit.dart';
+import 'package:masroofy/features/wallets/presentation/screens/wallet_form_screen.dart';
+import 'package:masroofy/features/wallets/presentation/screens/wallets_screen.dart';
 import 'package:masroofy/shared/auth/auth_cubit.dart';
 import 'package:masroofy/shared/auth/pin_flow.dart';
 import 'package:masroofy/shared/settings/settings_cubit.dart';
@@ -66,7 +72,7 @@ GoRouter buildRouter({required AuthCubit auth, required SettingsCubit settings})
         GoRoute(
           path: RoutePaths.expenses,
           builder: (context, state) => BlocProvider(
-            create: (context) => _expenseList(context.read<SettingsCubit>().state.firstWeekday),
+            create: (context) => _expenseList(context.read<SettingsCubit>().state),
             child: const ExpenseListScreen(),
           ),
           routes: [
@@ -126,15 +132,20 @@ GoRouter buildRouter({required AuthCubit auth, required SettingsCubit settings})
         GoRoute(
           path: RoutePaths.analytics,
           builder: (context, state) => BlocProvider(
-            create: (context) =>
-                getIt<AnalyticsCubit>(param1: context.read<SettingsCubit>().state.firstWeekday)..load(),
+            create: (context) {
+              final settings = context.read<SettingsCubit>().state;
+              return getIt<AnalyticsCubit>(param1: settings.firstWeekday, param2: settings.viewedWalletId)..load();
+            },
             child: const AnalyticsScreen(),
           ),
         ),
         GoRoute(
           path: RoutePaths.settings,
-          builder: (context, state) => BlocProvider(
-            create: (_) => getIt<DataManagementCubit>(),
+          builder: (context, state) => MultiBlocProvider(
+            providers: [
+              BlocProvider(create: (_) => getIt<DataManagementCubit>()),
+              BlocProvider(create: (_) => getIt<WalletCountCubit>()..load()),
+            ],
             child: SettingsScreen(appInfo: getIt()),
           ),
           routes: [
@@ -156,6 +167,32 @@ GoRouter buildRouter({required AuthCubit auth, required SettingsCubit settings})
               path: 'pin/verify',
               parentNavigatorKey: rootNavigatorKey,
               builder: (context, state) => PinVerifyScreen(purpose: state.extra as PinPurpose? ?? PinPurpose.changePin),
+            ),
+            GoRoute(
+              path: 'wallets',
+              parentNavigatorKey: rootNavigatorKey,
+              builder: (context, state) => BlocProvider(
+                create: (_) => getIt<WalletsCubit>()..load(),
+                child: const WalletsScreen(),
+              ),
+              routes: [
+                GoRoute(
+                  path: 'new',
+                  parentNavigatorKey: rootNavigatorKey,
+                  builder: (context, state) => BlocProvider(
+                    create: (context) => _walletForm(context, null),
+                    child: const WalletFormScreen(),
+                  ),
+                ),
+                GoRoute(
+                  path: ':id',
+                  parentNavigatorKey: rootNavigatorKey,
+                  builder: (context, state) => BlocProvider(
+                    create: (context) => _walletForm(context, int.parse(state.pathParameters['id']!)),
+                    child: const WalletFormScreen(),
+                  ),
+                ),
+              ],
             ),
             GoRoute(
               path: 'budgets',
@@ -226,8 +263,29 @@ CategoryFormCubit _categoryForm(int? id) {
   return cubit;
 }
 
-ExpenseListCubit _expenseList(int firstWeekday) {
-  return getIt<ExpenseListCubit>(param1: firstWeekday)..load();
+/// A screen cubit whose `load()` starts as the route opens.
+WalletFormCubit _walletForm(BuildContext context, int? id) {
+  final isDefault = id != null && id == context.read<SettingsCubit>().state.defaultWalletId;
+  final cubit = getIt<WalletFormCubit>(param1: id, param2: isDefault);
+  unawaited(cubit.load());
+  return cubit;
+}
+
+/// The list opens on the wallet viewed (null: All wallets).
+ExpenseListCubit _expenseList(SettingsState settings) {
+  return getIt<ExpenseListCubit>(param1: settings.firstWeekday, param2: settings.viewedWalletId)..load();
+}
+
+/// Starts a new transaction (no [id]) in the wallet viewed, or the default one
+/// when All wallets is viewed.
+void _presetWallet(BuildContext context, int? id, void Function(int walletId) select) {
+  if (id != null) return;
+  final settings = context.read<SettingsCubit>().state;
+  final walletId = WalletPreselect.initial(
+    viewedWalletId: settings.viewedWalletId,
+    defaultWalletId: settings.defaultWalletId,
+  );
+  if (walletId != null) select(walletId);
 }
 
 ExpenseFormCubit _expenseForm(BuildContext context, int? id, {TransactionKind kind = TransactionKind.expense}) {
@@ -235,6 +293,7 @@ ExpenseFormCubit _expenseForm(BuildContext context, int? id, {TransactionKind ki
     param1: context.read<SettingsCubit>().state.currency.fractionDigits,
     param2: id,
   )..kindSelected(kind);
+  _presetWallet(context, id, cubit.walletSelected);
   unawaited(cubit.load());
   return cubit;
 }
@@ -244,6 +303,7 @@ RecurringFormCubit _recurringForm(BuildContext context, int? id) {
     param1: context.read<SettingsCubit>().state.currency.fractionDigits,
     param2: id,
   );
+  _presetWallet(context, id, cubit.walletSelected);
   unawaited(cubit.load());
   return cubit;
 }

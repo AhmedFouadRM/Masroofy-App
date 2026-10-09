@@ -19,6 +19,8 @@ Future<void> main() async {
   await EasyLocalization.ensureInitialized();
   await initializeDateFormatting();
   await configureDependencies();
+  // The default and viewed wallet must exist before the first screen reads them.
+  await getIt<SettingsCubit>().repairWalletPreferences();
   // The persisted lockout and biometric support, so the lock screen is right at the first frame.
   await getIt<AuthCubit>().load();
   await ThmanyahFontLoader.load();

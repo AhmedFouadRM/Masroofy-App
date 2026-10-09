@@ -13,10 +13,15 @@ import 'package:masroofy/features/analytics/presentation/widgets/spending_bar_ch
 import 'package:masroofy/features/analytics/presentation/widgets/spending_pie_chart.dart';
 import 'package:masroofy/features/budgets/domain/entities/budget_period.dart';
 import 'package:masroofy/features/categories/domain/entities/category.dart';
+import 'package:masroofy/features/wallets/domain/entities/wallet.dart';
 import 'package:masroofy/shared/budgets/budget_progress_row.dart';
 import 'package:masroofy/shared/categories/category_avatar.dart';
 import 'package:masroofy/shared/categories/category_display.dart';
 import 'package:masroofy/shared/formatting/display_format.dart';
+import 'package:masroofy/shared/settings/settings_cubit.dart';
+import 'package:masroofy/shared/wallets/wallet_avatar.dart';
+import 'package:masroofy/shared/wallets/wallet_display.dart';
+import 'package:masroofy/shared/wallets/wallet_switcher.dart';
 import 'package:masroofy/shared/widgets/app_shell.dart';
 import 'package:masroofy/shared/widgets/aura_background.dart';
 import 'package:masroofy/shared/widgets/empty_state_widget.dart';
@@ -32,65 +37,80 @@ class AnalyticsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return AuraBackground(
-      child: Scaffold(
-        backgroundColor: Colors.transparent,
-        extendBodyBehindAppBar: true,
-        appBar: GlassAppBar(title: Text(StringManager.analyticsTitle)),
-        body: BlocBuilder<AnalyticsCubit, AnalyticsState>(
-          builder: (context, state) => ListView(
-            padding: EdgeInsets.fromLTRB(
-              AppSpacing.screen,
-              MediaQuery.paddingOf(context).top + AppSpacing.sm,
-              AppSpacing.screen,
-              AppShell.bottomInset,
+    // The wallet switcher (here or on another tab) stores the choice.
+    return BlocListener<SettingsCubit, SettingsState>(
+      listenWhen: (previous, current) => previous.viewedWalletId != current.viewedWalletId,
+      listener: (context, settings) => context.read<AnalyticsCubit>().selectWallet(settings.viewedWalletId),
+      child: AuraBackground(
+        child: Scaffold(
+          backgroundColor: Colors.transparent,
+          extendBodyBehindAppBar: true,
+          appBar: GlassAppBar(
+            title: BlocBuilder<AnalyticsCubit, AnalyticsState>(
+              buildWhen: (previous, current) => previous.walletSummaries != current.walletSummaries,
+              builder: (context, state) =>
+                  WalletSwitcher(wallets: state.walletSummaries, fallbackTitle: StringManager.analyticsTitle),
             ),
-            children: [
-              _Summary(state: state),
-              const SizedBox(height: AppSpacing.lg),
-              _PeriodPills(state: state),
-              ...switch (state.status) {
-                AnalyticsStatus.loading => [
-                  const Padding(
-                    padding: EdgeInsets.all(AppSpacing.xxxl),
-                    child: Center(child: CircularProgressIndicator.adaptive()),
-                  ),
-                ],
-                AnalyticsStatus.failure => [
-                  Padding(
-                    padding: const EdgeInsets.all(AppSpacing.xxl),
-                    child: Text(StringManager.failure(state.failure!), textAlign: TextAlign.center),
-                  ),
-                ],
-                AnalyticsStatus.loaded when state.isEmpty => [
-                  EmptyStateWidget(
-                    icon: Symbols.bar_chart_rounded,
-                    title: StringManager.noAnalyticsData,
-                    message: StringManager.noAnalyticsDataHint,
-                  ),
-                  ..._budgetSection(state),
-                ],
-                AnalyticsStatus.loaded => [
-                  SectionHeader(title: StringManager.incomeVsSpending),
-                  _IncomeVsSpending(totals: state.totals),
-                  SectionHeader(title: StringManager.byCategory),
-                  _CategoryBreakdown(state: state),
-                  SectionHeader(title: StringManager.spendingOverTime),
-                  Card(
-                    child: Padding(
-                      padding: const EdgeInsets.fromLTRB(AppSpacing.md, AppSpacing.xl, AppSpacing.md, AppSpacing.md),
-                      child: SpendingBarChart(
-                        bars: state.bars,
-                        bucket: state.bucket,
-                        range: state.range,
-                        weekdayLabels: state.period == AnalyticsPeriod.week,
+          ),
+          body: BlocBuilder<AnalyticsCubit, AnalyticsState>(
+            builder: (context, state) => ListView(
+              padding: EdgeInsets.fromLTRB(
+                AppSpacing.screen,
+                MediaQuery.paddingOf(context).top + AppSpacing.sm,
+                AppSpacing.screen,
+                AppShell.bottomInset,
+              ),
+              children: [
+                _Summary(state: state),
+                const SizedBox(height: AppSpacing.lg),
+                _PeriodPills(state: state),
+                ...switch (state.status) {
+                  AnalyticsStatus.loading => [
+                    const Padding(
+                      padding: EdgeInsets.all(AppSpacing.xxxl),
+                      child: Center(child: CircularProgressIndicator.adaptive()),
+                    ),
+                  ],
+                  AnalyticsStatus.failure => [
+                    Padding(
+                      padding: const EdgeInsets.all(AppSpacing.xxl),
+                      child: Text(StringManager.failure(state.failure!), textAlign: TextAlign.center),
+                    ),
+                  ],
+                  AnalyticsStatus.loaded when state.isEmpty => [
+                    EmptyStateWidget(
+                      icon: Symbols.bar_chart_rounded,
+                      title: StringManager.noAnalyticsData,
+                      message: StringManager.noAnalyticsDataHint,
+                    ),
+                    ..._budgetSection(state),
+                  ],
+                  AnalyticsStatus.loaded => [
+                    SectionHeader(title: StringManager.incomeVsSpending),
+                    _IncomeVsSpending(totals: state.totals),
+                    if (state.showsByWallet && state.wallets.length > 1) ...[
+                      SectionHeader(title: StringManager.byWallet),
+                      _WalletBreakdown(state: state),
+                    ],
+                    SectionHeader(title: StringManager.byCategory),
+                    _CategoryBreakdown(state: state),
+                    SectionHeader(title: StringManager.spendingOverTime),
+                    Card(
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(AppSpacing.md, AppSpacing.xl, AppSpacing.md, AppSpacing.md),
+                        child: SpendingBarChart(
+                          bars: state.bars,
+                          bucket: state.bucket,
+                          range: state.range,
+                          weekdayLabels: state.period == AnalyticsPeriod.week,
+                        ),
                       ),
                     ),
-                  ),
-                  ..._budgetSection(state),
-                ],
-              },
-            ],
+                    ..._budgetSection(state),
+                  ],
+                },
+              ],
+            ),
           ),
         ),
       ),
@@ -251,6 +271,97 @@ class _IncomeVsSpending extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+/// All wallets: each wallet's spending and income for the period, with a thin
+/// bar for its share of the spending.
+class _WalletBreakdown extends StatelessWidget {
+  const _WalletBreakdown({required this.state});
+
+  final AnalyticsState state;
+
+  @override
+  Widget build(BuildContext context) {
+    final totalSpent = state.totals.spent;
+    return Card(
+      clipBehavior: Clip.antiAlias,
+      child: Column(
+        children: [
+          for (final (index, wallet) in state.wallets.indexed) ...[
+            if (index > 0) const Divider(indent: 72),
+            _WalletRow(
+              wallet: wallet,
+              totals: state.byWallet[wallet.id] ?? PeriodTotals.zero,
+              share: totalSpent.isPositive ? (state.byWallet[wallet.id]?.spent.minor ?? 0) / totalSpent.minor : 0,
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _WalletRow extends StatelessWidget {
+  const _WalletRow({required this.wallet, required this.totals, required this.share});
+
+  final Wallet wallet;
+  final PeriodTotals totals;
+
+  /// This wallet's part of all spending, 0 to 1.
+  final double share;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = MasroofyColors.of(context);
+    final text = Theme.of(context).textTheme;
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg, vertical: AppSpacing.md),
+      child: Row(
+        children: [
+          WalletAvatar(icon: wallet.icon, color: wallet.color),
+          const SizedBox(width: AppSpacing.md),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        wallet.displayName,
+                        textDirection: wallet.nameDirection,
+                        style: text.bodyLarge,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    Text(context.money(totals.spent), style: text.titleMedium),
+                  ],
+                ),
+                const SizedBox(height: AppSpacing.xs),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(AppRadius.full),
+                  child: LinearProgressIndicator(
+                    value: share,
+                    minHeight: 4,
+                    color: Color(wallet.color),
+                    backgroundColor: colors.track,
+                  ),
+                ),
+                if (totals.income.isPositive) ...[
+                  const SizedBox(height: AppSpacing.xs),
+                  Text(
+                    '${StringManager.analyticsIncome} ${context.signedMoney(totals.income)}',
+                    style: text.labelMedium!.copyWith(color: colors.textPositive),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }

@@ -4,6 +4,7 @@ import 'package:masroofy/core/domain/transaction_kind.dart';
 import 'package:masroofy/core/error/failures.dart';
 import 'package:masroofy/features/categories/domain/entities/category.dart';
 import 'package:masroofy/features/recurring_expenses/domain/entities/recurring_frequency.dart';
+import 'package:masroofy/features/wallets/domain/entities/wallet_summary.dart';
 
 part 'recurring_form_state.freezed.dart';
 
@@ -26,6 +27,9 @@ abstract class RecurringFormState with _$RecurringFormState {
 
     /// As typed: Western or Arabic-Indic digits, `.` or `٫`.
     @Default('') String amountText,
+
+    /// The wallet the template's rows go to.
+    int? walletId,
     int? categoryId,
     @Default('') String title,
     @Default(RecurringFrequency.monthly) RecurringFrequency frequency,
@@ -34,7 +38,10 @@ abstract class RecurringFormState with _$RecurringFormState {
     /// Every visible category; the picker offers those of [kind].
     @Default(<Category>[]) List<Category> categories,
 
-    /// Field errors, keyed by `amount`, `categoryId`, `title`.
+    /// Every wallet, for the Wallet field.
+    @Default(<WalletSummary>[]) List<WalletSummary> wallets,
+
+    /// Field errors, keyed by `amount`, `walletId`, `categoryId`, `title`.
     @Default(<String, ValidationReason>{}) Map<String, ValidationReason> errors,
 
     /// A load or save failure other than a field error.
@@ -52,6 +59,8 @@ abstract class RecurringFormState with _$RecurringFormState {
   ];
 
   Category? get category => categories.where((c) => c.id == categoryId).firstOrNull;
+
+  WalletSummary? get wallet => wallets.where((w) => w.wallet.id == walletId).firstOrNull;
 
   bool get canSave => status == RecurringFormStatus.ready;
 }

@@ -12,18 +12,24 @@ import 'package:masroofy/core/error/failures.dart';
 import 'package:masroofy/features/analytics/data/datasources/analytics_local_datasource.dart';
 import 'package:masroofy/features/analytics/data/repositories/analytics_repository_impl.dart';
 
+import '../../../helpers/db_rows.dart';
+
 void main() {
   late AppDatabase db;
   late AnalyticsRepositoryImpl repository;
   late int food;
   late int transport;
   late int salary;
+  late int me;
+  late int son;
   final october = DateRange(LocalDate(2026, 10, 1), LocalDate(2026, 10, 31));
 
   setUp(() async {
     driftRuntimeOptions.dontWarnAboutMultipleDatabases = true;
     db = AppDatabase(NativeDatabase.memory());
     repository = AnalyticsRepositoryImpl(AnalyticsLocalDatasource(db));
+    me = await db.seedDefaultWallet();
+    son = await addWallet(db, 'Son');
     Future<int> seed(String key) async =>
         (await (db.select(db.categoriesTable)..where((c) => c.seedKey.equals(key))).getSingle()).id;
     food = await seed('food');
@@ -31,7 +37,9 @@ void main() {
     salary = await seed('salary');
     Future<void> add(int minor, int category, LocalDate date) => db
         .into(db.expensesTable)
-        .insert(ExpensesTableCompanion.insert(amountMinor: minor, categoryId: category, date: date));
+        .insert(
+          ExpensesTableCompanion.insert(amountMinor: minor, walletId: me, categoryId: Value(category), date: date),
+        );
     await add(1000, food, LocalDate(2026, 10, 1));
     await add(500, food, LocalDate(2026, 10, 1));
     await add(300, transport, LocalDate(2026, 10, 5));
@@ -79,7 +87,88 @@ void main() {
     await Future<void>.delayed(Duration.zero);
     await db
         .into(db.expensesTable)
-        .insert(ExpensesTableCompanion.insert(amountMinor: 100, categoryId: food, date: LocalDate(2026, 10, 9)));
+        .insert(
+          ExpensesTableCompanion.insert(
+            amountMinor: 100,
+            walletId: me,
+            categoryId: Value(food),
+            date: LocalDate(2026, 10, 9),
+          ),
+        );
     await done;
+  });
+
+  group('wallets', () {
+    Future<void> addFor(int wallet, int minor, int category, LocalDate date) => db
+        .into(db.expensesTable)
+        .insert(
+          ExpensesTableCompanion.insert(
+            amountMinor: minor,
+            walletId: wallet,
+            categoryId: Value(category),
+            date: date,
+          ),
+        );
+
+    setUp(() async {
+      await addFor(son, 700, food, LocalDate(2026, 10, 2));
+      await addFor(son, 40000, salary, LocalDate(2026, 10, 3));
+    });
+
+    test('a wallet has its own totals, categories and daily totals', () async {
+      expect(
+        first(await repository.watchTotals(october, walletId: son).first),
+        const PeriodTotals(income: Money(40000), spent: Money(700)),
+      );
+      expect(
+        first(await repository.watchTotals(october, walletId: me).first),
+        const PeriodTotals(income: Money(520000), spent: Money(1800)),
+      );
+      expect(first(await repository.watchTotalsByCategory(october, TransactionKind.expense, walletId: son).first), {
+        food: const Money(700),
+      });
+      expect(first(await repository.watchDailyTotals(october, walletId: son).first), {
+        LocalDate(2026, 10, 2): const PeriodTotals(income: Money.zero, spent: Money(700)),
+        LocalDate(2026, 10, 3): const PeriodTotals(income: Money(40000), spent: Money.zero),
+      });
+    });
+
+    test('All wallets sums every wallet', () async {
+      expect(
+        first(await repository.watchTotals(october).first),
+        const PeriodTotals(income: Money(560000), spent: Money(2500)),
+      );
+    });
+
+    test('transfers are in no total, in any view', () async {
+      await addTransferRows(db, from: me, to: son, amountMinor: 50000, date: LocalDate(2026, 10, 4));
+
+      expect(
+        first(await repository.watchTotals(october).first),
+        const PeriodTotals(income: Money(560000), spent: Money(2500)),
+      );
+      expect(
+        first(await repository.watchTotals(october, walletId: me).first),
+        const PeriodTotals(income: Money(520000), spent: Money(1800)),
+      );
+      expect(
+        first(await repository.watchTotals(october, walletId: son).first),
+        const PeriodTotals(income: Money(40000), spent: Money(700)),
+      );
+      expect(first(await repository.watchTotalsByCategory(october, TransactionKind.expense).first), {
+        food: const Money(2200),
+        transport: const Money(300),
+      });
+      expect(first(await repository.watchDailyTotals(october).first).containsKey(LocalDate(2026, 10, 4)), isFalse);
+    });
+
+    test('totals by wallet carry income and spending per wallet', () async {
+      await addTransferRows(db, from: me, to: son, amountMinor: 50000, date: LocalDate(2026, 10, 4));
+
+      expect(first(await repository.watchTotalsByWallet(october).first), {
+        me: const PeriodTotals(income: Money(520000), spent: Money(1800)),
+        son: const PeriodTotals(income: Money(40000), spent: Money(700)),
+      });
+    });
   });
 }

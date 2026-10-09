@@ -66,7 +66,8 @@ void main() {
             .insert(
               ExpensesTableCompanion.insert(
                 amountMinor: 1250,
-                categoryId: food.id,
+                walletId: await db.seedDefaultWallet(),
+                categoryId: Value(food.id),
                 date: LocalDate(2026, 10, 8),
               ),
             );
@@ -165,5 +166,123 @@ void main() {
     expect(cubit.state.westernDigits, isTrue);
     expect(cubit.state.currencyChosen, isTrue);
     expect(cubit.state.firstWeekday, DateTime.saturday);
+  });
+
+  group('wallets', () {
+    Future<SharedPreferences> preferences() => SharedPreferences.getInstance();
+
+    test('nothing is stored on a fresh install', () async {
+      final cubit = await makeCubit();
+
+      expect(cubit.state.defaultWalletId, isNull);
+      expect(cubit.state.viewedWalletId, isNull);
+    });
+
+    test('reads the stored default and viewed wallet, and 0 is All wallets', () async {
+      final cubit = await makeCubit({PreferenceKeys.defaultWalletId: 1, PreferenceKeys.viewedWalletId: 2});
+      expect((cubit.state.defaultWalletId, cubit.state.viewedWalletId), (1, 2));
+
+      final all = await makeCubit({PreferenceKeys.defaultWalletId: 1, PreferenceKeys.viewedWalletId: 0});
+      expect((all.state.defaultWalletId, all.state.viewedWalletId), (1, null));
+    });
+
+    test('the default wallet is remembered', () async {
+      final cubit = await makeCubit();
+
+      await cubit.setDefaultWallet(3);
+
+      expect(cubit.state.defaultWalletId, 3);
+      expect((await preferences()).getInt('default_wallet_id'), 3);
+    });
+
+    test('the viewed wallet is remembered, and All wallets too', () async {
+      final cubit = await makeCubit();
+
+      await cubit.setViewedWallet(2);
+      expect(cubit.state.viewedWalletId, 2);
+      expect((await preferences()).getInt('viewed_wallet_id'), 2);
+
+      await cubit.setViewedWallet(null);
+      expect(cubit.state.viewedWalletId, isNull);
+      expect((await preferences()).getInt('viewed_wallet_id'), PreferenceKeys.allWallets);
+      expect(cubit.state.defaultWalletId, isNull, reason: 'the default is a separate choice');
+    });
+
+    test('reload re-reads the wallets too (after a restore or a clear)', () async {
+      final cubit = await makeCubit();
+      final stored = await preferences();
+      await stored.setInt(PreferenceKeys.defaultWalletId, 4);
+      await stored.setInt(PreferenceKeys.viewedWalletId, 4);
+
+      cubit.reload();
+
+      expect((cubit.state.defaultWalletId, cubit.state.viewedWalletId), (4, 4));
+    });
+
+    group('repairWalletPreferences', () {
+      late int me;
+
+      setUp(() async => me = await db.seedDefaultWallet());
+
+      test('an upgraded or fresh install: Me is the default and the wallet viewed', () async {
+        final cubit = await makeCubit();
+
+        await cubit.repairWalletPreferences();
+
+        expect((cubit.state.defaultWalletId, cubit.state.viewedWalletId), (me, me));
+        final stored = await preferences();
+        expect((stored.getInt('default_wallet_id'), stored.getInt('viewed_wallet_id')), (me, me));
+      });
+
+      test('keeps wallets that exist', () async {
+        final son = await db
+            .into(db.walletsTable)
+            .insert(WalletsTableCompanion.insert(name: const Value('Son'), icon: 'child', color: 0, sortOrder: 1));
+        final cubit = await makeCubit({PreferenceKeys.defaultWalletId: son, PreferenceKeys.viewedWalletId: me});
+
+        await cubit.repairWalletPreferences();
+
+        expect((cubit.state.defaultWalletId, cubit.state.viewedWalletId), (son, me));
+      });
+
+      test('a choice of All wallets is not undone at the next launch', () async {
+        final cubit = await makeCubit({
+          PreferenceKeys.defaultWalletId: me,
+          PreferenceKeys.viewedWalletId: PreferenceKeys.allWallets,
+        });
+
+        await cubit.repairWalletPreferences();
+
+        expect(cubit.state.viewedWalletId, isNull);
+        expect((await preferences()).getInt('viewed_wallet_id'), PreferenceKeys.allWallets);
+      });
+
+      test('a default wallet that is gone becomes the first wallet', () async {
+        final cubit = await makeCubit({PreferenceKeys.defaultWalletId: 99, PreferenceKeys.viewedWalletId: me});
+
+        await cubit.repairWalletPreferences();
+
+        expect(cubit.state.defaultWalletId, me);
+      });
+
+      test('a viewed wallet that is gone becomes All wallets', () async {
+        final cubit = await makeCubit({PreferenceKeys.defaultWalletId: me, PreferenceKeys.viewedWalletId: 99});
+
+        await cubit.repairWalletPreferences();
+
+        expect(cubit.state.viewedWalletId, isNull);
+        expect((await preferences()).getInt('viewed_wallet_id'), PreferenceKeys.allWallets);
+      });
+
+      test('with no wallet at all nothing is stored', () async {
+        await db.customStatement('DELETE FROM wallets');
+        final cubit = await makeCubit();
+
+        await cubit.repairWalletPreferences();
+
+        expect(cubit.state.defaultWalletId, isNull);
+        expect((await preferences()).containsKey('default_wallet_id'), isFalse);
+      });
+    });
   });
 }

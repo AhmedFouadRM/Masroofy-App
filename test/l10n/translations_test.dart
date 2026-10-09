@@ -30,6 +30,10 @@ void main() {
     }
   });
 
+  test('the default wallet seed key has a name', () {
+    expect(en, contains('wallets.${DefaultWallets.meSeedKey}'));
+  });
+
   test('every supported currency has a name', () {
     for (final currency in CurrencyUtils.supported) {
       expect(en, contains('currencies.${currency.code}'));

@@ -39,6 +39,7 @@ class RecurringExpenseRepositoryImpl implements IRecurringExpenseRepository {
         RecurringExpensesTableCompanion.insert(
           title: draft.title,
           amountMinor: draft.amount.minor,
+          walletId: draft.walletId,
           categoryId: draft.categoryId,
           frequency: draft.frequency.name,
           startDate: draft.startDate,
@@ -59,6 +60,7 @@ class RecurringExpenseRepositoryImpl implements IRecurringExpenseRepository {
         RecurringExpensesTableCompanion(
           title: Value(draft.title),
           amountMinor: Value(draft.amount.minor),
+          walletId: Value(draft.walletId),
           categoryId: Value(draft.categoryId),
           frequency: Value(draft.frequency.name),
           startDate: Value(draft.startDate),
@@ -111,7 +113,8 @@ class RecurringExpenseRepositoryImpl implements IRecurringExpenseRepository {
             ExpensesTableCompanion.insert(
               title: Value(template.title),
               amountMinor: template.amount.minor,
-              categoryId: template.categoryId,
+              walletId: template.walletId,
+              categoryId: Value(template.categoryId),
               date: date,
               recurringExpenseId: Value(template.id),
               occurrenceDate: Value(date),
@@ -134,6 +137,7 @@ class RecurringExpenseRepositoryImpl implements IRecurringExpenseRepository {
       id: row.id,
       title: row.title,
       amount: Money(row.amountMinor),
+      walletId: row.walletId,
       categoryId: row.categoryId,
       frequency: RecurringFrequency.values.byName(row.frequency),
       startDate: row.startDate,

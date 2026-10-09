@@ -11,9 +11,13 @@ import 'package:masroofy/core/domain/transaction_kind.dart';
 import 'package:masroofy/core/error/failures.dart';
 import 'package:masroofy/features/expenses/data/datasources/expense_local_datasource.dart';
 import 'package:masroofy/features/expenses/data/repositories/expense_repository_impl.dart';
+import 'package:masroofy/features/expenses/domain/entities/expense.dart';
 import 'package:masroofy/features/expenses/domain/entities/expense_draft.dart';
 import 'package:masroofy/features/expenses/domain/entities/expense_filter.dart';
+import 'package:masroofy/features/expenses/domain/entities/list_entry.dart';
 import 'package:masroofy/features/expenses/domain/usecases/save_expense.dart';
+
+import '../../../helpers/db_rows.dart';
 
 void main() {
   late AppDatabase db;
@@ -22,6 +26,8 @@ void main() {
   late int food;
   late int transport;
   late int salary;
+  late int me;
+  late int son;
   final today = LocalDate(2026, 10, 8);
   final october = ExpenseFilter(range: DateRange.monthToDate(today));
 
@@ -35,30 +41,58 @@ void main() {
     food = await seed('food');
     transport = await seed('transport');
     salary = await seed('salary');
+    me = await db.seedDefaultWallet();
+    son = await addWallet(db, 'Son');
   });
   tearDown(() => db.close());
 
   T right<T>(Either<Failure, T> result) => result.getOrElse((f) => fail('expected Right, got $f'));
   Failure left<T>(Either<Failure, T> result) => result.getLeft().getOrElse(() => fail('expected Left'));
 
-  Future<int> add(int minor, LocalDate date, {int? category, String? title, String? note}) async => right(
+  Future<int> add(int minor, LocalDate date, {int? category, int? wallet, String? title, String? note}) async => right(
     await save(
-      ExpenseDraft(amount: Money(minor), categoryId: category ?? food, date: date, title: title, note: note),
+      ExpenseDraft(
+        amount: Money(minor),
+        walletId: wallet ?? me,
+        categoryId: category ?? food,
+        date: date,
+        title: title,
+        note: note,
+      ),
     ),
   );
 
-  Future<int> addIncome(int minor, LocalDate date) async => right(
-    await save(ExpenseDraft(amount: Money(minor), categoryId: salary, date: date, kind: TransactionKind.income)),
+  Future<int> addIncome(int minor, LocalDate date, {int? wallet}) async => right(
+    await save(
+      ExpenseDraft(
+        amount: Money(minor),
+        walletId: wallet ?? me,
+        categoryId: salary,
+        date: date,
+        kind: TransactionKind.income,
+      ),
+    ),
   );
+
+  /// The expense or income behind row [id].
+  Future<Expense> expense(int id) async => switch (right(await repository.getEntry(id))) {
+    TransactionEntry(:final expense) => expense,
+    TransferEntry() => fail('expected a transaction'),
+  };
+
+  Future<List<ListEntry>> entries(ExpenseFilter filter, {int limit = 50}) async =>
+      right(await repository.watchEntries(filter, limit: limit).first);
 
   test('saves trimmed text, and empty text as null', () async {
     final id = await add(1250, today, title: '  Lunch ', note: '   ');
-    final expense = right(await repository.getById(id));
-    expect((expense.title, expense.note, expense.amount), ('Lunch', null, const Money(1250)));
+    final saved = await expense(id);
+    expect((saved.title, saved.note, saved.amount), ('Lunch', null, const Money(1250)));
   });
 
   test('rejects a future date', () async {
-    final result = await save(ExpenseDraft(amount: const Money(1), categoryId: food, date: today.addDays(1)));
+    final result = await save(
+      ExpenseDraft(amount: const Money(1), walletId: me, categoryId: food, date: today.addDays(1)),
+    );
     expect(left(result), const Failure.validation(field: 'date', reason: ValidationReason.inFuture));
   });
 
@@ -68,10 +102,8 @@ void main() {
     final third = await add(300, today);
     await add(400, LocalDate(2026, 9, 30)); // outside
 
-    final all = right(await repository.watchExpenses(october, limit: 50).first);
-    expect(all.map((e) => e.id), [third, second, first]);
-    final page = right(await repository.watchExpenses(october, limit: 2).first);
-    expect(page.map((e) => e.id), [third, second]);
+    expect((await entries(october)).map((e) => e.id), [third, second, first]);
+    expect((await entries(october, limit: 2)).map((e) => e.id), [third, second]);
   });
 
   test('filters by category and searches title and note case-insensitively', () async {
@@ -79,8 +111,7 @@ void main() {
     final uber = await add(200, today, category: transport, note: 'uber to work');
     await add(300, today);
 
-    Future<List<int>> ids(ExpenseFilter filter) async =>
-        right(await repository.watchExpenses(filter, limit: 50).first).map((e) => e.id).toList();
+    Future<List<int>> ids(ExpenseFilter filter) async => [for (final e in await entries(filter)) e.id];
 
     expect(await ids(october.copyWith(categoryId: transport)), [uber]);
     expect(await ids(october.copyWith(search: ' lunch ')), [lunch]);
@@ -112,7 +143,7 @@ void main() {
       expect(after.spent, before.spent);
       expect(after.income, const Money(500000));
       expect(after.balance, const Money(499000));
-      expect(right(await repository.getById(pay)).kind, TransactionKind.income);
+      expect((await expense(pay)).kind, TransactionKind.income);
     });
 
     test('the kind filter narrows rows and totals', () async {
@@ -120,8 +151,8 @@ void main() {
       final pay = await addIncome(500000, today);
 
       final incomeOnly = october.copyWith(kind: TransactionKind.income);
-      final rows = right(await repository.watchExpenses(incomeOnly, limit: 50).first);
-      expect(rows.map((e) => (e.id, e.kind)), [(pay, TransactionKind.income)]);
+      final rows = await entries(incomeOnly);
+      expect(rows.map((e) => (e.id, (e as TransactionEntry).expense.kind)), [(pay, TransactionKind.income)]);
       expect(
         right(await repository.watchTotals(incomeOnly).first),
         const PeriodTotals(income: Money(500000), spent: Money.zero),
@@ -144,13 +175,19 @@ void main() {
     test('a category of the other kind is rejected', () async {
       const wrongKind = Failure.validation(field: 'categoryId', reason: ValidationReason.wrongKind);
       expect(
-        left(await save(ExpenseDraft(amount: const Money(1), categoryId: salary, date: today))),
+        left(await save(ExpenseDraft(amount: const Money(1), walletId: me, categoryId: salary, date: today))),
         wrongKind,
       );
       expect(
         left(
           await save(
-            ExpenseDraft(amount: const Money(1), categoryId: food, date: today, kind: TransactionKind.income),
+            ExpenseDraft(
+              amount: const Money(1),
+              walletId: me,
+              categoryId: food,
+              date: today,
+              kind: TransactionKind.income,
+            ),
           ),
         ),
         wrongKind,
@@ -159,19 +196,19 @@ void main() {
       expect(
         left(
           await save(
-            ExpenseDraft(amount: const Money(1), categoryId: salary, date: today),
+            ExpenseDraft(amount: const Money(1), walletId: me, categoryId: salary, date: today),
             id: id,
           ),
         ),
         wrongKind,
       );
-      expect(right(await repository.getById(id)).categoryId, food);
+      expect((await expense(id)).categoryId, food);
     });
   });
 
   test('the list stream updates after a change', () async {
     final counts = <int>[];
-    final sub = repository.watchExpenses(october, limit: 50).listen((r) => counts.add(right(r).length));
+    final sub = repository.watchEntries(october, limit: 50).listen((r) => counts.add(right(r).length));
     await pumpEventQueue();
     await add(100, today);
     await pumpEventQueue();
@@ -183,23 +220,182 @@ void main() {
     final id = await add(100, today);
     right(
       await save(
-        ExpenseDraft(amount: const Money(999), categoryId: transport, date: today),
+        ExpenseDraft(amount: const Money(999), walletId: me, categoryId: transport, date: today),
         id: id,
       ),
     );
-    final updated = right(await repository.getById(id));
+    final updated = await expense(id);
     expect((updated.amount, updated.categoryId), (const Money(999), transport));
 
     right(await repository.delete(id));
     expect(left(await repository.delete(id)), const Failure.notFound());
     expect(
-      left(await repository.update(id, ExpenseDraft(amount: const Money(1), categoryId: food, date: today))),
+      left(
+        await repository.update(
+          id,
+          ExpenseDraft(amount: const Money(1), walletId: me, categoryId: food, date: today),
+        ),
+      ),
       const Failure.notFound(),
     );
   });
 
   test('an unknown category is a constraint failure', () async {
-    final result = await save(ExpenseDraft(amount: const Money(1), categoryId: 999, date: today));
+    final result = await save(ExpenseDraft(amount: const Money(1), walletId: me, categoryId: 999, date: today));
     expect(left(result), isA<ConstraintFailure>());
+  });
+
+  group('wallets', () {
+    test('a row belongs to its wallet, and can move to another', () async {
+      final id = await add(100, today, wallet: son);
+      expect((await expense(id)).walletId, son);
+
+      right(
+        await save(
+          ExpenseDraft(amount: const Money(100), walletId: me, categoryId: food, date: today),
+          id: id,
+        ),
+      );
+      expect((await expense(id)).walletId, me);
+    });
+
+    test('an unknown wallet is a constraint failure', () async {
+      final result = await save(ExpenseDraft(amount: const Money(1), walletId: 999, categoryId: food, date: today));
+      expect(left(result), isA<ConstraintFailure>());
+    });
+
+    test('rows, totals and daily totals follow the wallet filter; no wallet is All wallets', () async {
+      final mine = await add(1000, today);
+      final his = await add(250, today, wallet: son);
+      await addIncome(500000, today, wallet: son);
+
+      final sonOnly = october.copyWith(walletId: son);
+      expect((await entries(october)).map((e) => e.id), hasLength(3));
+      expect((await entries(october.copyWith(walletId: me))).map((e) => e.id), [mine]);
+      expect((await entries(sonOnly)).map((e) => e.id), contains(his));
+      expect(
+        right(await repository.watchTotals(sonOnly).first),
+        const PeriodTotals(income: Money(500000), spent: Money(250)),
+      );
+      expect(
+        right(await repository.watchTotals(october).first),
+        const PeriodTotals(income: Money(500000), spent: Money(1250)),
+      );
+      expect(right(await repository.watchDailyTotals(october.copyWith(walletId: me)).first), {
+        today: const PeriodTotals(income: Money.zero, spent: Money(1000)),
+      });
+    });
+
+    test('search and the category filter work inside a wallet', () async {
+      await add(100, today, title: 'Pocket money', wallet: son);
+      final hers = await add(200, today, title: 'Pocket money');
+
+      expect((await entries(october.copyWith(walletId: me, search: 'pocket'))).map((e) => e.id), [hers]);
+      expect(await entries(october.copyWith(walletId: son, categoryId: transport)), isEmpty);
+    });
+  });
+
+  group('transfers', () {
+    late int transferId;
+
+    Future<List<(int, int?)>> idsAndWallets(ExpenseFilter filter) async => [
+      for (final e in await entries(filter)) (e.id, e is TransferEntry ? e.walletId : null),
+    ];
+
+    setUp(() async {
+      await addIncome(500000, LocalDate(2026, 10, 1));
+      await add(1000, LocalDate(2026, 10, 2));
+      transferId = await addTransferRows(db, from: me, to: son, amountMinor: 50000, date: today, note: 'Pocket money');
+    });
+
+    test('a transfer is one entry in All wallets (its out leg), with both wallets', () async {
+      final rows = await entries(october);
+      expect(rows, hasLength(3));
+      final transfer = rows.whereType<TransferEntry>().single;
+      expect(transfer.transfer.id, transferId);
+      expect((transfer.transfer.fromWalletId, transfer.transfer.toWalletId), (me, son));
+      expect((transfer.transfer.amount, transfer.transfer.note), (const Money(50000), 'Pocket money'));
+      expect(transfer.walletId, me);
+    });
+
+    test("in a single wallet it is that wallet's own leg", () async {
+      final mine = (await entries(october.copyWith(walletId: me))).whereType<TransferEntry>().single;
+      final his = (await entries(october.copyWith(walletId: son))).whereType<TransferEntry>().single;
+      expect(mine.walletId, me);
+      expect(his.walletId, son);
+      expect(mine.id, isNot(his.id));
+      // Both describe the same transfer, from Me to Son.
+      expect((mine.transfer.id, mine.transfer.fromWalletId, mine.transfer.toWalletId), (transferId, me, son));
+      expect((his.transfer.id, his.transfer.fromWalletId, his.transfer.toWalletId), (transferId, me, son));
+    });
+
+    test('a transfer is in no income or spending total, in any view', () async {
+      expect(
+        right(await repository.watchTotals(october).first),
+        const PeriodTotals(income: Money(500000), spent: Money(1000)),
+      );
+      expect(right(await repository.watchTotals(october.copyWith(walletId: me)).first).income, const Money(500000));
+      expect(right(await repository.watchTotals(october.copyWith(walletId: me)).first).spent, const Money(1000));
+      expect(right(await repository.watchTotals(october.copyWith(walletId: son)).first).income, Money.zero);
+      expect(right(await repository.watchTotals(october.copyWith(walletId: son)).first).spent, Money.zero);
+    });
+
+    test('it changes balances: out of one wallet, into the other, and nothing over all wallets', () async {
+      final all = right(await repository.watchTotals(october).first);
+      final mine = right(await repository.watchTotals(october.copyWith(walletId: me)).first);
+      final his = right(await repository.watchTotals(october.copyWith(walletId: son)).first);
+
+      expect(mine.transfersNet, const Money(-50000));
+      expect(mine.balance, const Money(449000)); // 500000 − 1000 − 50000
+      expect(his.transfersNet, const Money(50000));
+      expect(his.balance, const Money(50000));
+      expect(all.transfersNet, Money.zero);
+      expect(all.balance, const Money(499000));
+      expect(mine.balance + his.balance, all.balance, reason: 'no double count in All wallets');
+    });
+
+    test('daily totals count transfers in the net, and a kind or category filter leaves them out', () async {
+      final daily = right(await repository.watchDailyTotals(october.copyWith(walletId: son)).first);
+      expect(daily[today], const PeriodTotals(income: Money.zero, spent: Money.zero, transfersNet: Money(50000)));
+      expect(right(await repository.watchDailyTotals(october).first)[today]?.transfersNet, Money.zero);
+
+      expect(await entries(october.copyWith(kind: TransactionKind.expense)), hasLength(1));
+      expect(await entries(october.copyWith(kind: TransactionKind.income)), hasLength(1));
+      expect(await entries(october.copyWith(categoryId: food)), hasLength(1));
+      final expenseTotals = right(
+        await repository.watchTotals(october.copyWith(walletId: son, kind: TransactionKind.expense)).first,
+      );
+      expect(expenseTotals, PeriodTotals.zero);
+    });
+
+    test('search finds a transfer by its note', () async {
+      expect((await entries(october.copyWith(search: 'pocket'))).whereType<TransferEntry>(), hasLength(1));
+      expect(await entries(october.copyWith(search: 'rent')), isEmpty);
+    });
+
+    test('getEntry on either leg returns the transfer', () async {
+      final legs = await idsAndWallets(october.copyWith(walletId: me));
+      final outLeg = legs.firstWhere((l) => l.$2 != null).$1;
+      final inLeg = (await idsAndWallets(october.copyWith(walletId: son))).single.$1;
+
+      for (final leg in [outLeg, inLeg]) {
+        final entry = right(await repository.getEntry(leg));
+        expect(entry, isA<TransferEntry>());
+        expect((entry as TransferEntry).transfer.id, transferId);
+        expect(entry.rowId, leg);
+      }
+    });
+
+    test('deleting either leg deletes the whole transfer', () async {
+      final inLeg = (await idsAndWallets(october.copyWith(walletId: son))).single.$1;
+
+      right(await repository.delete(inLeg));
+
+      expect(await entries(october.copyWith(walletId: son)), isEmpty);
+      expect((await entries(october.copyWith(walletId: me))).whereType<TransferEntry>(), isEmpty);
+      expect(await db.select(db.transfersTable).get(), isEmpty);
+      expect(await db.select(db.expensesTable).get(), hasLength(2));
+      expect(left(await repository.delete(inLeg)), const Failure.notFound());
+    });
   });
 }

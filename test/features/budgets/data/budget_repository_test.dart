@@ -17,12 +17,15 @@ import 'package:masroofy/features/budgets/domain/usecases/save_budget.dart';
 import 'package:masroofy/features/budgets/domain/usecases/take_new_budget_alerts.dart';
 import 'package:masroofy/features/categories/data/datasources/category_local_datasource.dart';
 
+import '../../../helpers/db_rows.dart';
+
 void main() {
   late AppDatabase db;
   late BudgetRepositoryImpl repository;
   late SaveBudget save;
   late int food;
   late int transport;
+  late int me;
   // Friday; in Egypt the week runs Saturday Oct 3 – Friday Oct 9.
   final today = LocalDate(2026, 10, 9);
   final egyptWeekStart = DateUtilsHelper.firstWeekdayFor(languageCode: 'ar', countryCode: 'EG');
@@ -32,6 +35,7 @@ void main() {
     db = AppDatabase(NativeDatabase.memory());
     repository = BudgetRepositoryImpl(BudgetLocalDatasource(db));
     save = SaveBudget(repository);
+    me = await db.seedDefaultWallet();
     Future<int> seed(String key) async =>
         (await (db.select(db.categoriesTable)..where((c) => c.seedKey.equals(key))).getSingle()).id;
     food = await seed('food');
@@ -43,7 +47,7 @@ void main() {
 
   Future<void> spend(int minor, int category, LocalDate date) => db
       .into(db.expensesTable)
-      .insert(ExpensesTableCompanion.insert(amountMinor: minor, categoryId: category, date: date));
+      .insert(ExpensesTableCompanion.insert(amountMinor: minor, walletId: me, categoryId: Value(category), date: date));
 
   Future<List<BudgetProgress>> progress() async =>
       right(await repository.watchProgress(today, firstWeekday: egyptWeekStart).first);
@@ -71,6 +75,22 @@ void main() {
     final [foodProgress, transportProgress] = await progress();
     expect((foodProgress.spent, foodProgress.periodStart), (const Money(2000), LocalDate(2026, 10, 3)));
     expect((transportProgress.spent, transportProgress.periodStart), (const Money(4000), LocalDate(2026, 10, 1)));
+  });
+
+  test('budgets are global: spending in every wallet counts, and transfers never do', () async {
+    right(await save(BudgetDraft(categoryId: food, limit: const Money(10000), period: BudgetPeriod.monthly)));
+    final son = await addWallet(db, 'Son');
+    await spend(1000, food, today);
+    await db
+        .into(db.expensesTable)
+        .insert(
+          ExpensesTableCompanion.insert(amountMinor: 700, walletId: son, categoryId: Value(food), date: today),
+        );
+    expect((await progress()).single.spent, const Money(1700));
+
+    // Moving money between wallets is not spending.
+    await addTransferRows(db, from: me, to: son, amountMinor: 50000, date: today);
+    expect((await progress()).single.spent, const Money(1700));
   });
 
   test('progress re-emits when an expense is added', () async {

@@ -10,21 +10,28 @@ import 'package:masroofy/features/expenses/domain/entities/expense_filter.dart';
 import 'package:masroofy/features/expenses/domain/repositories/i_expense_repository.dart';
 import 'package:masroofy/features/expenses/domain/usecases/delete_expense.dart';
 import 'package:masroofy/features/expenses/presentation/cubits/expense_list_state.dart';
+import 'package:masroofy/features/wallets/domain/repositories/i_wallet_repository.dart';
 
 export 'package:masroofy/features/expenses/presentation/cubits/expense_list_state.dart';
 
-/// The home screen: a live, filterable, paged list of transactions (expenses
-/// and income) with period totals.
+/// The home screen: a live, filterable, paged list of transactions (expenses,
+/// income and transfers) with period totals, for one wallet or All wallets.
 class ExpenseListCubit extends Cubit<ExpenseListState> {
   ExpenseListCubit(
     this._expenses,
     this._categories,
+    this._wallets,
     this._deleteExpense, {
     required this.firstWeekday,
+    int? walletId,
     LocalDate Function()? today,
   }) : _today = today ?? LocalDate.today,
        super(
-         ExpenseListState(period: ExpensePeriod.month, range: DateRange.monthToDate((today ?? LocalDate.today)())),
+         ExpenseListState(
+           period: ExpensePeriod.month,
+           range: DateRange.monthToDate((today ?? LocalDate.today)()),
+           walletId: walletId,
+         ),
        );
 
   static const pageSize = 50;
@@ -32,6 +39,7 @@ class ExpenseListCubit extends Cubit<ExpenseListState> {
 
   final IExpenseRepository _expenses;
   final ICategoryRepository _categories;
+  final IWalletRepository _wallets;
   final DeleteExpense _deleteExpense;
   final LocalDate Function() _today;
 
@@ -41,14 +49,20 @@ class ExpenseListCubit extends Cubit<ExpenseListState> {
   int _limit = pageSize;
   Timer? _searchTimer;
   StreamSubscription<void>? _categoriesSub;
+  StreamSubscription<void>? _walletsSub;
   final List<StreamSubscription<void>> _filterSubs = [];
   StreamSubscription<void>? _pageSub;
 
   /// Ids whose delete was sent (successfully or in flight).
   final Set<int> _committed = {};
 
-  ExpenseFilter get _filter =>
-      ExpenseFilter(range: state.range, kind: state.kind, categoryId: state.categoryId, search: state.search);
+  ExpenseFilter get _filter => ExpenseFilter(
+    range: state.range,
+    walletId: state.walletId,
+    kind: state.kind,
+    categoryId: state.categoryId,
+    search: state.search,
+  );
 
   void load() {
     unawaited(_categoriesSub?.cancel());
@@ -60,7 +74,19 @@ class ExpenseListCubit extends Cubit<ExpenseListState> {
             (categories) => emit(state.copyWith(categories: {for (final c in categories) c.id: c})),
           ),
         );
+    // The switcher and the rows show each wallet's balance this month.
+    unawaited(_walletsSub?.cancel());
+    _walletsSub = _wallets
+        .watchSummaries(DateRange.monthToDate(_today()))
+        .listen((result) => result.match(_onLoadFailure, (wallets) => emit(state.copyWith(wallets: wallets))));
     _subscribe();
+  }
+
+  /// Views one wallet, or All wallets (null). Rows, totals, filters and
+  /// search follow.
+  void selectWallet(int? walletId) {
+    if (walletId == state.walletId) return;
+    _apply(state.copyWith(walletId: walletId));
   }
 
   /// This week / this month, both up to today.
@@ -136,19 +162,19 @@ class ExpenseListCubit extends Cubit<ExpenseListState> {
     unawaited(_pageSub?.cancel());
     final limit = _limit;
     _pageSub = _expenses
-        .watchExpenses(_filter, limit: limit)
+        .watchEntries(_filter, limit: limit)
         .listen(
           (result) => result.match(
             _onLoadFailure,
-            (expenses) => emit(
+            (entries) => emit(
               state.copyWith(
                 status: ExpenseListStatus.loaded,
-                loaded: expenses,
-                hasMore: expenses.length == limit,
+                loaded: entries,
+                hasMore: entries.length == limit,
                 // A deleted row stays hidden until the stream has dropped it.
                 pendingDelete: {
                   for (final id in state.pendingDelete)
-                    if (!_committed.contains(id) || expenses.any((e) => e.id == id)) id,
+                    if (!_committed.contains(id) || entries.any((e) => e.id == id)) id,
                 },
                 loadFailure: null,
               ),
@@ -193,6 +219,7 @@ class ExpenseListCubit extends Cubit<ExpenseListState> {
     final pending = state.pendingDelete.difference(_committed);
     await Future.wait([for (final id in pending) _deleteExpense(id)]);
     await _categoriesSub?.cancel();
+    await _walletsSub?.cancel();
     await _pageSub?.cancel();
     await Future.wait([for (final sub in _filterSubs) sub.cancel()]);
     return super.close();

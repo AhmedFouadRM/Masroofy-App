@@ -12,6 +12,7 @@ abstract class RecurringDraft with _$RecurringDraft {
   const factory RecurringDraft({
     required String title,
     required Money amount,
+    required int walletId,
     required int categoryId,
     required RecurringFrequency frequency,
 

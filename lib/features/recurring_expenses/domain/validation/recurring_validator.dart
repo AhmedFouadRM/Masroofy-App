@@ -16,6 +16,9 @@ abstract final class RecurringValidator {
     if (!draft.amount.isPositive) {
       return const ValidationFailure(field: 'amount', reason: ValidationReason.mustBePositive);
     }
+    if (draft.walletId <= 0) {
+      return const ValidationFailure(field: 'walletId', reason: ValidationReason.required);
+    }
     if (draft.categoryId <= 0) {
       return const ValidationFailure(field: 'categoryId', reason: ValidationReason.required);
     }

@@ -23,6 +23,9 @@ abstract final class ExpenseValidator {
     if (!expense.amount.isPositive) {
       return const ValidationFailure(field: 'amount', reason: ValidationReason.mustBePositive);
     }
+    if (expense.walletId <= 0) {
+      return const ValidationFailure(field: 'walletId', reason: ValidationReason.required);
+    }
     if (expense.categoryId <= 0) {
       return const ValidationFailure(field: 'categoryId', reason: ValidationReason.required);
     }

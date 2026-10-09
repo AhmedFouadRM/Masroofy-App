@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart' show ThemeMode;
+import 'package:masroofy/core/constants/app_constants.dart';
 import 'package:masroofy/core/database/app_database.dart';
 import 'package:masroofy/core/domain/local_date.dart';
 import 'package:masroofy/core/utils/currency_utils.dart';
@@ -9,14 +10,18 @@ import 'package:masroofy/features/settings/domain/entities/backup_preview.dart';
 /// Every row of the database, as read for a backup or ready to be restored.
 class BackupSnapshot {
   const BackupSnapshot({
+    required this.wallets,
     required this.categories,
     required this.recurring,
+    required this.transfers,
     required this.expenses,
     required this.budgets,
   });
 
+  final List<WalletsTableData> wallets;
   final List<CategoriesTableData> categories;
   final List<RecurringExpensesTableData> recurring;
+  final List<TransfersTableData> transfers;
   final List<ExpensesTableData> expenses;
   final List<BudgetsTableData> budgets;
 }
@@ -24,11 +29,19 @@ class BackupSnapshot {
 /// The preferences a backup carries. App Lock and the PIN are deliberately
 /// absent: restoring a lock flag without its PIN would lock the user out.
 class BackupPreferences {
-  const BackupPreferences({required this.currencyCode, required this.themeMode, required this.westernDigits});
+  const BackupPreferences({
+    required this.currencyCode,
+    required this.themeMode,
+    required this.westernDigits,
+    required this.defaultWalletId,
+  });
 
   final String currencyCode;
   final String themeMode;
   final bool westernDigits;
+
+  /// The wallet new transactions go to when All wallets is viewed.
+  final int defaultWalletId;
 }
 
 typedef DecodedBackup = ({BackupSnapshot snapshot, BackupPreferences preferences, DateTime exportedAt});
@@ -36,23 +49,26 @@ typedef DecodedBackup = ({BackupSnapshot snapshot, BackupPreferences preferences
 /// The versioned backup file (Settings PRD → Export Backup).
 ///
 /// ```json
-/// {"format":"masroofy-backup","version":2,"exportedAt":"…Z",
-///  "preferences":{"currency_code":"EGP","theme_mode":"system","western_digits":false},
-///  "categories":[…],"recurringExpenses":[…],"expenses":[…],"budgets":[…]}
+/// {"format":"masroofy-backup","version":3,"exportedAt":"…Z",
+///  "preferences":{"currency_code":"EGP","theme_mode":"system","western_digits":false,"default_wallet_id":1},
+///  "wallets":[…],"categories":[…],"recurringExpenses":[…],"transfers":[…],"expenses":[…],"budgets":[…]}
 /// ```
 ///
 /// Version 2 adds each category's `kind` (`expense` or `income`); a version 1
-/// file has none and every category is an expense category. Amounts are
-/// integer minor units in the file's `currency_code`. [decode]
+/// file has none and every category is an expense category. Version 3 adds the
+/// wallets, the default wallet, the transfers and each row's `walletId`,
+/// `transferId` and `direction`; an older file restores into one wallet, "Me".
+/// Amounts are integer minor units in the file's `currency_code`. [decode]
 /// checks everything (types, ranges, references, uniqueness) and throws a
 /// [FormatException] on the first problem, so nothing is written from a bad file.
 abstract final class BackupCodec {
   static const format = 'masroofy-backup';
-  static const version = 2;
+  static const version = 3;
 
   static const _frequencies = ['daily', 'weekly', 'monthly', 'yearly'];
   static const _periods = ['weekly', 'monthly'];
   static const _kinds = ['expense', 'income'];
+  static const _directions = ['out', 'in'];
 
   static String encode(BackupSnapshot snapshot, BackupPreferences preferences, {required DateTime exportedAt}) =>
       jsonEncode({
@@ -63,7 +79,21 @@ abstract final class BackupCodec {
           'currency_code': preferences.currencyCode,
           'theme_mode': preferences.themeMode,
           'western_digits': preferences.westernDigits,
+          'default_wallet_id': preferences.defaultWalletId,
         },
+        'wallets': [
+          for (final w in snapshot.wallets)
+            {
+              'id': w.id,
+              'seedKey': w.seedKey,
+              'name': w.name,
+              'icon': w.icon,
+              'color': w.color,
+              'sortOrder': w.sortOrder,
+              'createdAt': _time(w.createdAt),
+              'updatedAt': _time(w.updatedAt),
+            },
+        ],
         'categories': [
           for (final c in snapshot.categories)
             {
@@ -85,6 +115,7 @@ abstract final class BackupCodec {
               'id': r.id,
               'title': r.title,
               'amountMinor': r.amountMinor,
+              'walletId': r.walletId,
               'categoryId': r.categoryId,
               'frequency': r.frequency,
               'startDate': r.startDate.toIso(),
@@ -94,17 +125,24 @@ abstract final class BackupCodec {
               'updatedAt': _time(r.updatedAt),
             },
         ],
+        'transfers': [
+          for (final t in snapshot.transfers)
+            {'id': t.id, 'createdAt': _time(t.createdAt), 'updatedAt': _time(t.updatedAt)},
+        ],
         'expenses': [
           for (final e in snapshot.expenses)
             {
               'id': e.id,
               'title': e.title,
               'amountMinor': e.amountMinor,
+              'walletId': e.walletId,
               'categoryId': e.categoryId,
               'date': e.date.toIso(),
               'note': e.note,
               'recurringExpenseId': e.recurringExpenseId,
               'occurrenceDate': e.occurrenceDate?.toIso(),
+              'transferId': e.transferId,
+              'direction': e.direction,
               'createdAt': _time(e.createdAt),
               'updatedAt': _time(e.updatedAt),
             },
@@ -141,17 +179,52 @@ abstract final class BackupCodec {
       throw const FormatException('Unsupported version');
     }
 
-    final preferences = _preferences(_get<Map<String, dynamic>>(root, 'preferences'));
+    final exportedAt = DateTime.parse(_get<String>(root, 'exportedAt'));
+    // A file before version 3 has no wallets: everything goes into "Me".
+    final wallets = fileVersion < 3 ? [_meWallet(exportedAt)] : _list(root, 'wallets').map(_wallet).toList();
+    final walletIds = _uniqueIds(wallets.map((w) => w.id), 'wallet');
+    if (wallets.isEmpty) throw const FormatException('A backup needs a wallet');
+    final seedKeys = wallets.map((w) => w.seedKey).whereType<String>().toList();
+    if (seedKeys.toSet().length != seedKeys.length) throw const FormatException('Duplicate wallet seedKey');
+    final names = wallets.map((w) => w.name?.toLowerCase()).whereType<String>().toList();
+    if (names.toSet().length != names.length) throw const FormatException('Duplicate wallet name');
+    final meId = wallets.first.id;
+
+    final preferences = _preferences(
+      _get<Map<String, dynamic>>(root, 'preferences'),
+      fileVersion: fileVersion,
+      walletIds: walletIds,
+      meId: meId,
+    );
     final categories = _list(root, 'categories').map((m) => _category(m, fileVersion: fileVersion)).toList();
     final categoryIds = _uniqueIds(categories.map((c) => c.id), 'category');
-    final seedKeys = categories.map((c) => c.seedKey).whereType<String>().toList();
-    if (seedKeys.toSet().length != seedKeys.length) throw const FormatException('Duplicate seedKey');
+    final categorySeedKeys = categories.map((c) => c.seedKey).whereType<String>().toList();
+    if (categorySeedKeys.toSet().length != categorySeedKeys.length) throw const FormatException('Duplicate seedKey');
 
-    final recurring = _list(root, 'recurringExpenses').map((m) => _recurring(m, categoryIds)).toList();
+    final recurring = _list(
+      root,
+      'recurringExpenses',
+    ).map((m) => _recurring(m, categoryIds, walletIds, fileVersion: fileVersion, meId: meId)).toList();
     final recurringIds = _uniqueIds(recurring.map((r) => r.id), 'recurring');
 
-    final expenses = _list(root, 'expenses').map((m) => _expense(m, categoryIds, recurringIds)).toList();
+    final transfers = fileVersion < 3 ? <TransfersTableData>[] : _list(root, 'transfers').map(_transfer).toList();
+    final transferIds = _uniqueIds(transfers.map((t) => t.id), 'transfer');
+
+    final expenses = _list(root, 'expenses')
+        .map(
+          (m) => _expense(
+            m,
+            categoryIds,
+            recurringIds,
+            walletIds,
+            transferIds,
+            fileVersion: fileVersion,
+            meId: meId,
+          ),
+        )
+        .toList();
     _uniqueIds(expenses.map((e) => e.id), 'expense');
+    _checkTransferLegs(transferIds, expenses);
     final occurrences = {
       for (final e in expenses)
         if (e.recurringExpenseId != null) (e.recurringExpenseId, e.occurrenceDate),
@@ -167,9 +240,16 @@ abstract final class BackupCodec {
     }
 
     return (
-      snapshot: BackupSnapshot(categories: categories, recurring: recurring, expenses: expenses, budgets: budgets),
+      snapshot: BackupSnapshot(
+        wallets: wallets,
+        categories: categories,
+        recurring: recurring,
+        transfers: transfers,
+        expenses: expenses,
+        budgets: budgets,
+      ),
       preferences: preferences,
-      exportedAt: DateTime.parse(_get<String>(root, 'exportedAt')),
+      exportedAt: exportedAt,
     );
   }
 
@@ -241,16 +321,77 @@ abstract final class BackupCodec {
 
   // ── Rows ──
 
-  static BackupPreferences _preferences(Map<String, dynamic> map) {
+  static BackupPreferences _preferences(
+    Map<String, dynamic> map, {
+    required int fileVersion,
+    required Set<int> walletIds,
+    required int meId,
+  }) {
     final currencyCode = _get<String>(map, 'currency_code');
     final themeMode = _get<String>(map, 'theme_mode');
     if (CurrencyUtils.byCode(currencyCode) == null) throw const FormatException('Unknown currency');
     if (!ThemeMode.values.asNameMap().containsKey(themeMode)) throw const FormatException('Unknown theme');
+    final defaultWalletId = fileVersion < 3 ? meId : _get<int>(map, 'default_wallet_id');
+    if (!walletIds.contains(defaultWalletId)) throw const FormatException('Unknown default wallet');
     return BackupPreferences(
       currencyCode: currencyCode,
       themeMode: themeMode,
       westernDigits: _get<bool>(map, 'western_digits'),
+      defaultWalletId: defaultWalletId,
     );
+  }
+
+  /// The one wallet a version 1 or 2 backup restores into.
+  static WalletsTableData _meWallet(DateTime exportedAt) => WalletsTableData(
+    id: 1,
+    seedKey: DefaultWallets.meSeedKey,
+    icon: DefaultWallets.meIcon,
+    color: DefaultWallets.meColor,
+    sortOrder: 0,
+    createdAt: exportedAt,
+    updatedAt: exportedAt,
+  );
+
+  static WalletsTableData _wallet(Map<String, dynamic> map) {
+    final seedKey = _textOrNull(map, 'seedKey', max: 50);
+    final name = _textOrNull(map, 'name', max: AppConstants.maxWalletNameLength);
+    // Exactly one of the two (the table's CHECK constraint).
+    if ((seedKey == null) == (name == null)) throw const FormatException('A wallet needs a seedKey or a name');
+    return WalletsTableData(
+      id: _get<int>(map, 'id'),
+      seedKey: seedKey,
+      name: name,
+      icon: _text(map, 'icon', min: 1, max: 100),
+      color: _get<int>(map, 'color'),
+      sortOrder: _get<int>(map, 'sortOrder'),
+      createdAt: _timestamp(map, 'createdAt'),
+      updatedAt: _timestamp(map, 'updatedAt'),
+    );
+  }
+
+  static TransfersTableData _transfer(Map<String, dynamic> map) => TransfersTableData(
+    id: _get<int>(map, 'id'),
+    createdAt: _timestamp(map, 'createdAt'),
+    updatedAt: _timestamp(map, 'updatedAt'),
+  );
+
+  /// Every transfer is two legs: an out and an in, in two wallets, with one
+  /// amount and one date.
+  static void _checkTransferLegs(Set<int> transferIds, List<ExpensesTableData> expenses) {
+    final legs = <int, List<ExpensesTableData>>{};
+    for (final e in expenses) {
+      if (e.transferId case final id?) (legs[id] ??= []).add(e);
+    }
+    for (final id in transferIds) {
+      final pair = legs[id] ?? const <ExpensesTableData>[];
+      if (pair.length != 2 || pair.map((e) => e.direction).toSet().length != 2) {
+        throw const FormatException('A transfer needs an out leg and an in leg');
+      }
+      final [a, b] = pair;
+      if (a.walletId == b.walletId || a.amountMinor != b.amountMinor || a.date != b.date) {
+        throw const FormatException('The legs of a transfer disagree');
+      }
+    }
   }
 
   static CategoriesTableData _category(Map<String, dynamic> map, {required int fileVersion}) {
@@ -275,15 +416,24 @@ abstract final class BackupCodec {
     );
   }
 
-  static RecurringExpensesTableData _recurring(Map<String, dynamic> map, Set<int> categoryIds) {
+  static RecurringExpensesTableData _recurring(
+    Map<String, dynamic> map,
+    Set<int> categoryIds,
+    Set<int> walletIds, {
+    required int fileVersion,
+    required int meId,
+  }) {
     final categoryId = _get<int>(map, 'categoryId');
+    final walletId = fileVersion < 3 ? meId : _get<int>(map, 'walletId');
     final frequency = _get<String>(map, 'frequency');
     if (!categoryIds.contains(categoryId)) throw const FormatException('Unknown category');
+    if (!walletIds.contains(walletId)) throw const FormatException('Unknown wallet');
     if (!_frequencies.contains(frequency)) throw const FormatException('Unknown frequency');
     return RecurringExpensesTableData(
       id: _get<int>(map, 'id'),
       title: _text(map, 'title', min: 1, max: 100),
       amountMinor: _positive(map, 'amountMinor'),
+      walletId: walletId,
       categoryId: categoryId,
       frequency: frequency,
       startDate: _date(map, 'startDate'),
@@ -294,22 +444,46 @@ abstract final class BackupCodec {
     );
   }
 
-  static ExpensesTableData _expense(Map<String, dynamic> map, Set<int> categoryIds, Set<int> recurringIds) {
-    final categoryId = _get<int>(map, 'categoryId');
+  static ExpensesTableData _expense(
+    Map<String, dynamic> map,
+    Set<int> categoryIds,
+    Set<int> recurringIds,
+    Set<int> walletIds,
+    Set<int> transferIds, {
+    required int fileVersion,
+    required int meId,
+  }) {
+    final categoryId = _getOrNull<int>(map, 'categoryId');
     final recurringId = _getOrNull<int>(map, 'recurringExpenseId');
-    if (!categoryIds.contains(categoryId)) throw const FormatException('Unknown category');
+    final walletId = fileVersion < 3 ? meId : _get<int>(map, 'walletId');
+    final transferId = fileVersion < 3 ? null : _getOrNull<int>(map, 'transferId');
+    final direction = fileVersion < 3 ? null : _getOrNull<String>(map, 'direction');
+    if (!walletIds.contains(walletId)) throw const FormatException('Unknown wallet');
     if (recurringId != null && !recurringIds.contains(recurringId)) {
       throw const FormatException('Unknown recurring template');
+    }
+    // A category on every row except transfer legs, and a direction on legs only
+    // (the table's CHECK constraints).
+    if (transferId == null) {
+      if (categoryId == null || !categoryIds.contains(categoryId)) throw const FormatException('Unknown category');
+      if (direction != null) throw const FormatException('Only a transfer leg has a direction');
+    } else {
+      if (!transferIds.contains(transferId)) throw const FormatException('Unknown transfer');
+      if (categoryId != null) throw const FormatException('A transfer leg has no category');
+      if (!_directions.contains(direction)) throw const FormatException('Unknown direction');
     }
     return ExpensesTableData(
       id: _get<int>(map, 'id'),
       title: _textOrNull(map, 'title', max: 100),
       amountMinor: _positive(map, 'amountMinor'),
+      walletId: walletId,
       categoryId: categoryId,
       date: _date(map, 'date'),
       note: _textOrNull(map, 'note', max: 500, allowEmpty: true),
       recurringExpenseId: recurringId,
       occurrenceDate: _dateOrNull(map, 'occurrenceDate'),
+      transferId: transferId,
+      direction: direction,
       createdAt: _timestamp(map, 'createdAt'),
       updatedAt: _timestamp(map, 'updatedAt'),
     );

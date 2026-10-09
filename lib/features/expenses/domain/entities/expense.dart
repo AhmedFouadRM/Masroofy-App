@@ -10,6 +10,7 @@ abstract class Expense with _$Expense {
   const factory Expense({
     required int id,
     required Money amount,
+    required int walletId,
     required int categoryId,
     required LocalDate date,
     required DateTime createdAt,

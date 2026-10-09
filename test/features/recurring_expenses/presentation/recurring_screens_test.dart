@@ -14,6 +14,8 @@ import 'package:masroofy/features/recurring_expenses/presentation/cubits/recurri
 import 'package:masroofy/features/recurring_expenses/presentation/cubits/recurring_list_cubit.dart';
 import 'package:masroofy/features/recurring_expenses/presentation/screens/recurring_form_screen.dart';
 import 'package:masroofy/features/recurring_expenses/presentation/screens/recurring_list_screen.dart';
+import 'package:masroofy/features/wallets/domain/entities/wallet.dart';
+import 'package:masroofy/features/wallets/domain/entities/wallet_summary.dart';
 import 'package:mocktail/mocktail.dart';
 
 import '../../../helpers/pump_app.dart';
@@ -56,6 +58,7 @@ RecurringExpense _template(
   id: id,
   title: title,
   amount: const Money(500000),
+  walletId: 1,
   categoryId: 1,
   frequency: RecurringFrequency.monthly,
   startDate: _today,
@@ -65,6 +68,26 @@ RecurringExpense _template(
   updatedAt: _epoch,
   kind: kind,
 );
+
+WalletSummary _wallet(int id, {String? name}) => WalletSummary(
+  wallet: Wallet(
+    id: id,
+    seedKey: id == 1 ? 'me' : null,
+    name: id == 1 ? null : (name ?? 'Wallet $id'),
+    icon: 'person',
+    color: 0xFF059669,
+    sortOrder: id,
+    createdAt: _epoch,
+    updatedAt: _epoch,
+  ),
+  balance: Money.zero,
+  transactionCount: 0,
+  transferCount: 0,
+  templateCount: 0,
+);
+
+final WalletSummary _me = _wallet(1);
+final WalletSummary _son = _wallet(2, name: 'Son');
 
 void main() {
   group('RecurringListScreen', () {
@@ -224,6 +247,39 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.text('Salary'), findsOneWidget);
       expect(find.text('Bills'), findsNothing);
+    });
+
+    testWidgets('the Wallet field comes after Category, preselected, and opens the wallet sheet', (tester) async {
+      await pump(tester, ready.copyWith(wallets: [_me, _son], walletId: 1, categoryId: 1));
+
+      expect(find.text('Wallet'), findsOneWidget);
+      expect(find.text('Me'), findsOneWidget);
+      expect(
+        tester.getTopLeft(find.text('Category')).dy,
+        lessThan(tester.getTopLeft(find.text('Wallet')).dy),
+      );
+
+      await tester.tap(find.text('Me'));
+      await tester.pumpAndSettle();
+      expect(find.text('Choose wallet'), findsOneWidget);
+      await tester.tap(find.text('Son'));
+      await tester.pumpAndSettle();
+      verify(() => cubit.walletSelected(2)).called(1);
+    });
+
+    testWidgets('the Wallet field in Arabic, and its required error', (tester) async {
+      when(() => cubit.state).thenReturn(
+        ready.copyWith(wallets: [_me], errors: {'walletId': ValidationReason.required}),
+      );
+      await pumpApp(
+        tester,
+        const RecurringFormScreen(),
+        locale: const Locale('ar'),
+        providers: [BlocProvider<RecurringFormCubit>.value(value: cubit)],
+      );
+
+      expect(find.text('محفظة'), findsOneWidget);
+      expect(find.text('هذا الحقل مطلوب'), findsOneWidget);
     });
 
     testWidgets('editing shows the active switch', (tester) async {

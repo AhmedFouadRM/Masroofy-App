@@ -25,8 +25,14 @@ class DataManagementCubit extends Cubit<DataManagementState> {
   final RestoreBackup _restoreBackup;
   final ClearAllData _clearAll;
 
-  Future<void> exportCsv({required Currency currency, required CategoryLabeler categoryLabel}) =>
-      _run(DataAction.exportCsv, () => _exportCsv(currency: currency, categoryLabel: categoryLabel));
+  Future<void> exportCsv({
+    required Currency currency,
+    required CategoryLabeler categoryLabel,
+    required WalletLabeler walletLabel,
+  }) => _run(
+    DataAction.exportCsv,
+    () => _exportCsv(currency: currency, categoryLabel: categoryLabel, walletLabel: walletLabel),
+  );
 
   Future<void> exportBackup() => _run(DataAction.exportBackup, _exportBackup.call);
 

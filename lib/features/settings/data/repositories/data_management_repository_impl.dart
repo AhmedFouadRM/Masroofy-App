@@ -25,18 +25,41 @@ class DataManagementRepositoryImpl implements IDataManagementRepository {
 
   @override
   Future<Either<Failure, List<ExpenseExportRow>>> loadExpenseExport() => guardDb(() async {
+    final rows = await _datasource.loadExpensesWithCategory();
+    final wallets = {for (final wallet in await _datasource.loadWallets()) wallet.id: wallet};
+    // A transfer is one row: its out leg, with the wallet of its in leg.
+    final inLegs = {
+      for (final (:expense, category: _) in rows)
+        if (expense.direction == 'in') expense.transferId!: expense.walletId,
+    };
     return [
-      for (final (:expense, :category) in await _datasource.loadExpensesWithCategory())
-        ExpenseExportRow(
-          date: expense.date,
-          amount: Money(expense.amountMinor),
-          kind: TransactionKind.values.byName(category.kind),
-          title: expense.title,
-          categorySeedKey: category.seedKey,
-          categoryName: category.name,
-          note: expense.note,
-          isRecurring: expense.occurrenceDate != null,
-        ),
+      for (final (:expense, :category) in rows)
+        if (expense.direction != 'in')
+          if (expense.transferId != null)
+            ExpenseExportRow(
+              date: expense.date,
+              amount: Money(expense.amountMinor),
+              isTransfer: true,
+              walletSeedKey: wallets[expense.walletId]?.seedKey,
+              walletName: wallets[expense.walletId]?.name,
+              toWalletSeedKey: wallets[inLegs[expense.transferId]]?.seedKey,
+              toWalletName: wallets[inLegs[expense.transferId]]?.name,
+              note: expense.note,
+              isRecurring: false,
+            )
+          else
+            ExpenseExportRow(
+              date: expense.date,
+              amount: Money(expense.amountMinor),
+              kind: TransactionKind.values.byName(category!.kind),
+              title: expense.title,
+              categorySeedKey: category.seedKey,
+              categoryName: category.name,
+              walletSeedKey: wallets[expense.walletId]?.seedKey,
+              walletName: wallets[expense.walletId]?.name,
+              note: expense.note,
+              isRecurring: expense.occurrenceDate != null,
+            ),
     ];
   });
 
@@ -49,6 +72,7 @@ class DataManagementRepositoryImpl implements IDataManagementRepository {
         currencyCode: _preferences.getString(PreferenceKeys.currencyCode) ?? CurrencyUtils.defaultCode,
         themeMode: _preferences.getString(PreferenceKeys.themeMode) ?? ThemeMode.system.name,
         westernDigits: _preferences.getBool(PreferenceKeys.westernDigits) ?? false,
+        defaultWalletId: _preferences.getInt(PreferenceKeys.defaultWalletId) ?? snapshot.wallets.first.id,
       ),
       exportedAt: _now(),
     );
@@ -79,13 +103,20 @@ class DataManagementRepositoryImpl implements IDataManagementRepository {
       await _preferences.setString(PreferenceKeys.currencyCode, backup.preferences.currencyCode);
       await _preferences.setString(PreferenceKeys.themeMode, backup.preferences.themeMode);
       await _preferences.setBool(PreferenceKeys.westernDigits, backup.preferences.westernDigits);
+      await _useWallet(backup.preferences.defaultWalletId);
       return unit;
     });
   }
 
   @override
   Future<Either<Failure, Unit>> clearAllData() => guardDb(() async {
-    await _datasource.clearAll();
+    await _useWallet(await _datasource.clearAll());
     return unit;
   });
+
+  /// Makes [walletId] the default wallet and the one viewed.
+  Future<void> _useWallet(int walletId) async {
+    await _preferences.setInt(PreferenceKeys.defaultWalletId, walletId);
+    await _preferences.setInt(PreferenceKeys.viewedWalletId, walletId);
+  }
 }

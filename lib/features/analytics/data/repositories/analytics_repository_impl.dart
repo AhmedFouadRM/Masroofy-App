@@ -15,20 +15,31 @@ class AnalyticsRepositoryImpl implements IAnalyticsRepository {
   final AnalyticsLocalDatasource _datasource;
 
   @override
-  Stream<Either<Failure, PeriodTotals>> watchTotals(DateRange range) =>
-      _datasource.watchTotals(range).map(_toTotals).guarded();
+  Stream<Either<Failure, PeriodTotals>> watchTotals(DateRange range, {int? walletId}) =>
+      _datasource.watchTotals(range, walletId: walletId).map(_toTotals).guarded();
 
   @override
-  Stream<Either<Failure, Map<int, Money>>> watchTotalsByCategory(DateRange range, TransactionKind kind) => _datasource
-      .watchTotalsByCategory(range, kind)
+  Stream<Either<Failure, Map<int, Money>>> watchTotalsByCategory(
+    DateRange range,
+    TransactionKind kind, {
+    int? walletId,
+  }) => _datasource
+      .watchTotalsByCategory(range, kind, walletId: walletId)
       .map((totals) => totals.map((id, minor) => MapEntry(id, Money(minor))))
       .guarded();
 
   @override
-  Stream<Either<Failure, Map<LocalDate, PeriodTotals>>> watchDailyTotals(DateRange range) => _datasource
-      .watchDailyTotals(range)
-      .map((totals) => totals.map((date, minor) => MapEntry(date, _toTotals(minor))))
+  Stream<Either<Failure, Map<int, PeriodTotals>>> watchTotalsByWallet(DateRange range) => _datasource
+      .watchTotalsByWallet(range)
+      .map((totals) => totals.map((id, minor) => MapEntry(id, _toTotals(minor))))
       .guarded();
+
+  @override
+  Stream<Either<Failure, Map<LocalDate, PeriodTotals>>> watchDailyTotals(DateRange range, {int? walletId}) =>
+      _datasource
+          .watchDailyTotals(range, walletId: walletId)
+          .map((totals) => totals.map((date, minor) => MapEntry(date, _toTotals(minor))))
+          .guarded();
 
   static PeriodTotals _toTotals(MinorTotals totals) =>
       PeriodTotals(income: Money(totals.income), spent: Money(totals.spent));

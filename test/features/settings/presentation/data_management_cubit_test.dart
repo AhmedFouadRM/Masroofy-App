@@ -24,10 +24,13 @@ class _MockClear extends Mock implements ClearAllData {}
 
 String _label({String? seedKey, String? name}) => seedKey ?? name ?? '';
 
+String _walletLabel({String? seedKey, String? name}) => seedKey ?? name ?? '';
+
 void main() {
   setUpAll(() {
     registerFallbackValue(CurrencyUtils.defaultCurrency);
     registerFallbackValue(_label);
+    registerFallbackValue(_walletLabel);
   });
 
   late _MockExportCsv exportCsv;
@@ -59,10 +62,15 @@ void main() {
         () => exportCsv(
           currency: any(named: 'currency'),
           categoryLabel: any(named: 'categoryLabel'),
+          walletLabel: any(named: 'walletLabel'),
         ),
       ).thenAnswer((_) async => const Right(unit)),
       build: build,
-      act: (cubit) => cubit.exportCsv(currency: CurrencyUtils.defaultCurrency, categoryLabel: _label),
+      act: (cubit) => cubit.exportCsv(
+        currency: CurrencyUtils.defaultCurrency,
+        categoryLabel: _label,
+        walletLabel: _walletLabel,
+      ),
       expect: () => [
         const DataManagementState(busy: DataAction.exportCsv),
         const DataManagementState(completed: DataAction.exportCsv),
@@ -75,10 +83,15 @@ void main() {
         () => exportCsv(
           currency: any(named: 'currency'),
           categoryLabel: any(named: 'categoryLabel'),
+          walletLabel: any(named: 'walletLabel'),
         ),
       ).thenAnswer((_) async => const Left(Failure.exportFailed(message: 'x'))),
       build: build,
-      act: (cubit) => cubit.exportCsv(currency: CurrencyUtils.defaultCurrency, categoryLabel: _label),
+      act: (cubit) => cubit.exportCsv(
+        currency: CurrencyUtils.defaultCurrency,
+        categoryLabel: _label,
+        walletLabel: _walletLabel,
+      ),
       expect: () => [
         const DataManagementState(busy: DataAction.exportCsv),
         const DataManagementState(

@@ -14,11 +14,14 @@ import 'package:masroofy/features/settings/data/repositories/data_management_rep
 import 'package:masroofy/shared/settings/settings_cubit.dart' show PreferenceKeys;
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../../helpers/db_rows.dart';
+
 void main() {
   late AppDatabase db;
   late SharedPreferences preferences;
   late DataManagementLocalDatasource datasource;
   late DataManagementRepositoryImpl repository;
+  late int me;
 
   final exportedAt = DateTime.utc(2026, 10, 9, 8, 30);
 
@@ -34,6 +37,7 @@ void main() {
       PreferenceKeys.biometricEnabled: true,
     });
     preferences = await SharedPreferences.getInstance();
+    me = await db.seedDefaultWallet();
     datasource = DataManagementLocalDatasource(db);
     repository = DataManagementRepositoryImpl(datasource, preferences, now: () => exportedAt);
   });
@@ -63,6 +67,7 @@ void main() {
           RecurringExpensesTableCompanion.insert(
             title: 'Gym fee',
             amountMinor: 120000,
+            walletId: me,
             categoryId: gym,
             frequency: 'monthly',
             startDate: LocalDate(2026, 9, 1),
@@ -74,7 +79,8 @@ void main() {
         .insert(
           ExpensesTableCompanion.insert(
             amountMinor: 1250,
-            categoryId: food,
+            walletId: me,
+            categoryId: Value(food),
             date: LocalDate(2026, 10, 8),
             title: const Value('Lunch, "friends"'),
             note: const Value('two\nlines'),
@@ -85,7 +91,8 @@ void main() {
         .insert(
           ExpensesTableCompanion.insert(
             amountMinor: 120000,
-            categoryId: gym,
+            walletId: me,
+            categoryId: Value(gym),
             date: LocalDate(2026, 10, 1),
             recurringExpenseId: Value(template),
             occurrenceDate: Value(LocalDate(2026, 10, 1)),
@@ -93,7 +100,14 @@ void main() {
         );
     await db
         .into(db.expensesTable)
-        .insert(ExpensesTableCompanion.insert(amountMinor: 500, categoryId: food, date: LocalDate(2026, 9, 30)));
+        .insert(
+          ExpensesTableCompanion.insert(
+            amountMinor: 500,
+            walletId: me,
+            categoryId: Value(food),
+            date: LocalDate(2026, 9, 30),
+          ),
+        );
     await db
         .into(db.budgetsTable)
         .insert(
@@ -106,11 +120,51 @@ void main() {
         );
   }
 
+  /// A second wallet, Son, with a 500 transfer from Me, an expense and a template of his own.
+  /// Returns Son's id.
+  Future<int> fillWithWallets() async {
+    final son = await addWallet(db, 'Son', icon: 'child', color: 0xFF3B82F6);
+    await addTransferRows(
+      db,
+      from: me,
+      to: son,
+      amountMinor: 50000,
+      date: LocalDate(2026, 10, 5),
+      note: 'Pocket money',
+    );
+    await db
+        .into(db.expensesTable)
+        .insert(
+          ExpensesTableCompanion.insert(
+            amountMinor: 700,
+            walletId: son,
+            categoryId: Value(await seed('food')),
+            date: LocalDate(2026, 10, 6),
+          ),
+        );
+    await db
+        .into(db.recurringExpensesTable)
+        .insert(
+          RecurringExpensesTableCompanion.insert(
+            title: 'Pocket money',
+            amountMinor: 20000,
+            walletId: son,
+            categoryId: await seed('food'),
+            frequency: 'monthly',
+            startDate: LocalDate(2026, 10, 1),
+            nextDueDate: LocalDate(2026, 11, 1),
+          ),
+        );
+    return son;
+  }
+
   Future<List<int>> counts() async => [
     (await db.select(db.expensesTable).get()).length,
     (await db.select(db.categoriesTable).get()).length,
     (await db.select(db.budgetsTable).get()).length,
     (await db.select(db.recurringExpensesTable).get()).length,
+    (await db.select(db.walletsTable).get()).length,
+    (await db.select(db.transfersTable).get()).length,
   ];
 
   group('loadExpenseExport', () {
@@ -129,6 +183,51 @@ void main() {
       expect(rows[2].amount.minor, 1250);
     });
 
+    test('names the wallet of every row', () async {
+      await fillWithData();
+      final son = await fillWithWallets();
+      await db.update(db.expensesTable).write(const ExpensesTableCompanion(note: Value(null)));
+      await (db.update(db.expensesTable)..where((e) => e.amountMinor.equals(500))).write(
+        ExpensesTableCompanion(walletId: Value(son)),
+      );
+
+      final rows = right(await repository.loadExpenseExport());
+
+      expect(rows.map((r) => (r.amount.minor, r.walletSeedKey, r.walletName)), [
+        (500, null, 'Son'),
+        (120000, 'me', null),
+        (50000, 'me', null),
+        (700, null, 'Son'),
+        (1250, 'me', null),
+      ]);
+    });
+
+    test('a transfer is one row, with its source and target wallet and no category', () async {
+      await fillWithData();
+      await fillWithWallets();
+
+      final rows = right(await repository.loadExpenseExport());
+
+      final transfers = rows.where((r) => r.isTransfer).toList();
+      expect(transfers, hasLength(1));
+      expect((transfers.single.amount.minor, transfers.single.date.toIso()), (50000, '2026-10-05'));
+      expect((transfers.single.walletSeedKey, transfers.single.walletName), ('me', null));
+      expect((transfers.single.toWalletSeedKey, transfers.single.toWalletName), (null, 'Son'));
+      expect(
+        (transfers.single.categorySeedKey, transfers.single.categoryName, transfers.single.note),
+        (
+          null,
+          null,
+          'Pocket money',
+        ),
+      );
+      expect(rows, hasLength(5), reason: "three expenses, the son's expense and one transfer, not two");
+      expect(
+        rows.where((r) => !r.isTransfer).every((r) => r.toWalletName == null && r.toWalletSeedKey == null),
+        isTrue,
+      );
+    });
+
     test('carries the kind of each row, with positive amounts', () async {
       await fillWithData();
       await db
@@ -136,7 +235,8 @@ void main() {
           .insert(
             ExpensesTableCompanion.insert(
               amountMinor: 500000,
-              categoryId: await seed('salary'),
+              walletId: me,
+              categoryId: Value(await seed('salary')),
               date: LocalDate(2026, 10, 9),
             ),
           );
@@ -166,9 +266,16 @@ void main() {
       final map = jsonDecode(json) as Map<String, dynamic>;
 
       expect(map['format'], 'masroofy-backup');
-      expect(map['version'], 2);
+      expect(map['version'], 3);
       expect(map['exportedAt'], '2026-10-09T08:30:00.000Z');
-      expect(map['preferences'], {'currency_code': 'KWD', 'theme_mode': 'dark', 'western_digits': true});
+      expect(map['preferences'], {
+        'currency_code': 'KWD',
+        'theme_mode': 'dark',
+        'western_digits': true,
+        'default_wallet_id': me,
+      });
+      expect(map['wallets'] as List, hasLength(1));
+      expect(map['transfers'] as List, isEmpty);
       expect(map['expenses'] as List, hasLength(3));
       expect(map['categories'] as List, hasLength(15));
       expect(
@@ -191,6 +298,7 @@ void main() {
         'currency_code': 'EGP',
         'theme_mode': 'system',
         'western_digits': false,
+        'default_wallet_id': me,
       });
     });
 
@@ -210,7 +318,8 @@ void main() {
           .insert(
             ExpensesTableCompanion.insert(
               amountMinor: 7,
-              categoryId: (await (other.select(other.categoriesTable)..limit(1)).getSingle()).id,
+              walletId: await other.seedDefaultWallet(),
+              categoryId: Value((await (other.select(other.categoriesTable)..limit(1)).getSingle()).id),
               date: LocalDate(2020, 1, 1),
             ),
           );
@@ -218,6 +327,8 @@ void main() {
       right(await otherRepository.restoreBackup(json));
       final restored = await DataManagementLocalDatasource(other).readSnapshot();
 
+      expect(restored.wallets, original.wallets);
+      expect(restored.transfers, original.transfers);
       expect(restored.categories, original.categories);
       expect(restored.recurring, original.recurring);
       expect(restored.expenses, original.expenses);
@@ -236,7 +347,7 @@ void main() {
       expect(preferences.getBool(PreferenceKeys.authEnabled), isFalse);
     });
 
-    test('a version 2 backup round-trips the kinds', () async {
+    test('a backup round-trips the kinds', () async {
       await fillWithData();
       final tips = await db
           .into(db.categoriesTable)
@@ -260,7 +371,7 @@ void main() {
       expect(after.firstWhere((c) => c.id == tips).kind, 'income');
     });
 
-    test('a version 1 backup restores with every category as an expense category', () async {
+    test('a version 1 backup restores with every category as an expense category, all in Me', () async {
       await fillWithData();
       final json = right(await repository.createBackup());
       final map = jsonDecode(json) as Map<String, dynamic>;
@@ -289,6 +400,7 @@ void main() {
         'other_income',
       ]);
       expect(await db.select(db.expensesTable).get(), hasLength(3));
+      expect((await db.select(db.walletsTable).get()).map((w) => w.seedKey), ['me']);
     });
 
     test('restoring a backup that lacks a default category re-seeds it', () async {
@@ -313,6 +425,112 @@ void main() {
       expect(preview.budgets, 1);
       expect(preview.recurring, 1);
     });
+  });
+
+  group('backup version 3: wallets', () {
+    late int son;
+
+    setUp(() async {
+      await fillWithData();
+      son = await fillWithWallets();
+    });
+
+    test("carries the wallets, the transfers and each row's wallet and leg", () async {
+      await preferences.setInt(PreferenceKeys.defaultWalletId, son);
+
+      final map = jsonDecode(right(await repository.createBackup())) as Map<String, dynamic>;
+
+      expect(map['version'], 3);
+      expect((map['preferences'] as Map)['default_wallet_id'], son);
+      final wallets = (map['wallets'] as List).cast<Map<String, dynamic>>();
+      expect(wallets.map((w) => (w['id'], w['seedKey'], w['name'], w['icon'])), [
+        (me, 'me', null, 'person'),
+        (son, null, 'Son', 'child'),
+      ]);
+      expect(map['transfers'] as List, hasLength(1));
+      final expenses = (map['expenses'] as List).cast<Map<String, dynamic>>();
+      final legs = expenses.where((e) => e['transferId'] != null).toList();
+      expect(legs.map((e) => (e['direction'], e['walletId'], e['categoryId'])), [('out', me, null), ('in', son, null)]);
+      expect(expenses.where((e) => e['transferId'] == null).every((e) => e['direction'] == null), isTrue);
+      expect((map['recurringExpenses'] as List).cast<Map<String, dynamic>>().map((t) => t['walletId']), [me, son]);
+    });
+
+    test('round trip: wallets, transfers and the default come back as they were', () async {
+      await preferences.setInt(PreferenceKeys.defaultWalletId, son);
+      final json = right(await repository.createBackup());
+      final original = await datasource.readSnapshot();
+      await repository.clearAllData();
+      expect(await db.select(db.walletsTable).get(), hasLength(1));
+
+      right(await repository.restoreBackup(json));
+
+      final restored = await datasource.readSnapshot();
+      expect(restored.wallets, original.wallets);
+      expect(restored.transfers, original.transfers);
+      expect(restored.expenses, original.expenses);
+      expect(restored.recurring, original.recurring);
+      expect(preferences.getInt(PreferenceKeys.defaultWalletId), son);
+      expect(preferences.getInt(PreferenceKeys.viewedWalletId), son);
+    });
+
+    test('a restored transfer still lists once and deletes as one', () async {
+      final json = right(await repository.createBackup());
+      await repository.clearAllData();
+      right(await repository.restoreBackup(json));
+
+      expect(await db.select(db.transfersTable).get(), hasLength(1));
+      await db.delete(db.transfersTable).go();
+      expect((await db.select(db.expensesTable).get()).where((e) => e.transferId != null), isEmpty);
+    });
+  });
+
+  group('backups from before wallets', () {
+    setUp(fillWithData);
+
+    /// A version 1 or 2 file: no wallets, no transfers, no wallet on any row.
+    Future<String> older(int version) async {
+      final map = (jsonDecode(right(await repository.createBackup())) as Map<String, dynamic>)
+        ..['version'] = version
+        ..remove('wallets')
+        ..remove('transfers');
+      (map['preferences'] as Map<String, dynamic>).remove('default_wallet_id');
+      final rows = [...(map['expenses'] as List), ...(map['recurringExpenses'] as List)];
+      for (final row in rows.cast<Map<String, dynamic>>()) {
+        row
+          ..remove('walletId')
+          ..remove('transferId')
+          ..remove('direction');
+      }
+      if (version == 1) {
+        map['categories'] = [
+          for (final c in (map['categories'] as List).cast<Map<String, dynamic>>())
+            if (c['kind'] == 'expense') {...c}..remove('kind'),
+        ];
+      }
+      return jsonEncode(map);
+    }
+
+    for (final version in [1, 2]) {
+      test('a version $version backup restores into one wallet, Me, with everything in it', () async {
+        final file = await older(version);
+        await addWallet(db, 'Son');
+        await repository.clearAllData();
+
+        right(await repository.restoreBackup(file));
+
+        final wallets = await db.select(db.walletsTable).get();
+        expect(wallets.map((w) => (w.seedKey, w.name, w.icon, w.color, w.sortOrder)), [
+          ('me', null, 'person', DefaultWallets.meColor, 0),
+        ]);
+        final id = wallets.single.id;
+        expect((await db.select(db.expensesTable).get()).map((e) => e.walletId).toSet(), {id});
+        expect((await db.select(db.recurringExpensesTable).get()).map((t) => t.walletId).toSet(), {id});
+        expect(await db.select(db.transfersTable).get(), isEmpty);
+        expect(preferences.getInt(PreferenceKeys.defaultWalletId), id);
+        expect(preferences.getInt(PreferenceKeys.viewedWalletId), id);
+        expect(right(repository.previewBackup(file)).expenses, 3);
+      });
+    }
   });
 
   group('restore rejects a bad file without touching anything', () {
@@ -346,7 +564,7 @@ void main() {
     test('an empty file', () => expectRejected((_) => null, raw: ''));
     test('JSON that is not an object', () => expectRejected((_) => null, raw: '[1, 2, 3]'));
     test('a file of another format', () => expectRejected((m) => m['format'] = 'something-else'));
-    test('a newer version', () => expectRejected((m) => m['version'] = 3));
+    test('a newer version', () => expectRejected((m) => m['version'] = 4));
     test('version 0', () => expectRejected((m) => m['version'] = 0));
     test('no version', () => expectRejected((m) => m.remove('version')));
     test('a missing table', () => expectRejected((m) => m.remove('expenses')));
@@ -411,6 +629,86 @@ void main() {
       'a title that is too long',
       () => expectRejected((m) => ((m['expenses'] as List).first as Map)['title'] = 'x' * 101),
     );
+
+    group('version 3', () {
+      Map<String, dynamic> row(Map<String, dynamic> m, String table, int index) =>
+          (m[table] as List)[index] as Map<String, dynamic>;
+
+      setUp(() async {
+        // Make the good file hold a second wallet and a transfer.
+        await fillWithWallets();
+        good = jsonDecode(right(await repository.createBackup())) as Map<String, dynamic>;
+      });
+
+      Map<String, dynamic> leg(Map<String, dynamic> m, String direction) =>
+          (m['expenses'] as List).cast<Map<String, dynamic>>().firstWhere((e) => e['direction'] == direction);
+
+      test('no wallets', () => expectRejected((m) => m['wallets'] = <Object>[]));
+      test('the wallets missing', () => expectRejected((m) => m.remove('wallets')));
+      test('the transfers missing', () => expectRejected((m) => m.remove('transfers')));
+      test(
+        'a wallet with both a seed key and a name',
+        () => expectRejected((m) => row(m, 'wallets', 0)['name'] = 'Both'),
+      );
+      test('a wallet with neither', () => expectRejected((m) => row(m, 'wallets', 1)['name'] = null));
+      test('a wallet name that is too long', () => expectRejected((m) => row(m, 'wallets', 1)['name'] = 'x' * 31));
+      test('two wallets of the same name, ignoring case', () {
+        return expectRejected((m) => (m['wallets'] as List).add({...row(m, 'wallets', 1), 'id': 77, 'name': 'SON'}));
+      });
+      test(
+        'two wallets with the same id',
+        () => expectRejected((m) => row(m, 'wallets', 1)['id'] = row(m, 'wallets', 0)['id']),
+      );
+      test('a default wallet that is not in the file', () {
+        return expectRejected((m) => (m['preferences'] as Map)['default_wallet_id'] = 999);
+      });
+      test('no default wallet', () => expectRejected((m) => (m['preferences'] as Map).remove('default_wallet_id')));
+      test('an expense in a wallet that is not in the file', () {
+        return expectRejected((m) => row(m, 'expenses', 0)['walletId'] = 999);
+      });
+      test('a template in a wallet that is not in the file', () {
+        return expectRejected((m) => row(m, 'recurringExpenses', 0)['walletId'] = 999);
+      });
+      test('a row without a wallet', () => expectRejected((m) => row(m, 'expenses', 0).remove('walletId')));
+      test('a row with no category that is not a transfer leg', () {
+        return expectRejected((m) => row(m, 'expenses', 0)['categoryId'] = null);
+      });
+      test('a transfer leg with a category', () => expectRejected((m) => leg(m, 'out')['categoryId'] = 1));
+      test('a transfer leg without a direction', () => expectRejected((m) => leg(m, 'in')['direction'] = null));
+      test('a direction other than out or in', () => expectRejected((m) => leg(m, 'in')['direction'] = 'sideways'));
+      test('a direction on a row that is not a transfer leg', () {
+        return expectRejected((m) => row(m, 'expenses', 0)['direction'] = 'out');
+      });
+      test(
+        'a leg of a transfer that is not in the file',
+        () => expectRejected((m) => leg(m, 'out')['transferId'] = 999),
+      );
+      test('a transfer with one leg only', () {
+        return expectRejected((m) => (m['expenses'] as List).remove(leg(m, 'in')));
+      });
+      test('a transfer with two out legs', () => expectRejected((m) => leg(m, 'in')['direction'] = 'out'));
+      test(
+        'a transfer inside one wallet',
+        () => expectRejected((m) => leg(m, 'in')['walletId'] = leg(m, 'out')['walletId']),
+      );
+      test(
+        'a transfer whose legs disagree on the amount',
+        () => expectRejected((m) => leg(m, 'in')['amountMinor'] = 1),
+      );
+      test(
+        'a transfer whose legs disagree on the date',
+        () => expectRejected((m) => leg(m, 'in')['date'] = '2026-01-01'),
+      );
+      test('a transfer without legs', () {
+        return expectRejected(
+          (m) => (m['transfers'] as List).add({
+            'id': 99,
+            'createdAt': '2026-10-09T00:00:00Z',
+            'updatedAt': '2026-10-09T00:00:00Z',
+          }),
+        );
+      });
+    });
   });
 
   test('a database error while restoring rolls everything back', () async {
@@ -419,8 +717,10 @@ void main() {
     final food = before.categories.firstWhere((c) => c.seedKey == 'food');
     // Passes the type checks but breaks a UNIQUE constraint.
     final broken = BackupSnapshot(
+      wallets: before.wallets,
       categories: [food],
       recurring: const [],
+      transfers: const [],
       expenses: [before.expenses.first, before.expenses.first],
       budgets: const [],
     );
@@ -432,6 +732,7 @@ void main() {
     expect(after.categories, before.categories);
     expect(after.budgets, before.budgets);
     expect(after.recurring, before.recurring);
+    expect(after.wallets, before.wallets);
   });
 
   group('clearAllData', () {
@@ -446,6 +747,22 @@ void main() {
       expect(await db.select(db.recurringExpensesTable).get(), isEmpty);
       expect(categories.map((c) => c.seedKey), DefaultCategories.seeds.map((s) => s.seedKey));
       expect(categories.every((c) => c.name == null && !c.isHidden), isTrue);
+    });
+
+    test('deletes every wallet and transfer, then recreates Me as the default and viewed wallet', () async {
+      await fillWithData();
+      final son = await fillWithWallets();
+      await preferences.setInt(PreferenceKeys.defaultWalletId, son);
+      await preferences.setInt(PreferenceKeys.viewedWalletId, son);
+
+      right(await repository.clearAllData());
+
+      final wallets = await db.select(db.walletsTable).get();
+      expect(wallets.map((w) => (w.seedKey, w.name, w.icon, w.sortOrder)), [('me', null, 'person', 0)]);
+      expect(await db.select(db.transfersTable).get(), isEmpty);
+      expect(await db.select(db.expensesTable).get(), isEmpty);
+      expect(preferences.getInt(PreferenceKeys.defaultWalletId), wallets.single.id);
+      expect(preferences.getInt(PreferenceKeys.viewedWalletId), wallets.single.id);
     });
 
     test('keeps the preferences and App Lock', () async {

@@ -22,5 +22,12 @@ abstract class SettingsState with _$SettingsState {
     /// False until the user has picked a currency on first launch. Defaults to
     /// true so a state built without it (tests) skips the first-launch step.
     @Default(true) bool currencyChosen,
+
+    /// The wallet new transactions go to when All wallets is viewed. Null only
+    /// until the app has checked it against the wallets (a fresh install).
+    int? defaultWalletId,
+
+    /// The wallet the Transactions list and Analytics show; null is All wallets.
+    int? viewedWalletId,
   }) = _SettingsState;
 }

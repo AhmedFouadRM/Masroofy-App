@@ -57,6 +57,17 @@ import 'package:masroofy/features/settings/domain/usecases/export_expenses_csv.d
 import 'package:masroofy/features/settings/domain/usecases/pick_backup.dart';
 import 'package:masroofy/features/settings/domain/usecases/restore_backup.dart';
 import 'package:masroofy/features/settings/presentation/cubits/data_management_cubit.dart';
+import 'package:masroofy/features/settings/presentation/cubits/wallet_count_cubit.dart';
+import 'package:masroofy/features/wallets/data/datasources/wallet_local_datasource.dart';
+import 'package:masroofy/features/wallets/data/repositories/transfer_repository_impl.dart';
+import 'package:masroofy/features/wallets/data/repositories/wallet_repository_impl.dart';
+import 'package:masroofy/features/wallets/domain/repositories/i_transfer_repository.dart';
+import 'package:masroofy/features/wallets/domain/repositories/i_wallet_repository.dart';
+import 'package:masroofy/features/wallets/domain/usecases/delete_wallet.dart';
+import 'package:masroofy/features/wallets/domain/usecases/save_transfer.dart';
+import 'package:masroofy/features/wallets/domain/usecases/save_wallet.dart';
+import 'package:masroofy/features/wallets/presentation/cubits/wallet_form_cubit.dart';
+import 'package:masroofy/features/wallets/presentation/cubits/wallets_cubit.dart';
 import 'package:masroofy/shared/auth/auth_cubit.dart';
 import 'package:masroofy/shared/settings/settings_cubit.dart';
 import 'package:package_info_plus/package_info_plus.dart';
@@ -89,6 +100,7 @@ Future<void> configureDependencies({AppDatabase Function() openDatabase = AppDat
 
   _registerAuth();
   _registerSettings();
+  _registerWallets();
   _registerCategories();
   _registerExpenses();
   _registerRecurring();
@@ -124,7 +136,24 @@ void _registerSettings() {
     ..registerLazySingleton(() => PickBackup(getIt(), getIt()))
     ..registerLazySingleton(() => RestoreBackup(getIt()))
     ..registerLazySingleton(() => ClearAllData(getIt()))
-    ..registerFactory(() => DataManagementCubit(getIt(), getIt(), getIt(), getIt(), getIt()));
+    ..registerFactory(() => DataManagementCubit(getIt(), getIt(), getIt(), getIt(), getIt()))
+    ..registerFactory(() => WalletCountCubit(getIt()));
+}
+
+void _registerWallets() {
+  getIt
+    ..registerLazySingleton(() => WalletLocalDatasource(getIt()))
+    ..registerLazySingleton<IWalletRepository>(() => WalletRepositoryImpl(getIt()))
+    ..registerLazySingleton<ITransferRepository>(() => TransferRepositoryImpl(getIt()))
+    ..registerLazySingleton(() => SaveWallet(getIt()))
+    ..registerLazySingleton(() => DeleteWallet(getIt()))
+    ..registerLazySingleton(() => SaveTransfer(getIt()))
+    ..registerFactory(() => WalletsCubit(getIt()))
+    // param1: the id of the wallet to edit, or null for a new one; param2:
+    // whether it is the default wallet.
+    ..registerFactoryParam<WalletFormCubit, int?, bool>(
+      (walletId, isDefault) => WalletFormCubit(getIt(), getIt(), getIt(), walletId: walletId, isDefault: isDefault),
+    );
 }
 
 void _registerCategories() {
@@ -147,14 +176,23 @@ void _registerExpenses() {
     ..registerLazySingleton<IExpenseRepository>(() => ExpenseRepositoryImpl(getIt()))
     ..registerLazySingleton(() => SaveExpense(getIt()))
     ..registerLazySingleton(() => DeleteExpense(getIt()))
-    // param1: the device's first weekday (from SettingsCubit).
-    ..registerFactoryParam<ExpenseListCubit, int, void>(
-      (firstWeekday, _) => ExpenseListCubit(getIt(), getIt(), getIt(), firstWeekday: firstWeekday),
+    // param1: the device's first weekday (from SettingsCubit); param2: the
+    // wallet viewed, or null for All wallets.
+    ..registerFactoryParam<ExpenseListCubit, int, int?>(
+      (firstWeekday, walletId) =>
+          ExpenseListCubit(getIt(), getIt(), getIt(), getIt(), firstWeekday: firstWeekday, walletId: walletId),
     )
     // param1: the currency's fraction digits; param2: the id to edit, or null.
     ..registerFactoryParam<ExpenseFormCubit, int, int?>(
-      (fractionDigits, expenseId) =>
-          ExpenseFormCubit(getIt(), getIt(), getIt(), fractionDigits: fractionDigits, expenseId: expenseId),
+      (fractionDigits, expenseId) => ExpenseFormCubit(
+        getIt(),
+        getIt(),
+        getIt(),
+        getIt(),
+        getIt(),
+        fractionDigits: fractionDigits,
+        expenseId: expenseId,
+      ),
     );
 }
 
@@ -169,8 +207,14 @@ void _registerRecurring() {
     ..registerFactory(() => RecurringListCubit(getIt(), getIt(), getIt(), getIt()))
     // param1: the currency's fraction digits; param2: the id to edit, or null.
     ..registerFactoryParam<RecurringFormCubit, int, int?>(
-      (fractionDigits, recurringId) =>
-          RecurringFormCubit(getIt(), getIt(), getIt(), fractionDigits: fractionDigits, recurringId: recurringId),
+      (fractionDigits, recurringId) => RecurringFormCubit(
+        getIt(),
+        getIt(),
+        getIt(),
+        getIt(),
+        fractionDigits: fractionDigits,
+        recurringId: recurringId,
+      ),
     );
 }
 
@@ -178,9 +222,11 @@ void _registerAnalytics() {
   getIt
     ..registerLazySingleton(() => AnalyticsLocalDatasource(getIt()))
     ..registerLazySingleton<IAnalyticsRepository>(() => AnalyticsRepositoryImpl(getIt()))
-    // param1: the device's first weekday (from SettingsCubit).
-    ..registerFactoryParam<AnalyticsCubit, int, void>(
-      (firstWeekday, _) => AnalyticsCubit(getIt(), getIt(), getIt(), firstWeekday: firstWeekday),
+    // param1: the device's first weekday (from SettingsCubit); param2: the
+    // wallet viewed, or null for All wallets.
+    ..registerFactoryParam<AnalyticsCubit, int, int?>(
+      (firstWeekday, walletId) =>
+          AnalyticsCubit(getIt(), getIt(), getIt(), getIt(), firstWeekday: firstWeekday, walletId: walletId),
     );
 }
 

@@ -13,6 +13,7 @@ import 'package:masroofy/core/theme/app_dimensions.dart';
 import 'package:masroofy/core/utils/date_utils.dart';
 import 'package:masroofy/features/settings/domain/entities/app_info.dart';
 import 'package:masroofy/features/settings/presentation/cubits/data_management_cubit.dart';
+import 'package:masroofy/features/settings/presentation/cubits/wallet_count_cubit.dart';
 import 'package:masroofy/features/settings/presentation/widgets/choice_sheet.dart';
 import 'package:masroofy/features/settings/presentation/widgets/hold_to_delete_button.dart';
 import 'package:masroofy/features/settings/presentation/widgets/settings_tile.dart';
@@ -27,8 +28,8 @@ import 'package:masroofy/shared/widgets/grouped_list.dart';
 import 'package:masroofy/shared/widgets/icon_dialog.dart';
 import 'package:material_symbols_icons/symbols.dart';
 
-/// The Settings tab. Expects a [DataManagementCubit], and the app-wide
-/// [SettingsCubit] and [AuthCubit], above it.
+/// The Settings tab. Expects a [DataManagementCubit] and a [WalletCountCubit],
+/// and the app-wide [SettingsCubit] and [AuthCubit], above it.
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({required this.appInfo, super.key});
 
@@ -111,6 +112,7 @@ class SettingsScreen extends StatelessWidget {
     context.read<DataManagementCubit>().exportCsv(
       currency: context.read<SettingsCubit>().state.currency,
       categoryLabel: ({seedKey, name}) => seedKey != null ? StringManager.categoryName(seedKey) : (name ?? ''),
+      walletLabel: ({seedKey, name}) => seedKey != null ? StringManager.walletName(seedKey) : (name ?? ''),
     ),
   );
 
@@ -202,6 +204,8 @@ class SettingsScreen extends StatelessWidget {
           context.read<SettingsCubit>().reload();
           _showMessage(context, StringManager.restored);
         case DataAction.clearAll:
+          // The default and viewed wallet are "Me" again.
+          context.read<SettingsCubit>().reload();
           _showMessage(context, StringManager.cleared);
         case DataAction.exportCsv || DataAction.exportBackup:
           break;
@@ -214,6 +218,7 @@ class SettingsScreen extends StatelessWidget {
     final settings = context.select<SettingsCubit, SettingsState>((cubit) => cubit.state);
     final auth = context.select<AuthCubit, AuthState>((cubit) => cubit.state);
     final busy = context.select<DataManagementCubit, bool>((cubit) => cubit.state.busy != null);
+    final walletCount = context.select<WalletCountCubit, int?>((cubit) => cubit.state);
     final arabic = context.locale.languageCode == 'ar';
 
     return BlocListener<DataManagementCubit, DataManagementState>(
@@ -238,6 +243,12 @@ class SettingsScreen extends StatelessWidget {
               SectionHeader(title: StringManager.sectionGeneral),
               GroupedCard(
                 children: [
+                  SettingsTile(
+                    icon: Symbols.account_balance_wallet_rounded,
+                    title: StringManager.walletsTitle,
+                    value: walletCount == null ? null : context.count(walletCount),
+                    onTap: () => context.push(RoutePaths.wallets),
+                  ),
                   SettingsTile(
                     icon: Symbols.payments_rounded,
                     title: StringManager.currency,

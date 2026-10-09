@@ -17,6 +17,9 @@ import 'package:masroofy/features/budgets/domain/entities/budget_progress.dart';
 import 'package:masroofy/features/budgets/domain/repositories/i_budget_repository.dart';
 import 'package:masroofy/features/categories/domain/entities/category.dart';
 import 'package:masroofy/features/categories/domain/repositories/i_category_repository.dart';
+import 'package:masroofy/features/wallets/domain/entities/wallet.dart';
+import 'package:masroofy/features/wallets/domain/entities/wallet_summary.dart';
+import 'package:masroofy/features/wallets/domain/repositories/i_wallet_repository.dart';
 import 'package:masroofy/shared/widgets/segmented_pills.dart';
 import 'package:mocktail/mocktail.dart';
 
@@ -27,6 +30,8 @@ class _MockAnalytics extends Mock implements IAnalyticsRepository {}
 class _MockCategories extends Mock implements ICategoryRepository {}
 
 class _MockBudgets extends Mock implements IBudgetRepository {}
+
+class _MockWallets extends Mock implements IWalletRepository {}
 
 class _MockCubit extends MockCubit<AnalyticsState> implements AnalyticsCubit {}
 
@@ -42,6 +47,20 @@ Category _category(int id, String seedKey, int color) => Category(
   updatedAt: _epoch,
 );
 
+Wallet _wallet(int id, {String? name}) => Wallet(
+  id: id,
+  seedKey: id == 1 ? 'me' : null,
+  name: id == 1 ? null : (name ?? 'Wallet $id'),
+  icon: id == 1 ? 'person' : 'child',
+  color: id == 1 ? 0xFF059669 : 0xFF3B82F6,
+  sortOrder: id,
+  createdAt: _epoch,
+  updatedAt: _epoch,
+);
+
+final Wallet _me = _wallet(1);
+final Wallet _son = _wallet(2, name: 'Son');
+
 final Category _food = _category(1, 'food', 0xFFF97316);
 final Category _transport = _category(2, 'transport', 0xFF3B82F6);
 
@@ -56,6 +75,7 @@ void main() {
     late _MockAnalytics analytics;
     late _MockCategories categories;
     late _MockBudgets budgets;
+    late _MockWallets wallets;
     final today = LocalDate(2026, 10, 9);
     final ranges = <DateRange>[];
 
@@ -63,25 +83,55 @@ void main() {
       analytics = _MockAnalytics();
       categories = _MockCategories();
       budgets = _MockBudgets();
+      wallets = _MockWallets();
+      when(() => wallets.watchSummaries(any())).thenAnswer(
+        (_) => Stream.value(
+          Right([
+            for (final wallet in [_me, _son])
+              WalletSummary(
+                wallet: wallet,
+                balance: Money.zero,
+                transactionCount: 0,
+                transferCount: 0,
+                templateCount: 0,
+              ),
+          ]),
+        ),
+      );
+      when(() => analytics.watchTotalsByWallet(any())).thenAnswer(
+        (_) => Stream.value(
+          const Right({
+            1: PeriodTotals(income: Money(500000), spent: Money(75000)),
+            2: PeriodTotals(income: Money.zero, spent: Money(25000)),
+          }),
+        ),
+      );
       when(
         () => budgets.watchProgress(any(), firstWeekday: any(named: 'firstWeekday')),
       ).thenAnswer((_) => Stream.value(const Right([])));
       ranges.clear();
       when(() => categories.watchAll(includeHidden: true)).thenAnswer((_) => Stream.value(Right([_food])));
-      when(() => analytics.watchTotals(any())).thenAnswer((invocation) {
+      when(() => analytics.watchTotals(any(), walletId: any(named: 'walletId'))).thenAnswer((invocation) {
         ranges.add(invocation.positionalArguments.single as DateRange);
         return Stream.value(Right(PeriodTotals(income: const Money(5000), spent: Money(ranges.length * 100))));
       });
       when(
-        () => analytics.watchTotalsByCategory(any(), any()),
+        () => analytics.watchTotalsByCategory(any(), any(), walletId: any(named: 'walletId')),
       ).thenAnswer((_) => Stream.value(const Right({1: Money(100)})));
       when(
-        () => analytics.watchDailyTotals(any()),
+        () => analytics.watchDailyTotals(any(), walletId: any(named: 'walletId')),
       ).thenAnswer((_) => Stream.value(const Right({})));
     });
 
-    AnalyticsCubit build() =>
-        AnalyticsCubit(analytics, categories, budgets, firstWeekday: DateTime.saturday, today: () => today);
+    AnalyticsCubit build({int? walletId}) => AnalyticsCubit(
+      analytics,
+      categories,
+      budgets,
+      wallets,
+      firstWeekday: DateTime.saturday,
+      walletId: walletId,
+      today: () => today,
+    );
 
     blocTest<AnalyticsCubit, AnalyticsState>(
       'starts on this month, compared with the same days of last month',
@@ -108,7 +158,9 @@ void main() {
         ..selectBreakdown(TransactionKind.income),
       verify: (cubit) {
         expect(cubit.state.breakdownKind, TransactionKind.income);
-        verify(() => analytics.watchTotalsByCategory(any(), TransactionKind.income)).called(1);
+        // The explicit null is All wallets.
+        // ignore: avoid_redundant_argument_values
+        verify(() => analytics.watchTotalsByCategory(any(), TransactionKind.income, walletId: null)).called(1);
       },
     );
 
@@ -125,6 +177,89 @@ void main() {
         ]);
       },
     );
+
+    group('wallets', () {
+      blocTest<AnalyticsCubit, AnalyticsState>(
+        'All wallets queries every wallet, and adds the By wallet totals',
+        build: build,
+        act: (cubit) => cubit.load(),
+        verify: (cubit) {
+          expect(cubit.state.walletId, isNull);
+          expect(cubit.state.showsByWallet, isTrue);
+          expect(cubit.state.wallets, [_me, _son]);
+          expect(cubit.state.byWallet.keys, [1, 2]);
+          // The explicit null is All wallets.
+          // ignore: avoid_redundant_argument_values
+          verify(() => analytics.watchTotals(any(), walletId: null)).called(2);
+          verify(() => analytics.watchTotalsByWallet(DateRange(LocalDate(2026, 10, 1), today))).called(1);
+        },
+      );
+
+      blocTest<AnalyticsCubit, AnalyticsState>(
+        'a wallet scopes the totals, the comparison, the days and the breakdown to it',
+        build: () => build(walletId: 2),
+        act: (cubit) => cubit.load(),
+        verify: (cubit) {
+          expect(cubit.state.showsByWallet, isFalse);
+          verify(() => analytics.watchTotals(any(), walletId: 2)).called(2);
+          verify(() => analytics.watchDailyTotals(any(), walletId: 2)).called(1);
+          verify(() => analytics.watchTotalsByCategory(any(), TransactionKind.expense, walletId: 2)).called(1);
+          // By wallet compares wallets, so it isn't asked for.
+          verifyNever(() => analytics.watchTotalsByWallet(any()));
+        },
+      );
+
+      blocTest<AnalyticsCubit, AnalyticsState>(
+        'switching wallet re-queries everything, and drops the By wallet totals for a single wallet',
+        build: build,
+        act: (cubit) async {
+          cubit.load();
+          await Future<void>.delayed(Duration.zero);
+          cubit.selectWallet(2);
+          await Future<void>.delayed(Duration.zero);
+        },
+        verify: (cubit) {
+          expect(cubit.state.walletId, 2);
+          expect(cubit.state.byWallet, isEmpty);
+          verify(() => analytics.watchTotals(any(), walletId: 2)).called(2);
+          verify(() => analytics.watchTotalsByCategory(any(), any(), walletId: 2)).called(1);
+        },
+      );
+
+      blocTest<AnalyticsCubit, AnalyticsState>(
+        'going back to All wallets brings the By wallet totals back',
+        build: () => build(walletId: 2),
+        act: (cubit) async {
+          cubit.load();
+          await Future<void>.delayed(Duration.zero);
+          cubit.selectWallet(null);
+          await Future<void>.delayed(Duration.zero);
+        },
+        verify: (cubit) {
+          expect(cubit.state.walletId, isNull);
+          expect(cubit.state.byWallet.keys, [1, 2]);
+        },
+      );
+
+      blocTest<AnalyticsCubit, AnalyticsState>(
+        'picking the wallet already shown asks for nothing new',
+        build: () => build(walletId: 2),
+        act: (cubit) async {
+          cubit.load();
+          await Future<void>.delayed(Duration.zero);
+          clearInteractions(analytics);
+          cubit.selectWallet(2);
+        },
+        verify: (_) => verifyZeroInteractions(analytics),
+      );
+
+      blocTest<AnalyticsCubit, AnalyticsState>(
+        'budgets stay global: they are read without any wallet',
+        build: () => build(walletId: 2),
+        act: (cubit) => cubit.load(),
+        verify: (_) => verify(() => budgets.watchProgress(any(), firstWeekday: any(named: 'firstWeekday'))).called(1),
+      );
+    });
 
     blocTest<AnalyticsCubit, AnalyticsState>(
       'this week starts on the region week day',
@@ -150,6 +285,13 @@ void main() {
       byCategory: {1: const Money(75000), 2: const Money(25000)},
       daily: {today: const PeriodTotals(income: Money(500000), spent: Money(100000))},
       categories: {1: _food, 2: _transport},
+    );
+    final withWallets = loaded.copyWith(
+      wallets: [_me, _son],
+      byWallet: const {
+        1: PeriodTotals(income: Money(500000), spent: Money(75000)),
+        2: PeriodTotals(income: Money(20000), spent: Money(25000)),
+      },
     );
 
     setUp(() => cubit = _MockCubit());
@@ -287,6 +429,77 @@ void main() {
       expect(find.text('حسب الفئة'), findsOneWidget);
       expect(find.text('٧٥%'), findsOneWidget);
       expect(Directionality.of(tester.element(find.text('حسب الفئة'))), TextDirection.rtl);
+    });
+
+    group('By wallet', () {
+      testWidgets("in All wallets: each wallet's spending and income, with a thin bar for its share", (tester) async {
+        await pump(tester, withWallets);
+
+        expect(find.text('By wallet'), findsOneWidget);
+        expect(find.text('Me'), findsOneWidget);
+        expect(find.text('Son'), findsOneWidget);
+        final card = find.ancestor(of: find.text('Me'), matching: find.byType(Card));
+        expect(find.descendant(of: card, matching: find.text('EGP 750')), findsOneWidget);
+        expect(find.descendant(of: card, matching: find.text('EGP 250')), findsOneWidget);
+        expect(find.text('Income +EGP 5,000'), findsOneWidget);
+        expect(find.text('Income +EGP 200'), findsOneWidget);
+        final bars = tester
+            .widgetList<LinearProgressIndicator>(
+              find.descendant(
+                of: find.ancestor(of: find.text('Me'), matching: find.byType(Card)),
+                matching: find.byType(LinearProgressIndicator),
+              ),
+            )
+            .toList();
+        expect(bars.map((b) => b.value), [0.75, 0.25]);
+        expect(bars.every((b) => b.minHeight == 4), isTrue, reason: 'thin');
+        // Between the income card and the categories.
+        final income = tester.getTopLeft(find.text('Income vs spending')).dy;
+        final byWallet = tester.getTopLeft(find.text('By wallet')).dy;
+        final byCategory = tester.getTopLeft(find.text('By category')).dy;
+        expect(income, lessThan(byWallet));
+        expect(byWallet, lessThan(byCategory));
+      });
+
+      testWidgets('a wallet without income shows no income line', (tester) async {
+        await pump(
+          tester,
+          withWallets.copyWith(
+            byWallet: const {
+              1: PeriodTotals(income: Money(500000), spent: Money(75000)),
+              2: PeriodTotals(income: Money.zero, spent: Money(25000)),
+            },
+          ),
+        );
+
+        expect(find.textContaining('Income +'), findsOneWidget);
+      });
+
+      testWidgets('a single wallet has no By wallet card', (tester) async {
+        await pump(tester, withWallets.copyWith(walletId: 2));
+
+        expect(find.text('By wallet'), findsNothing);
+        expect(find.text('Income vs spending'), findsOneWidget);
+      });
+
+      testWidgets('Arabic: the card and its names', (tester) async {
+        await pump(
+          tester,
+          withWallets.copyWith(
+            wallets: [
+              _me,
+              _wallet(2, name: 'ابني'),
+            ],
+          ),
+          locale: const Locale('ar'),
+        );
+
+        expect(find.text('حسب المحفظة'), findsOneWidget);
+        expect(find.text('أنا'), findsOneWidget);
+        expect(find.text('ابني'), findsOneWidget);
+        final card = find.ancestor(of: find.text('أنا'), matching: find.byType(Card));
+        expect(find.descendant(of: card, matching: find.text('٧٥٠ ج.م.')), findsOneWidget);
+      });
     });
   });
 }

@@ -1,6 +1,7 @@
 import 'package:bloc_test/bloc_test.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fpdart/fpdart.dart';
+import 'package:masroofy/core/domain/date_range.dart';
 import 'package:masroofy/core/domain/local_date.dart';
 import 'package:masroofy/core/domain/money.dart';
 import 'package:masroofy/core/domain/transaction_kind.dart';
@@ -16,11 +17,16 @@ import 'package:masroofy/features/recurring_expenses/domain/usecases/save_recurr
 import 'package:masroofy/features/recurring_expenses/domain/usecases/set_recurring_active.dart';
 import 'package:masroofy/features/recurring_expenses/presentation/cubits/recurring_form_cubit.dart';
 import 'package:masroofy/features/recurring_expenses/presentation/cubits/recurring_list_cubit.dart';
+import 'package:masroofy/features/wallets/domain/entities/wallet.dart';
+import 'package:masroofy/features/wallets/domain/entities/wallet_summary.dart';
+import 'package:masroofy/features/wallets/domain/repositories/i_wallet_repository.dart';
 import 'package:mocktail/mocktail.dart';
 
 class _MockRecurring extends Mock implements IRecurringExpenseRepository {}
 
 class _MockCategories extends Mock implements ICategoryRepository {}
+
+class _MockWallets extends Mock implements IWalletRepository {}
 
 class _MockSetActive extends Mock implements SetRecurringActive {}
 
@@ -36,6 +42,7 @@ RecurringExpense _template(int id, {bool active = true, TransactionKind kind = T
       id: id,
       title: 'Rent $id',
       amount: const Money(500000),
+      walletId: 1,
       categoryId: 1,
       frequency: RecurringFrequency.monthly,
       startDate: _today,
@@ -45,6 +52,26 @@ RecurringExpense _template(int id, {bool active = true, TransactionKind kind = T
       updatedAt: _epoch,
       kind: kind,
     );
+
+WalletSummary _wallet(int id, {String? name}) => WalletSummary(
+  wallet: Wallet(
+    id: id,
+    seedKey: id == 1 ? 'me' : null,
+    name: id == 1 ? null : (name ?? 'Wallet $id'),
+    icon: 'person',
+    color: 0,
+    sortOrder: id,
+    createdAt: _epoch,
+    updatedAt: _epoch,
+  ),
+  balance: Money.zero,
+  transactionCount: 0,
+  transferCount: 0,
+  templateCount: 0,
+);
+
+final WalletSummary _me = _wallet(1);
+final WalletSummary _son = _wallet(2, name: 'Son');
 
 final _salary = Category(
   id: 2,
@@ -70,12 +97,15 @@ final _bills = Category(
 void main() {
   late _MockRecurring recurring;
   late _MockCategories categories;
+  late _MockWallets wallets;
 
   setUpAll(() {
+    registerFallbackValue(DateRange(_today, _today));
     registerFallbackValue(
       RecurringDraft(
         title: '',
         amount: Money.zero,
+        walletId: 0,
         categoryId: 0,
         frequency: RecurringFrequency.monthly,
         startDate: _today,
@@ -86,9 +116,11 @@ void main() {
   setUp(() {
     recurring = _MockRecurring();
     categories = _MockCategories();
+    wallets = _MockWallets();
     when(
       () => categories.watchAll(includeHidden: any(named: 'includeHidden')),
     ).thenAnswer((_) => Stream.value(Right([_bills])));
+    when(() => wallets.watchSummaries(any())).thenAnswer((_) => Stream.value(Right([_me, _son])));
   });
 
   group('RecurringListCubit', () {
@@ -153,8 +185,15 @@ void main() {
 
     setUp(() => save = _MockSave());
 
-    RecurringFormCubit build({int? id}) =>
-        RecurringFormCubit(recurring, categories, save, fractionDigits: 2, recurringId: id, today: () => _today);
+    RecurringFormCubit build({int? id}) => RecurringFormCubit(
+      recurring,
+      categories,
+      wallets,
+      save,
+      fractionDigits: 2,
+      recurringId: id,
+      today: () => _today,
+    );
 
     blocTest<RecurringFormCubit, RecurringFormState>(
       'a new template starts today, monthly and active',
@@ -254,6 +293,62 @@ void main() {
     );
 
     blocTest<RecurringFormCubit, RecurringFormState>(
+      'a new template starts in the wallet preset before loading (the viewed one, or the default)',
+      build: build,
+      act: (cubit) async {
+        cubit.walletSelected(2);
+        await cubit.load();
+      },
+      verify: (cubit) {
+        expect(cubit.state.walletId, 2);
+        expect(cubit.state.wallet, _son);
+      },
+    );
+
+    blocTest<RecurringFormCubit, RecurringFormState>(
+      'with no preset, or one that is gone, a new template starts in the first wallet',
+      build: build,
+      act: (cubit) async {
+        cubit.walletSelected(99);
+        await cubit.load();
+      },
+      verify: (cubit) => expect(cubit.state.walletId, 1),
+    );
+
+    blocTest<RecurringFormCubit, RecurringFormState>(
+      'the Wallet field overrides the preset, and the draft carries it',
+      build: build,
+      setUp: () => when(() => save(any(), id: any(named: 'id'))).thenAnswer((_) async => const Right(7)),
+      act: (cubit) async {
+        cubit.walletSelected(1);
+        await cubit.load();
+        cubit
+          ..walletSelected(2)
+          ..amountChanged('100')
+          ..categorySelected(1)
+          ..titleChanged('Pocket money');
+        await cubit.save();
+      },
+      verify: (cubit) {
+        final draft = verify(() => save(captureAny(), id: any(named: 'id'))).captured.single as RecurringDraft;
+        expect(draft.walletId, 2);
+      },
+    );
+
+    blocTest<RecurringFormCubit, RecurringFormState>(
+      'editing keeps the wallet of the template',
+      build: () => build(id: 2),
+      setUp: () => when(() => recurring.getById(2)).thenAnswer(
+        (_) async => Right(_template(2).copyWith(walletId: 2)),
+      ),
+      act: (cubit) async {
+        cubit.walletSelected(1);
+        await cubit.load();
+      },
+      verify: (cubit) => expect(cubit.state.walletId, 2),
+    );
+
+    blocTest<RecurringFormCubit, RecurringFormState>(
       'saves the parsed draft',
       build: build,
       setUp: () => when(() => save(any(), id: any(named: 'id'))).thenAnswer((_) async => const Right(7)),
@@ -274,6 +369,7 @@ void main() {
           RecurringDraft(
             title: 'Gym',
             amount: const Money(12550),
+            walletId: 1,
             categoryId: 1,
             frequency: RecurringFrequency.weekly,
             startDate: _today,

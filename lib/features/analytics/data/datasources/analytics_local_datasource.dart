@@ -12,9 +12,11 @@ part 'analytics_local_datasource.g.dart';
 /// Income and spending in minor units.
 typedef MinorTotals = ({int income, int spent});
 
-/// Aggregate queries over expenses, in minor units. Every one joins the
-/// category: its kind decides whether a row is income or spending. Throws
-/// database errors; the repository maps them to failures.
+/// Aggregate queries over expenses, in minor units, for one wallet or (with a
+/// null `walletId`) all of them. Every one joins the category: its kind
+/// decides whether a row is income or spending, and a transfer leg has none,
+/// so transfers are never counted. Throws database errors; the repository maps
+/// them to failures.
 @DriftAccessor(tables: [ExpensesTable, CategoriesTable])
 class AnalyticsLocalDatasource extends DatabaseAccessor<AppDatabase> with _$AnalyticsLocalDatasourceMixin {
   AnalyticsLocalDatasource(super.attachedDatabase);
@@ -26,8 +28,10 @@ class AnalyticsLocalDatasource extends DatabaseAccessor<AppDatabase> with _$Anal
 
   /// Dates are `YYYY-MM-DD` text, so string comparison is chronological and
   /// uses `idx_expenses_date`.
-  Expression<bool> _inRange(DateRange range) =>
-      expensesTable.date.isBetweenValues(_converter.toSql(range.start), _converter.toSql(range.end));
+  Expression<bool> _inRange(DateRange range, int? walletId) {
+    final inRange = expensesTable.date.isBetweenValues(_converter.toSql(range.start), _converter.toSql(range.end));
+    return walletId == null ? inRange : inRange & expensesTable.walletId.equals(walletId);
+  }
 
   /// `SUM(amount)` of the rows of [kind] (0 when there are none).
   Expression<int> _sumOf(TransactionKind kind) => CaseWhenExpression<int>(
@@ -35,32 +39,48 @@ class AnalyticsLocalDatasource extends DatabaseAccessor<AppDatabase> with _$Anal
     orElse: const Constant(0),
   ).sum();
 
-  Stream<MinorTotals> watchTotals(DateRange range) {
+  Stream<MinorTotals> watchTotals(DateRange range, {int? walletId}) {
     final income = _sumOf(TransactionKind.income);
     final spent = _sumOf(TransactionKind.expense);
     final query = selectOnly(expensesTable).join([_joinCategory])
       ..addColumns([income, spent])
-      ..where(_inRange(range));
+      ..where(_inRange(range, walletId));
     return query.watchSingle().map((row) => (income: row.read(income) ?? 0, spent: row.read(spent) ?? 0));
   }
 
-  Stream<Map<int, int>> watchTotalsByCategory(DateRange range, TransactionKind kind) {
+  Stream<Map<int, int>> watchTotalsByCategory(DateRange range, TransactionKind kind, {int? walletId}) {
     final sum = expensesTable.amountMinor.sum();
     final query = selectOnly(expensesTable).join([_joinCategory])
       ..addColumns([expensesTable.categoryId, sum])
-      ..where(_inRange(range) & categoriesTable.kind.equals(kind.name))
+      ..where(_inRange(range, walletId) & categoriesTable.kind.equals(kind.name))
       ..groupBy([expensesTable.categoryId]);
     return query.watch().map(
       (rows) => {for (final row in rows) row.read(expensesTable.categoryId)!: row.read(sum) ?? 0},
     );
   }
 
-  Stream<Map<LocalDate, MinorTotals>> watchDailyTotals(DateRange range) {
+  /// Income and spending per wallet; wallets without transactions are absent.
+  Stream<Map<int, MinorTotals>> watchTotalsByWallet(DateRange range) {
+    final income = _sumOf(TransactionKind.income);
+    final spent = _sumOf(TransactionKind.expense);
+    final query = selectOnly(expensesTable).join([_joinCategory])
+      ..addColumns([expensesTable.walletId, income, spent])
+      ..where(_inRange(range, null))
+      ..groupBy([expensesTable.walletId]);
+    return query.watch().map(
+      (rows) => {
+        for (final row in rows)
+          row.read(expensesTable.walletId)!: (income: row.read(income) ?? 0, spent: row.read(spent) ?? 0),
+      },
+    );
+  }
+
+  Stream<Map<LocalDate, MinorTotals>> watchDailyTotals(DateRange range, {int? walletId}) {
     final income = _sumOf(TransactionKind.income);
     final spent = _sumOf(TransactionKind.expense);
     final query = selectOnly(expensesTable).join([_joinCategory])
       ..addColumns([expensesTable.date, income, spent])
-      ..where(_inRange(range))
+      ..where(_inRange(range, walletId))
       ..groupBy([expensesTable.date]);
     return query.watch().map(
       (rows) => {

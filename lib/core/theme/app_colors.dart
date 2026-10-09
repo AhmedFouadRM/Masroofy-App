@@ -14,7 +14,21 @@ abstract final class AppColors {
   static const Color categoryEducation = Color(0xFF6366F1);
   static const Color categoryOther = Color(0xFF64748B);
 
+  static const Color walletEmerald = Color(0xFF059669);
+
   static const List<Color> categoryPalette = [
+    categoryFood,
+    categoryTransport,
+    categoryShopping,
+    categoryBills,
+    categoryHealth,
+    categoryEntertainment,
+    categoryEducation,
+    categoryOther,
+  ];
+
+  static const List<Color> walletPalette = [
+    walletEmerald,
     categoryFood,
     categoryTransport,
     categoryShopping,

@@ -14,12 +14,15 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$ExpenseListState {
 
- ExpensePeriod get period; DateRange get range; ExpenseListStatus get status;/// The All / Income / Expenses filter; null is All.
+ ExpensePeriod get period; DateRange get range; ExpenseListStatus get status;/// The wallet being viewed; null is All wallets.
+ int? get walletId;/// The All / Income / Expenses filter; null is All.
  TransactionKind? get kind; int? get categoryId; String get search;/// The loaded page, including rows waiting out their undo window.
- List<Expense> get loaded; bool get hasMore; PeriodTotals get totals;/// Totals of the comparison period; null until loaded, and not loaded at
+ List<ListEntry> get loaded; bool get hasMore; PeriodTotals get totals;/// Totals of the comparison period; null until loaded, and not loaded at
 /// all on All (the balance card has no comparison).
  PeriodTotals? get previousTotals; Map<LocalDate, PeriodTotals> get dailyTotals;/// All categories by id (incl. hidden, which old expenses may use).
- Map<int, Category> get categories;/// Swiped away, still restorable with Undo.
+ Map<int, Category> get categories;/// Every wallet with its balance this month, for the title, the switcher
+/// and the wallet names on rows.
+ List<WalletSummary> get wallets;/// Swiped away, still restorable with Undo (by the id of the row listed).
  Set<int> get pendingDelete; Failure? get loadFailure;/// A failed delete, shown once as a snackbar.
  Failure? get actionFailure;
 /// Create a copy of ExpenseListState
@@ -32,16 +35,16 @@ $ExpenseListStateCopyWith<ExpenseListState> get copyWith => _$ExpenseListStateCo
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is ExpenseListState&&(identical(other.period, period) || other.period == period)&&(identical(other.range, range) || other.range == range)&&(identical(other.status, status) || other.status == status)&&(identical(other.kind, kind) || other.kind == kind)&&(identical(other.categoryId, categoryId) || other.categoryId == categoryId)&&(identical(other.search, search) || other.search == search)&&const DeepCollectionEquality().equals(other.loaded, loaded)&&(identical(other.hasMore, hasMore) || other.hasMore == hasMore)&&(identical(other.totals, totals) || other.totals == totals)&&(identical(other.previousTotals, previousTotals) || other.previousTotals == previousTotals)&&const DeepCollectionEquality().equals(other.dailyTotals, dailyTotals)&&const DeepCollectionEquality().equals(other.categories, categories)&&const DeepCollectionEquality().equals(other.pendingDelete, pendingDelete)&&(identical(other.loadFailure, loadFailure) || other.loadFailure == loadFailure)&&(identical(other.actionFailure, actionFailure) || other.actionFailure == actionFailure));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ExpenseListState&&(identical(other.period, period) || other.period == period)&&(identical(other.range, range) || other.range == range)&&(identical(other.status, status) || other.status == status)&&(identical(other.walletId, walletId) || other.walletId == walletId)&&(identical(other.kind, kind) || other.kind == kind)&&(identical(other.categoryId, categoryId) || other.categoryId == categoryId)&&(identical(other.search, search) || other.search == search)&&const DeepCollectionEquality().equals(other.loaded, loaded)&&(identical(other.hasMore, hasMore) || other.hasMore == hasMore)&&(identical(other.totals, totals) || other.totals == totals)&&(identical(other.previousTotals, previousTotals) || other.previousTotals == previousTotals)&&const DeepCollectionEquality().equals(other.dailyTotals, dailyTotals)&&const DeepCollectionEquality().equals(other.categories, categories)&&const DeepCollectionEquality().equals(other.wallets, wallets)&&const DeepCollectionEquality().equals(other.pendingDelete, pendingDelete)&&(identical(other.loadFailure, loadFailure) || other.loadFailure == loadFailure)&&(identical(other.actionFailure, actionFailure) || other.actionFailure == actionFailure));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,period,range,status,kind,categoryId,search,const DeepCollectionEquality().hash(loaded),hasMore,totals,previousTotals,const DeepCollectionEquality().hash(dailyTotals),const DeepCollectionEquality().hash(categories),const DeepCollectionEquality().hash(pendingDelete),loadFailure,actionFailure);
+int get hashCode => Object.hash(runtimeType,period,range,status,walletId,kind,categoryId,search,const DeepCollectionEquality().hash(loaded),hasMore,totals,previousTotals,const DeepCollectionEquality().hash(dailyTotals),const DeepCollectionEquality().hash(categories),const DeepCollectionEquality().hash(wallets),const DeepCollectionEquality().hash(pendingDelete),loadFailure,actionFailure);
 
 @override
 String toString() {
-  return 'ExpenseListState(period: $period, range: $range, status: $status, kind: $kind, categoryId: $categoryId, search: $search, loaded: $loaded, hasMore: $hasMore, totals: $totals, previousTotals: $previousTotals, dailyTotals: $dailyTotals, categories: $categories, pendingDelete: $pendingDelete, loadFailure: $loadFailure, actionFailure: $actionFailure)';
+  return 'ExpenseListState(period: $period, range: $range, status: $status, walletId: $walletId, kind: $kind, categoryId: $categoryId, search: $search, loaded: $loaded, hasMore: $hasMore, totals: $totals, previousTotals: $previousTotals, dailyTotals: $dailyTotals, categories: $categories, wallets: $wallets, pendingDelete: $pendingDelete, loadFailure: $loadFailure, actionFailure: $actionFailure)';
 }
 
 
@@ -52,7 +55,7 @@ abstract mixin class $ExpenseListStateCopyWith<$Res>  {
   factory $ExpenseListStateCopyWith(ExpenseListState value, $Res Function(ExpenseListState) _then) = _$ExpenseListStateCopyWithImpl;
 @useResult
 $Res call({
- ExpensePeriod period, DateRange range, ExpenseListStatus status, TransactionKind? kind, int? categoryId, String search, List<Expense> loaded, bool hasMore, PeriodTotals totals, PeriodTotals? previousTotals, Map<LocalDate, PeriodTotals> dailyTotals, Map<int, Category> categories, Set<int> pendingDelete, Failure? loadFailure, Failure? actionFailure
+ ExpensePeriod period, DateRange range, ExpenseListStatus status, int? walletId, TransactionKind? kind, int? categoryId, String search, List<ListEntry> loaded, bool hasMore, PeriodTotals totals, PeriodTotals? previousTotals, Map<LocalDate, PeriodTotals> dailyTotals, Map<int, Category> categories, List<WalletSummary> wallets, Set<int> pendingDelete, Failure? loadFailure, Failure? actionFailure
 });
 
 
@@ -69,21 +72,23 @@ class _$ExpenseListStateCopyWithImpl<$Res>
 
 /// Create a copy of ExpenseListState
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? period = null,Object? range = null,Object? status = null,Object? kind = freezed,Object? categoryId = freezed,Object? search = null,Object? loaded = null,Object? hasMore = null,Object? totals = null,Object? previousTotals = freezed,Object? dailyTotals = null,Object? categories = null,Object? pendingDelete = null,Object? loadFailure = freezed,Object? actionFailure = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? period = null,Object? range = null,Object? status = null,Object? walletId = freezed,Object? kind = freezed,Object? categoryId = freezed,Object? search = null,Object? loaded = null,Object? hasMore = null,Object? totals = null,Object? previousTotals = freezed,Object? dailyTotals = null,Object? categories = null,Object? wallets = null,Object? pendingDelete = null,Object? loadFailure = freezed,Object? actionFailure = freezed,}) {
   return _then(_self.copyWith(
 period: null == period ? _self.period : period // ignore: cast_nullable_to_non_nullable
 as ExpensePeriod,range: null == range ? _self.range : range // ignore: cast_nullable_to_non_nullable
 as DateRange,status: null == status ? _self.status : status // ignore: cast_nullable_to_non_nullable
-as ExpenseListStatus,kind: freezed == kind ? _self.kind : kind // ignore: cast_nullable_to_non_nullable
+as ExpenseListStatus,walletId: freezed == walletId ? _self.walletId : walletId // ignore: cast_nullable_to_non_nullable
+as int?,kind: freezed == kind ? _self.kind : kind // ignore: cast_nullable_to_non_nullable
 as TransactionKind?,categoryId: freezed == categoryId ? _self.categoryId : categoryId // ignore: cast_nullable_to_non_nullable
 as int?,search: null == search ? _self.search : search // ignore: cast_nullable_to_non_nullable
 as String,loaded: null == loaded ? _self.loaded : loaded // ignore: cast_nullable_to_non_nullable
-as List<Expense>,hasMore: null == hasMore ? _self.hasMore : hasMore // ignore: cast_nullable_to_non_nullable
+as List<ListEntry>,hasMore: null == hasMore ? _self.hasMore : hasMore // ignore: cast_nullable_to_non_nullable
 as bool,totals: null == totals ? _self.totals : totals // ignore: cast_nullable_to_non_nullable
 as PeriodTotals,previousTotals: freezed == previousTotals ? _self.previousTotals : previousTotals // ignore: cast_nullable_to_non_nullable
 as PeriodTotals?,dailyTotals: null == dailyTotals ? _self.dailyTotals : dailyTotals // ignore: cast_nullable_to_non_nullable
 as Map<LocalDate, PeriodTotals>,categories: null == categories ? _self.categories : categories // ignore: cast_nullable_to_non_nullable
-as Map<int, Category>,pendingDelete: null == pendingDelete ? _self.pendingDelete : pendingDelete // ignore: cast_nullable_to_non_nullable
+as Map<int, Category>,wallets: null == wallets ? _self.wallets : wallets // ignore: cast_nullable_to_non_nullable
+as List<WalletSummary>,pendingDelete: null == pendingDelete ? _self.pendingDelete : pendingDelete // ignore: cast_nullable_to_non_nullable
 as Set<int>,loadFailure: freezed == loadFailure ? _self.loadFailure : loadFailure // ignore: cast_nullable_to_non_nullable
 as Failure?,actionFailure: freezed == actionFailure ? _self.actionFailure : actionFailure // ignore: cast_nullable_to_non_nullable
 as Failure?,
@@ -195,10 +200,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( ExpensePeriod period,  DateRange range,  ExpenseListStatus status,  TransactionKind? kind,  int? categoryId,  String search,  List<Expense> loaded,  bool hasMore,  PeriodTotals totals,  PeriodTotals? previousTotals,  Map<LocalDate, PeriodTotals> dailyTotals,  Map<int, Category> categories,  Set<int> pendingDelete,  Failure? loadFailure,  Failure? actionFailure)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( ExpensePeriod period,  DateRange range,  ExpenseListStatus status,  int? walletId,  TransactionKind? kind,  int? categoryId,  String search,  List<ListEntry> loaded,  bool hasMore,  PeriodTotals totals,  PeriodTotals? previousTotals,  Map<LocalDate, PeriodTotals> dailyTotals,  Map<int, Category> categories,  List<WalletSummary> wallets,  Set<int> pendingDelete,  Failure? loadFailure,  Failure? actionFailure)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _ExpenseListState() when $default != null:
-return $default(_that.period,_that.range,_that.status,_that.kind,_that.categoryId,_that.search,_that.loaded,_that.hasMore,_that.totals,_that.previousTotals,_that.dailyTotals,_that.categories,_that.pendingDelete,_that.loadFailure,_that.actionFailure);case _:
+return $default(_that.period,_that.range,_that.status,_that.walletId,_that.kind,_that.categoryId,_that.search,_that.loaded,_that.hasMore,_that.totals,_that.previousTotals,_that.dailyTotals,_that.categories,_that.wallets,_that.pendingDelete,_that.loadFailure,_that.actionFailure);case _:
   return orElse();
 
 }
@@ -216,10 +221,10 @@ return $default(_that.period,_that.range,_that.status,_that.kind,_that.categoryI
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( ExpensePeriod period,  DateRange range,  ExpenseListStatus status,  TransactionKind? kind,  int? categoryId,  String search,  List<Expense> loaded,  bool hasMore,  PeriodTotals totals,  PeriodTotals? previousTotals,  Map<LocalDate, PeriodTotals> dailyTotals,  Map<int, Category> categories,  Set<int> pendingDelete,  Failure? loadFailure,  Failure? actionFailure)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( ExpensePeriod period,  DateRange range,  ExpenseListStatus status,  int? walletId,  TransactionKind? kind,  int? categoryId,  String search,  List<ListEntry> loaded,  bool hasMore,  PeriodTotals totals,  PeriodTotals? previousTotals,  Map<LocalDate, PeriodTotals> dailyTotals,  Map<int, Category> categories,  List<WalletSummary> wallets,  Set<int> pendingDelete,  Failure? loadFailure,  Failure? actionFailure)  $default,) {final _that = this;
 switch (_that) {
 case _ExpenseListState():
-return $default(_that.period,_that.range,_that.status,_that.kind,_that.categoryId,_that.search,_that.loaded,_that.hasMore,_that.totals,_that.previousTotals,_that.dailyTotals,_that.categories,_that.pendingDelete,_that.loadFailure,_that.actionFailure);case _:
+return $default(_that.period,_that.range,_that.status,_that.walletId,_that.kind,_that.categoryId,_that.search,_that.loaded,_that.hasMore,_that.totals,_that.previousTotals,_that.dailyTotals,_that.categories,_that.wallets,_that.pendingDelete,_that.loadFailure,_that.actionFailure);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -236,10 +241,10 @@ return $default(_that.period,_that.range,_that.status,_that.kind,_that.categoryI
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( ExpensePeriod period,  DateRange range,  ExpenseListStatus status,  TransactionKind? kind,  int? categoryId,  String search,  List<Expense> loaded,  bool hasMore,  PeriodTotals totals,  PeriodTotals? previousTotals,  Map<LocalDate, PeriodTotals> dailyTotals,  Map<int, Category> categories,  Set<int> pendingDelete,  Failure? loadFailure,  Failure? actionFailure)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( ExpensePeriod period,  DateRange range,  ExpenseListStatus status,  int? walletId,  TransactionKind? kind,  int? categoryId,  String search,  List<ListEntry> loaded,  bool hasMore,  PeriodTotals totals,  PeriodTotals? previousTotals,  Map<LocalDate, PeriodTotals> dailyTotals,  Map<int, Category> categories,  List<WalletSummary> wallets,  Set<int> pendingDelete,  Failure? loadFailure,  Failure? actionFailure)?  $default,) {final _that = this;
 switch (_that) {
 case _ExpenseListState() when $default != null:
-return $default(_that.period,_that.range,_that.status,_that.kind,_that.categoryId,_that.search,_that.loaded,_that.hasMore,_that.totals,_that.previousTotals,_that.dailyTotals,_that.categories,_that.pendingDelete,_that.loadFailure,_that.actionFailure);case _:
+return $default(_that.period,_that.range,_that.status,_that.walletId,_that.kind,_that.categoryId,_that.search,_that.loaded,_that.hasMore,_that.totals,_that.previousTotals,_that.dailyTotals,_that.categories,_that.wallets,_that.pendingDelete,_that.loadFailure,_that.actionFailure);case _:
   return null;
 
 }
@@ -251,20 +256,22 @@ return $default(_that.period,_that.range,_that.status,_that.kind,_that.categoryI
 
 
 class _ExpenseListState extends ExpenseListState {
-  const _ExpenseListState({required this.period, required this.range, this.status = ExpenseListStatus.loading, this.kind, this.categoryId, this.search = '', final  List<Expense> loaded = const <Expense>[], this.hasMore = false, this.totals = PeriodTotals.zero, this.previousTotals, final  Map<LocalDate, PeriodTotals> dailyTotals = const <LocalDate, PeriodTotals>{}, final  Map<int, Category> categories = const <int, Category>{}, final  Set<int> pendingDelete = const <int>{}, this.loadFailure, this.actionFailure}): _loaded = loaded,_dailyTotals = dailyTotals,_categories = categories,_pendingDelete = pendingDelete,super._();
+  const _ExpenseListState({required this.period, required this.range, this.status = ExpenseListStatus.loading, this.walletId, this.kind, this.categoryId, this.search = '', final  List<ListEntry> loaded = const <ListEntry>[], this.hasMore = false, this.totals = PeriodTotals.zero, this.previousTotals, final  Map<LocalDate, PeriodTotals> dailyTotals = const <LocalDate, PeriodTotals>{}, final  Map<int, Category> categories = const <int, Category>{}, final  List<WalletSummary> wallets = const <WalletSummary>[], final  Set<int> pendingDelete = const <int>{}, this.loadFailure, this.actionFailure}): _loaded = loaded,_dailyTotals = dailyTotals,_categories = categories,_wallets = wallets,_pendingDelete = pendingDelete,super._();
   
 
 @override final  ExpensePeriod period;
 @override final  DateRange range;
 @override@JsonKey() final  ExpenseListStatus status;
+/// The wallet being viewed; null is All wallets.
+@override final  int? walletId;
 /// The All / Income / Expenses filter; null is All.
 @override final  TransactionKind? kind;
 @override final  int? categoryId;
 @override@JsonKey() final  String search;
 /// The loaded page, including rows waiting out their undo window.
- final  List<Expense> _loaded;
+ final  List<ListEntry> _loaded;
 /// The loaded page, including rows waiting out their undo window.
-@override@JsonKey() List<Expense> get loaded {
+@override@JsonKey() List<ListEntry> get loaded {
   if (_loaded is EqualUnmodifiableListView) return _loaded;
   // ignore: implicit_dynamic_type
   return EqualUnmodifiableListView(_loaded);
@@ -291,9 +298,20 @@ class _ExpenseListState extends ExpenseListState {
   return EqualUnmodifiableMapView(_categories);
 }
 
-/// Swiped away, still restorable with Undo.
+/// Every wallet with its balance this month, for the title, the switcher
+/// and the wallet names on rows.
+ final  List<WalletSummary> _wallets;
+/// Every wallet with its balance this month, for the title, the switcher
+/// and the wallet names on rows.
+@override@JsonKey() List<WalletSummary> get wallets {
+  if (_wallets is EqualUnmodifiableListView) return _wallets;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableListView(_wallets);
+}
+
+/// Swiped away, still restorable with Undo (by the id of the row listed).
  final  Set<int> _pendingDelete;
-/// Swiped away, still restorable with Undo.
+/// Swiped away, still restorable with Undo (by the id of the row listed).
 @override@JsonKey() Set<int> get pendingDelete {
   if (_pendingDelete is EqualUnmodifiableSetView) return _pendingDelete;
   // ignore: implicit_dynamic_type
@@ -314,16 +332,16 @@ _$ExpenseListStateCopyWith<_ExpenseListState> get copyWith => __$ExpenseListStat
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _ExpenseListState&&(identical(other.period, period) || other.period == period)&&(identical(other.range, range) || other.range == range)&&(identical(other.status, status) || other.status == status)&&(identical(other.kind, kind) || other.kind == kind)&&(identical(other.categoryId, categoryId) || other.categoryId == categoryId)&&(identical(other.search, search) || other.search == search)&&const DeepCollectionEquality().equals(other._loaded, _loaded)&&(identical(other.hasMore, hasMore) || other.hasMore == hasMore)&&(identical(other.totals, totals) || other.totals == totals)&&(identical(other.previousTotals, previousTotals) || other.previousTotals == previousTotals)&&const DeepCollectionEquality().equals(other._dailyTotals, _dailyTotals)&&const DeepCollectionEquality().equals(other._categories, _categories)&&const DeepCollectionEquality().equals(other._pendingDelete, _pendingDelete)&&(identical(other.loadFailure, loadFailure) || other.loadFailure == loadFailure)&&(identical(other.actionFailure, actionFailure) || other.actionFailure == actionFailure));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _ExpenseListState&&(identical(other.period, period) || other.period == period)&&(identical(other.range, range) || other.range == range)&&(identical(other.status, status) || other.status == status)&&(identical(other.walletId, walletId) || other.walletId == walletId)&&(identical(other.kind, kind) || other.kind == kind)&&(identical(other.categoryId, categoryId) || other.categoryId == categoryId)&&(identical(other.search, search) || other.search == search)&&const DeepCollectionEquality().equals(other._loaded, _loaded)&&(identical(other.hasMore, hasMore) || other.hasMore == hasMore)&&(identical(other.totals, totals) || other.totals == totals)&&(identical(other.previousTotals, previousTotals) || other.previousTotals == previousTotals)&&const DeepCollectionEquality().equals(other._dailyTotals, _dailyTotals)&&const DeepCollectionEquality().equals(other._categories, _categories)&&const DeepCollectionEquality().equals(other._wallets, _wallets)&&const DeepCollectionEquality().equals(other._pendingDelete, _pendingDelete)&&(identical(other.loadFailure, loadFailure) || other.loadFailure == loadFailure)&&(identical(other.actionFailure, actionFailure) || other.actionFailure == actionFailure));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,period,range,status,kind,categoryId,search,const DeepCollectionEquality().hash(_loaded),hasMore,totals,previousTotals,const DeepCollectionEquality().hash(_dailyTotals),const DeepCollectionEquality().hash(_categories),const DeepCollectionEquality().hash(_pendingDelete),loadFailure,actionFailure);
+int get hashCode => Object.hash(runtimeType,period,range,status,walletId,kind,categoryId,search,const DeepCollectionEquality().hash(_loaded),hasMore,totals,previousTotals,const DeepCollectionEquality().hash(_dailyTotals),const DeepCollectionEquality().hash(_categories),const DeepCollectionEquality().hash(_wallets),const DeepCollectionEquality().hash(_pendingDelete),loadFailure,actionFailure);
 
 @override
 String toString() {
-  return 'ExpenseListState(period: $period, range: $range, status: $status, kind: $kind, categoryId: $categoryId, search: $search, loaded: $loaded, hasMore: $hasMore, totals: $totals, previousTotals: $previousTotals, dailyTotals: $dailyTotals, categories: $categories, pendingDelete: $pendingDelete, loadFailure: $loadFailure, actionFailure: $actionFailure)';
+  return 'ExpenseListState(period: $period, range: $range, status: $status, walletId: $walletId, kind: $kind, categoryId: $categoryId, search: $search, loaded: $loaded, hasMore: $hasMore, totals: $totals, previousTotals: $previousTotals, dailyTotals: $dailyTotals, categories: $categories, wallets: $wallets, pendingDelete: $pendingDelete, loadFailure: $loadFailure, actionFailure: $actionFailure)';
 }
 
 
@@ -334,7 +352,7 @@ abstract mixin class _$ExpenseListStateCopyWith<$Res> implements $ExpenseListSta
   factory _$ExpenseListStateCopyWith(_ExpenseListState value, $Res Function(_ExpenseListState) _then) = __$ExpenseListStateCopyWithImpl;
 @override @useResult
 $Res call({
- ExpensePeriod period, DateRange range, ExpenseListStatus status, TransactionKind? kind, int? categoryId, String search, List<Expense> loaded, bool hasMore, PeriodTotals totals, PeriodTotals? previousTotals, Map<LocalDate, PeriodTotals> dailyTotals, Map<int, Category> categories, Set<int> pendingDelete, Failure? loadFailure, Failure? actionFailure
+ ExpensePeriod period, DateRange range, ExpenseListStatus status, int? walletId, TransactionKind? kind, int? categoryId, String search, List<ListEntry> loaded, bool hasMore, PeriodTotals totals, PeriodTotals? previousTotals, Map<LocalDate, PeriodTotals> dailyTotals, Map<int, Category> categories, List<WalletSummary> wallets, Set<int> pendingDelete, Failure? loadFailure, Failure? actionFailure
 });
 
 
@@ -351,21 +369,23 @@ class __$ExpenseListStateCopyWithImpl<$Res>
 
 /// Create a copy of ExpenseListState
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? period = null,Object? range = null,Object? status = null,Object? kind = freezed,Object? categoryId = freezed,Object? search = null,Object? loaded = null,Object? hasMore = null,Object? totals = null,Object? previousTotals = freezed,Object? dailyTotals = null,Object? categories = null,Object? pendingDelete = null,Object? loadFailure = freezed,Object? actionFailure = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? period = null,Object? range = null,Object? status = null,Object? walletId = freezed,Object? kind = freezed,Object? categoryId = freezed,Object? search = null,Object? loaded = null,Object? hasMore = null,Object? totals = null,Object? previousTotals = freezed,Object? dailyTotals = null,Object? categories = null,Object? wallets = null,Object? pendingDelete = null,Object? loadFailure = freezed,Object? actionFailure = freezed,}) {
   return _then(_ExpenseListState(
 period: null == period ? _self.period : period // ignore: cast_nullable_to_non_nullable
 as ExpensePeriod,range: null == range ? _self.range : range // ignore: cast_nullable_to_non_nullable
 as DateRange,status: null == status ? _self.status : status // ignore: cast_nullable_to_non_nullable
-as ExpenseListStatus,kind: freezed == kind ? _self.kind : kind // ignore: cast_nullable_to_non_nullable
+as ExpenseListStatus,walletId: freezed == walletId ? _self.walletId : walletId // ignore: cast_nullable_to_non_nullable
+as int?,kind: freezed == kind ? _self.kind : kind // ignore: cast_nullable_to_non_nullable
 as TransactionKind?,categoryId: freezed == categoryId ? _self.categoryId : categoryId // ignore: cast_nullable_to_non_nullable
 as int?,search: null == search ? _self.search : search // ignore: cast_nullable_to_non_nullable
 as String,loaded: null == loaded ? _self._loaded : loaded // ignore: cast_nullable_to_non_nullable
-as List<Expense>,hasMore: null == hasMore ? _self.hasMore : hasMore // ignore: cast_nullable_to_non_nullable
+as List<ListEntry>,hasMore: null == hasMore ? _self.hasMore : hasMore // ignore: cast_nullable_to_non_nullable
 as bool,totals: null == totals ? _self.totals : totals // ignore: cast_nullable_to_non_nullable
 as PeriodTotals,previousTotals: freezed == previousTotals ? _self.previousTotals : previousTotals // ignore: cast_nullable_to_non_nullable
 as PeriodTotals?,dailyTotals: null == dailyTotals ? _self._dailyTotals : dailyTotals // ignore: cast_nullable_to_non_nullable
 as Map<LocalDate, PeriodTotals>,categories: null == categories ? _self._categories : categories // ignore: cast_nullable_to_non_nullable
-as Map<int, Category>,pendingDelete: null == pendingDelete ? _self._pendingDelete : pendingDelete // ignore: cast_nullable_to_non_nullable
+as Map<int, Category>,wallets: null == wallets ? _self._wallets : wallets // ignore: cast_nullable_to_non_nullable
+as List<WalletSummary>,pendingDelete: null == pendingDelete ? _self._pendingDelete : pendingDelete // ignore: cast_nullable_to_non_nullable
 as Set<int>,loadFailure: freezed == loadFailure ? _self.loadFailure : loadFailure // ignore: cast_nullable_to_non_nullable
 as Failure?,actionFailure: freezed == actionFailure ? _self.actionFailure : actionFailure // ignore: cast_nullable_to_non_nullable
 as Failure?,

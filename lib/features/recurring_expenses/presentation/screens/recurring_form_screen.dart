@@ -15,6 +15,10 @@ import 'package:masroofy/shared/categories/category_display.dart';
 import 'package:masroofy/shared/categories/category_icon_registry.dart';
 import 'package:masroofy/shared/categories/category_picker_sheet.dart';
 import 'package:masroofy/shared/formatting/display_format.dart';
+import 'package:masroofy/shared/settings/settings_cubit.dart';
+import 'package:masroofy/shared/wallets/wallet_avatar.dart';
+import 'package:masroofy/shared/wallets/wallet_display.dart';
+import 'package:masroofy/shared/wallets/wallet_sheet.dart';
 import 'package:masroofy/shared/widgets/aura_background.dart';
 import 'package:masroofy/shared/widgets/glass_app_bar.dart';
 import 'package:masroofy/shared/widgets/glass_bottom_bar.dart';
@@ -149,6 +153,18 @@ class _Fields extends StatelessWidget {
     if (id != null) cubit.categorySelected(id);
   }
 
+  Future<void> _pickWallet(BuildContext context) async {
+    final cubit = context.read<RecurringFormCubit>();
+    final choice = await showWalletSheet(
+      context,
+      title: StringManager.chooseWallet,
+      wallets: state.wallets,
+      selectedId: state.walletId,
+      defaultId: context.read<SettingsCubit>().state.defaultWalletId,
+    );
+    if (choice?.walletId case final id?) cubit.walletSelected(id);
+  }
+
   String _startLabel(BuildContext context) {
     final today = LocalDate.today();
     final date = context.shortDate(state.startDate);
@@ -163,6 +179,7 @@ class _Fields extends StatelessWidget {
     final colors = MasroofyColors.of(context);
     final text = Theme.of(context).textTheme;
     final category = state.category;
+    final wallet = state.wallet?.wallet;
     const gap = SizedBox(height: AppSpacing.lg);
 
     return ListView(
@@ -210,6 +227,14 @@ class _Fields extends StatelessWidget {
           leading: category == null ? null : Icon(CategoryIconRegistry.of(category.icon), color: Color(category.color)),
           errorText: _error('categoryId'),
           onTap: () => _pickCategory(context),
+        ),
+        gap,
+        SelectField(
+          label: StringManager.walletLabel,
+          value: wallet?.displayName,
+          leading: wallet == null ? null : WalletAvatar(icon: wallet.icon, color: wallet.color, size: 28),
+          errorText: _error('walletId'),
+          onTap: () => _pickWallet(context),
         ),
         gap,
         TextField(

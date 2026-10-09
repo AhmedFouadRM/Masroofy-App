@@ -6,7 +6,8 @@ import 'package:masroofy/core/domain/period_totals.dart';
 import 'package:masroofy/core/domain/transaction_kind.dart';
 import 'package:masroofy/core/error/failures.dart';
 import 'package:masroofy/features/categories/domain/entities/category.dart';
-import 'package:masroofy/features/expenses/domain/entities/expense.dart';
+import 'package:masroofy/features/expenses/domain/entities/list_entry.dart';
+import 'package:masroofy/features/wallets/domain/entities/wallet_summary.dart';
 
 part 'expense_list_state.freezed.dart';
 
@@ -21,13 +22,16 @@ abstract class ExpenseListState with _$ExpenseListState {
     required DateRange range,
     @Default(ExpenseListStatus.loading) ExpenseListStatus status,
 
+    /// The wallet being viewed; null is All wallets.
+    int? walletId,
+
     /// The All / Income / Expenses filter; null is All.
     TransactionKind? kind,
     int? categoryId,
     @Default('') String search,
 
     /// The loaded page, including rows waiting out their undo window.
-    @Default(<Expense>[]) List<Expense> loaded,
+    @Default(<ListEntry>[]) List<ListEntry> loaded,
     @Default(false) bool hasMore,
     @Default(PeriodTotals.zero) PeriodTotals totals,
 
@@ -39,7 +43,11 @@ abstract class ExpenseListState with _$ExpenseListState {
     /// All categories by id (incl. hidden, which old expenses may use).
     @Default(<int, Category>{}) Map<int, Category> categories,
 
-    /// Swiped away, still restorable with Undo.
+    /// Every wallet with its balance this month, for the title, the switcher
+    /// and the wallet names on rows.
+    @Default(<WalletSummary>[]) List<WalletSummary> wallets,
+
+    /// Swiped away, still restorable with Undo (by the id of the row listed).
     @Default(<int>{}) Set<int> pendingDelete,
     Failure? loadFailure,
 
@@ -49,26 +57,40 @@ abstract class ExpenseListState with _$ExpenseListState {
 
   const ExpenseListState._();
 
-  List<Expense> get expenses => [
+  List<ListEntry> get entries => [
     for (final e in loaded)
       if (!pendingDelete.contains(e.id)) e,
   ];
 
-  /// [totals] without the rows waiting to be deleted.
-  static PeriodTotals _without(PeriodTotals totals, Iterable<Expense> pending) => PeriodTotals(
-    income:
-        totals.income -
-        Money.sum([
-          for (final e in pending)
-            if (e.kind == TransactionKind.income) e.amount,
-        ]),
-    spent:
-        totals.spent -
-        Money.sum([
-          for (final e in pending)
-            if (e.kind == TransactionKind.expense) e.amount,
-        ]),
-  );
+  /// The wallet being viewed; null for All wallets.
+  WalletSummary? get wallet => wallets.where((w) => w.wallet.id == walletId).firstOrNull;
+
+  /// [totals] without the rows waiting to be deleted. In All wallets a
+  /// transfer's two legs cancel out, so hiding one changes nothing.
+  PeriodTotals _without(PeriodTotals totals, Iterable<ListEntry> pending) {
+    var income = Money.zero;
+    var spent = Money.zero;
+    var transfers = Money.zero;
+    for (final entry in pending) {
+      switch (entry) {
+        case TransactionEntry(:final expense):
+          if (expense.kind == TransactionKind.income) {
+            income += expense.amount;
+          } else {
+            spent += expense.amount;
+          }
+        case TransferEntry(:final transfer, walletId: final legWallet) when walletId != null:
+          transfers += legWallet == transfer.toWalletId ? transfer.amount : -transfer.amount;
+        case TransferEntry():
+          break;
+      }
+    }
+    return PeriodTotals(
+      income: totals.income - income,
+      spent: totals.spent - spent,
+      transfersNet: totals.transfersNet - transfers,
+    );
+  }
 
   /// The period totals without the rows waiting to be deleted.
   PeriodTotals get visibleTotals => _without(totals, loaded.where((e) => pendingDelete.contains(e.id)));

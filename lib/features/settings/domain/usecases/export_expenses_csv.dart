@@ -22,11 +22,15 @@ class ExportExpensesCsv {
   /// Above this many records the text is encoded off the UI isolate.
   static const isolateThreshold = 5000;
 
-  Future<Either<Failure, Unit>> call({required Currency currency, required CategoryLabeler categoryLabel}) async {
+  Future<Either<Failure, Unit>> call({
+    required Currency currency,
+    required CategoryLabeler categoryLabel,
+    required WalletLabeler walletLabel,
+  }) async {
     final loaded = await _repository.loadExpenseExport();
     return loaded.match(
       (failure) async => Left(failure),
-      (expenses) => _share(expenses, currency, categoryLabel),
+      (expenses) => _share(expenses, currency, categoryLabel, walletLabel),
     );
   }
 
@@ -34,11 +38,12 @@ class ExportExpensesCsv {
     List<ExpenseExportRow> expenses,
     Currency currency,
     CategoryLabeler categoryLabel,
+    WalletLabeler walletLabel,
   ) async {
     try {
-      // Category names come from the translations, which only exist on this
-      // isolate, so the records are built here and only the encoding moves.
-      final records = CsvExport.records(expenses, currency, categoryLabel);
+      // Category and wallet names come from the translations, which only exist
+      // on this isolate, so the records are built here and only the encoding moves.
+      final records = CsvExport.records(expenses, currency, categoryLabel, walletLabel);
       final text = records.length > isolateThreshold
           ? await Isolate.run(() => CsvExport.encode(records))
           : CsvExport.encode(records);

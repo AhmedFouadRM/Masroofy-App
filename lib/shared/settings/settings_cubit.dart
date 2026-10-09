@@ -1,5 +1,6 @@
 import 'dart:ui' show PlatformDispatcher;
 
+import 'package:drift/drift.dart' show OrderingTerm;
 import 'package:flutter/material.dart' show ThemeMode;
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:masroofy/core/database/app_database.dart';
@@ -16,6 +17,14 @@ abstract final class PreferenceKeys {
   static const westernDigits = 'western_digits';
   static const authEnabled = 'auth_enabled';
   static const biometricEnabled = 'biometric_enabled';
+  static const defaultWalletId = 'default_wallet_id';
+
+  /// The wallet being viewed. Absent until the first launch has picked the
+  /// default wallet; [allWallets] stores a choice of All wallets.
+  static const viewedWalletId = 'viewed_wallet_id';
+
+  /// Wallet ids start at 1, so 0 can stand for All wallets (`null` in state).
+  static const allWallets = 0;
 }
 
 /// App-wide settings, provided above `MaterialApp` in `main()`. The initial
@@ -38,7 +47,14 @@ class SettingsCubit extends Cubit<SettingsState> {
     currencyChosen: preferences.containsKey(PreferenceKeys.currencyCode),
     westernDigits: preferences.getBool(PreferenceKeys.westernDigits) ?? false,
     firstWeekday: firstWeekday,
+    defaultWalletId: preferences.getInt(PreferenceKeys.defaultWalletId),
+    viewedWalletId: _viewedWallet(preferences),
   );
+
+  static int? _viewedWallet(SharedPreferences preferences) {
+    final id = preferences.getInt(PreferenceKeys.viewedWalletId);
+    return id == PreferenceKeys.allWallets ? null : id;
+  }
 
   static int _deviceFirstWeekday() {
     final deviceLocale = PlatformDispatcher.instance.locale;
@@ -85,5 +101,39 @@ class SettingsCubit extends Cubit<SettingsState> {
   Future<void> setWesternDigits({required bool enabled}) async {
     emit(state.copyWith(westernDigits: enabled));
     await _preferences.setBool(PreferenceKeys.westernDigits, enabled);
+  }
+
+  /// The wallet new transactions go to when All wallets is viewed.
+  Future<void> setDefaultWallet(int id) async {
+    emit(state.copyWith(defaultWalletId: id));
+    await _preferences.setInt(PreferenceKeys.defaultWalletId, id);
+  }
+
+  /// The wallet the list and Analytics show; null shows All wallets. Remembered
+  /// across launches.
+  Future<void> setViewedWallet(int? id) async {
+    emit(state.copyWith(viewedWalletId: id));
+    await _preferences.setInt(PreferenceKeys.viewedWalletId, id ?? PreferenceKeys.allWallets);
+  }
+
+  /// Checks the wallet preferences against the wallets that exist. A missing
+  /// or stale default becomes the first wallet (an upgraded or fresh install
+  /// has only "Me"), a viewed wallet that was never chosen starts as the
+  /// default one, and a viewed wallet that is gone becomes All wallets.
+  /// Runs at launch, before the first screen.
+  Future<void> repairWalletPreferences() async {
+    final wallets = await (_database.select(
+      _database.walletsTable,
+    )..orderBy([(w) => OrderingTerm(expression: w.sortOrder), (w) => OrderingTerm(expression: w.id)])).get();
+    final ids = [for (final wallet in wallets) wallet.id];
+    if (ids.isEmpty) return;
+    final defaultId = state.defaultWalletId;
+    if (defaultId == null || !ids.contains(defaultId)) await setDefaultWallet(ids.first);
+    final viewedId = state.viewedWalletId;
+    if (!_preferences.containsKey(PreferenceKeys.viewedWalletId)) {
+      await setViewedWallet(state.defaultWalletId);
+    } else if (viewedId != null && !ids.contains(viewedId)) {
+      await setViewedWallet(null);
+    }
   }
 }

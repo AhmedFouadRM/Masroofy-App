@@ -7,6 +7,7 @@ class AppConstants {
   static const int maxTitleLength = 100;
   static const int maxNoteLength = 500;
   static const int maxCategoryNameLength = 50;
+  static const int maxWalletNameLength = 30;
   static const int reLockGracePeriodSeconds = 30;
   static const int maxBackGenerationDays = 90;
   static const int pinAttemptsBeforeDelay = 5;

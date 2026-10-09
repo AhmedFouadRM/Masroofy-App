@@ -11,7 +11,9 @@ import 'package:masroofy/features/expenses/data/datasources/expense_local_dataso
 import 'package:masroofy/features/expenses/domain/entities/expense.dart';
 import 'package:masroofy/features/expenses/domain/entities/expense_draft.dart';
 import 'package:masroofy/features/expenses/domain/entities/expense_filter.dart';
+import 'package:masroofy/features/expenses/domain/entities/list_entry.dart';
 import 'package:masroofy/features/expenses/domain/repositories/i_expense_repository.dart';
+import 'package:masroofy/features/wallets/domain/entities/transfer.dart';
 
 class ExpenseRepositoryImpl implements IExpenseRepository {
   ExpenseRepositoryImpl(this._datasource);
@@ -19,8 +21,8 @@ class ExpenseRepositoryImpl implements IExpenseRepository {
   final ExpenseLocalDatasource _datasource;
 
   @override
-  Stream<Either<Failure, List<Expense>>> watchExpenses(ExpenseFilter filter, {required int limit}) =>
-      _datasource.watchExpenses(filter, limit: limit).map((rows) => rows.map(_toExpense).toList()).guarded();
+  Stream<Either<Failure, List<ListEntry>>> watchEntries(ExpenseFilter filter, {required int limit}) =>
+      _datasource.watchExpenses(filter, limit: limit).map((rows) => rows.map(_toEntry).toList()).guarded();
 
   @override
   Stream<Either<Failure, PeriodTotals>> watchTotals(ExpenseFilter filter) =>
@@ -31,8 +33,8 @@ class ExpenseRepositoryImpl implements IExpenseRepository {
       _datasource.watchDailyTotals(filter).map((totals) => totals.map((d, t) => MapEntry(d, _toTotals(t)))).guarded();
 
   @override
-  Future<Either<Failure, Expense>> getById(int id) async => (await guardDb(() => _datasource.getById(id))).flatMap(
-    (row) => row == null ? const Left(Failure.notFound()) : Right(_toExpense(row)),
+  Future<Either<Failure, ListEntry>> getEntry(int id) async => (await guardDb(() => _datasource.getById(id))).flatMap(
+    (row) => row == null ? const Left(Failure.notFound()) : Right(_toEntry(row)),
   );
 
   @override
@@ -43,7 +45,8 @@ class ExpenseRepositoryImpl implements IExpenseRepository {
       () => _datasource.insertExpense(
         ExpensesTableCompanion.insert(
           amountMinor: draft.amount.minor,
-          categoryId: draft.categoryId,
+          walletId: draft.walletId,
+          categoryId: Value(draft.categoryId),
           date: draft.date,
           title: Value(draft.title),
           note: Value(draft.note),
@@ -61,6 +64,7 @@ class ExpenseRepositoryImpl implements IExpenseRepository {
         id,
         ExpensesTableCompanion(
           amountMinor: Value(draft.amount.minor),
+          walletId: Value(draft.walletId),
           categoryId: Value(draft.categoryId),
           date: Value(draft.date),
           title: Value(draft.title),
@@ -87,23 +91,49 @@ class ExpenseRepositoryImpl implements IExpenseRepository {
   static Either<Failure, Unit> _oneRowChanged(int rows) =>
       rows == 1 ? const Right(unit) : const Left(Failure.notFound());
 
-  static PeriodTotals _toTotals(MinorTotals totals) =>
-      PeriodTotals(income: Money(totals.income), spent: Money(totals.spent));
+  static PeriodTotals _toTotals(MinorTotals totals) => PeriodTotals(
+    income: Money(totals.income),
+    spent: Money(totals.spent),
+    transfersNet: Money(totals.transfersNet),
+  );
 
-  static Expense _toExpense(ExpenseRow result) {
+  static ListEntry _toEntry(ExpenseRow result) {
     final row = result.expense;
-    return Expense(
-      id: row.id,
-      amount: Money(row.amountMinor),
-      categoryId: row.categoryId,
-      date: row.date,
-      title: row.title,
-      note: row.note,
-      recurringExpenseId: row.recurringExpenseId,
-      occurrenceDate: row.occurrenceDate,
-      createdAt: row.createdAt,
-      updatedAt: row.updatedAt,
-      kind: TransactionKind.values.byName(result.kind),
+    final transferId = row.transferId;
+    if (transferId != null) {
+      // The leg is the out leg when the wallet is the source.
+      final out = row.direction == 'out';
+      final other = result.counterpartWalletId ?? row.walletId;
+      return ListEntry.transfer(
+        Transfer(
+          id: transferId,
+          fromWalletId: out ? row.walletId : other,
+          toWalletId: out ? other : row.walletId,
+          amount: Money(row.amountMinor),
+          date: row.date,
+          note: row.note,
+          createdAt: row.createdAt,
+          updatedAt: row.updatedAt,
+        ),
+        rowId: row.id,
+        walletId: row.walletId,
+      );
+    }
+    return ListEntry.transaction(
+      Expense(
+        id: row.id,
+        amount: Money(row.amountMinor),
+        walletId: row.walletId,
+        categoryId: row.categoryId!,
+        date: row.date,
+        title: row.title,
+        note: row.note,
+        recurringExpenseId: row.recurringExpenseId,
+        occurrenceDate: row.occurrenceDate,
+        createdAt: row.createdAt,
+        updatedAt: row.updatedAt,
+        kind: TransactionKind.values.byName(result.kind!),
+      ),
     );
   }
 }

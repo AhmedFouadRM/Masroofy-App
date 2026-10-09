@@ -8,6 +8,8 @@ import 'package:masroofy/core/error/failures.dart';
 import 'package:masroofy/features/analytics/domain/analytics_math.dart';
 import 'package:masroofy/features/budgets/domain/entities/budget_progress.dart';
 import 'package:masroofy/features/categories/domain/entities/category.dart';
+import 'package:masroofy/features/wallets/domain/entities/wallet.dart';
+import 'package:masroofy/features/wallets/domain/entities/wallet_summary.dart';
 
 part 'analytics_state.freezed.dart';
 
@@ -25,6 +27,9 @@ abstract class AnalyticsState with _$AnalyticsState {
     /// `DateTime.weekday` the week starts on, for weekly bars.
     required int firstWeekday,
     @Default(AnalyticsStatus.loading) AnalyticsStatus status,
+
+    /// The wallet shown; null is All wallets.
+    int? walletId,
     @Default(PeriodTotals.zero) PeriodTotals totals,
 
     /// Spending of the comparison period; null until it has loaded.
@@ -40,12 +45,25 @@ abstract class AnalyticsState with _$AnalyticsState {
     /// Every category (hidden ones too), by id.
     @Default(<int, Category>{}) Map<int, Category> categories,
 
+    /// Income and spending per wallet id, for the By wallet card (All wallets
+    /// only).
+    @Default(<int, PeriodTotals>{}) Map<int, PeriodTotals> byWallet,
+
+    /// Every wallet in display order.
+    @Default(<Wallet>[]) List<Wallet> wallets,
+
+    /// The same wallets with their balance for [range], for the switcher sheet.
+    @Default(<WalletSummary>[]) List<WalletSummary> walletSummaries,
+
     /// Every budget in its own current week or month (ignores [range]).
     @Default(<BudgetProgress>[]) List<BudgetProgress> budgets,
     Failure? failure,
   }) = _AnalyticsState;
 
   const AnalyticsState._();
+
+  /// The By wallet card compares wallets, so it only exists in All wallets.
+  bool get showsByWallet => walletId == null;
 
   /// Spending in the period (income never counts).
   Money get total => totals.spent;

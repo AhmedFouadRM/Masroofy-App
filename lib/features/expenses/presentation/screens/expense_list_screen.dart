@@ -6,18 +6,23 @@ import 'package:go_router/go_router.dart';
 import 'package:masroofy/app/routes.dart';
 import 'package:masroofy/core/domain/date_range.dart';
 import 'package:masroofy/core/domain/local_date.dart';
+import 'package:masroofy/core/domain/money.dart';
 import 'package:masroofy/core/domain/period_totals.dart';
 import 'package:masroofy/core/domain/transaction_kind.dart';
 import 'package:masroofy/core/strings/string_manager.dart';
 import 'package:masroofy/core/theme/app_dimensions.dart';
 import 'package:masroofy/core/theme/masroofy_colors.dart';
-import 'package:masroofy/features/expenses/domain/entities/expense.dart';
+import 'package:masroofy/features/expenses/domain/entities/list_entry.dart';
 import 'package:masroofy/features/expenses/presentation/cubits/expense_list_cubit.dart';
 import 'package:masroofy/features/expenses/presentation/widgets/expense_row.dart';
+import 'package:masroofy/features/expenses/presentation/widgets/transfer_row.dart';
 import 'package:masroofy/shared/categories/category_chip.dart';
 import 'package:masroofy/shared/categories/category_display.dart';
 import 'package:masroofy/shared/categories/category_icon_registry.dart';
 import 'package:masroofy/shared/formatting/display_format.dart';
+import 'package:masroofy/shared/settings/settings_cubit.dart';
+import 'package:masroofy/shared/wallets/wallet_display.dart';
+import 'package:masroofy/shared/wallets/wallet_switcher.dart';
 import 'package:masroofy/shared/widgets/app_shell.dart';
 import 'package:masroofy/shared/widgets/aura_background.dart';
 import 'package:masroofy/shared/widgets/empty_state_widget.dart';
@@ -56,12 +61,21 @@ class _ExpenseListScreenState extends State<ExpenseListScreen> {
   @override
   Widget build(BuildContext context) {
     final cubit = context.read<ExpenseListCubit>();
-    return BlocListener<ExpenseListCubit, ExpenseListState>(
-      listenWhen: (previous, current) =>
-          current.actionFailure != null && previous.actionFailure != current.actionFailure,
-      listener: (context, state) => ScaffoldMessenger.of(context)
-        ..hideCurrentSnackBar()
-        ..showSnackBar(SnackBar(content: Text(StringManager.failure(state.actionFailure!)))),
+    return MultiBlocListener(
+      listeners: [
+        BlocListener<ExpenseListCubit, ExpenseListState>(
+          listenWhen: (previous, current) =>
+              current.actionFailure != null && previous.actionFailure != current.actionFailure,
+          listener: (context, state) => ScaffoldMessenger.of(context)
+            ..hideCurrentSnackBar()
+            ..showSnackBar(SnackBar(content: Text(StringManager.failure(state.actionFailure!)))),
+        ),
+        // The wallet switcher (here or on another tab) stores the choice.
+        BlocListener<SettingsCubit, SettingsState>(
+          listenWhen: (previous, current) => previous.viewedWalletId != current.viewedWalletId,
+          listener: (context, settings) => cubit.selectWallet(settings.viewedWalletId),
+        ),
+      ],
       child: AuraBackground(
         child: Scaffold(
           backgroundColor: Colors.transparent,
@@ -84,7 +98,10 @@ class _ExpenseListScreenState extends State<ExpenseListScreen> {
                       ),
                     ),
                   )
-                : Text(StringManager.expensesTitle),
+                : BlocBuilder<ExpenseListCubit, ExpenseListState>(
+                    builder: (context, state) =>
+                        WalletSwitcher(wallets: state.wallets, fallbackTitle: StringManager.expensesTitle),
+                  ),
             actions: [
               IconButton(
                 icon: Icon(_searching ? Symbols.close_rounded : Symbols.search_rounded),
@@ -149,7 +166,7 @@ class _ExpenseListScreenState extends State<ExpenseListScreen> {
             child: Center(child: Text(StringManager.failure(state.loadFailure!))),
           ),
         ];
-      case _ when state.expenses.isEmpty:
+      case _ when state.entries.isEmpty:
         return [
           SliverFillRemaining(
             hasScrollBody: false,
@@ -173,6 +190,15 @@ class _ExpenseListScreenState extends State<ExpenseListScreen> {
                       cubit.clearFilters();
                     },
                   )
+                : state.wallet != null && state.kind == null
+                ? EmptyStateWidget(
+                    icon: Symbols.receipt_long_rounded,
+                    title: StringManager.walletEmptyTitle(state.wallet!.wallet.displayName),
+                    message: StringManager.walletEmptyBody,
+                    actionLabel: StringManager.addFirstExpense,
+                    actionIcon: Symbols.add_rounded,
+                    onAction: () => context.push(RoutePaths.newExpense),
+                  )
                 : EmptyStateWidget(
                     icon: Symbols.receipt_long_rounded,
                     // With All selected the list holds income too.
@@ -185,24 +211,24 @@ class _ExpenseListScreenState extends State<ExpenseListScreen> {
           ),
         ];
       case _:
-        final days = _groupByDay(state.expenses);
+        final days = _groupByDay(state.entries);
         return [
           SliverPadding(
             padding: const EdgeInsets.symmetric(horizontal: AppSpacing.screen),
             sliver: SliverList.builder(
               itemCount: days.length,
-              itemBuilder: (context, i) => _DaySection(day: days[i].$1, expenses: days[i].$2, state: state),
+              itemBuilder: (context, i) => _DaySection(day: days[i].$1, entries: days[i].$2, state: state),
             ),
           ),
         ];
     }
   }
 
-  static List<(LocalDate, List<Expense>)> _groupByDay(List<Expense> expenses) {
-    final days = <(LocalDate, List<Expense>)>[];
-    for (final expense in expenses) {
-      if (days.isEmpty || days.last.$1 != expense.date) days.add((expense.date, []));
-      days.last.$2.add(expense);
+  static List<(LocalDate, List<ListEntry>)> _groupByDay(List<ListEntry> entries) {
+    final days = <(LocalDate, List<ListEntry>)>[];
+    for (final entry in entries) {
+      if (days.isEmpty || days.last.$1 != entry.date) days.add((entry.date, []));
+      days.last.$2.add(entry);
     }
     return days;
   }
@@ -232,9 +258,17 @@ class _Summary extends StatelessWidget {
         },
         total: totals.balance,
         signed: true,
+        // A wallet's net transfers count as money in or out, so In − Out is
+        // always the balance above them.
         details: [
-          (label: StringManager.incomeIn, amount: totals.income),
-          (label: StringManager.incomeOut, amount: totals.spent),
+          (
+            label: StringManager.incomeIn,
+            amount: totals.income + (totals.transfersNet.isPositive ? totals.transfersNet : Money.zero),
+          ),
+          (
+            label: StringManager.incomeOut,
+            amount: totals.spent + (totals.transfersNet.isNegative ? -totals.transfersNet : Money.zero),
+          ),
         ],
       ),
       TransactionKind.expense => SummaryCard(
@@ -348,15 +382,18 @@ class _CategoryFilter extends StatelessWidget {
 }
 
 class _DaySection extends StatelessWidget {
-  const _DaySection({required this.day, required this.expenses, required this.state});
+  const _DaySection({required this.day, required this.entries, required this.state});
 
   final LocalDate day;
-  final List<Expense> expenses;
+  final List<ListEntry> entries;
   final ExpenseListState state;
 
-  void _delete(BuildContext context, Expense expense) {
-    final cubit = context.read<ExpenseListCubit>()..hide(expense.id);
-    final title = expense.title ?? state.categories[expense.categoryId]?.displayName ?? '';
+  void _delete(BuildContext context, ListEntry entry) {
+    final cubit = context.read<ExpenseListCubit>()..hide(entry.id);
+    final title = switch (entry) {
+      TransactionEntry(:final expense) => expense.title ?? state.categories[expense.categoryId]?.displayName ?? '',
+      TransferEntry() => StringManager.transferKind,
+    };
     final messenger = ScaffoldMessenger.of(context)..hideCurrentSnackBar();
     final snackBar = messenger.showSnackBar(
       SnackBar(
@@ -369,9 +406,9 @@ class _DaySection extends StatelessWidget {
     unawaited(
       snackBar.closed.then((reason) async {
         if (reason == SnackBarClosedReason.action) {
-          cubit.undoDelete(expense.id);
+          cubit.undoDelete(entry.id);
         } else {
-          await cubit.commitDelete(expense.id);
+          await cubit.commitDelete(entry.id);
         }
       }),
     );
@@ -387,6 +424,7 @@ class _DaySection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = MasroofyColors.of(context);
+    final wallets = {for (final summary in state.wallets) summary.wallet.id: summary.wallet};
     return Column(
       children: [
         SectionHeader(
@@ -395,9 +433,9 @@ class _DaySection extends StatelessWidget {
         ),
         GroupedCard(
           children: [
-            for (final expense in expenses)
+            for (final entry in entries)
               Dismissible(
-                key: ValueKey(expense.id),
+                key: ValueKey(entry.id),
                 // Toward the start edge; flips in Arabic.
                 direction: DismissDirection.endToStart,
                 background: ColoredBox(
@@ -410,12 +448,23 @@ class _DaySection extends StatelessWidget {
                     ),
                   ),
                 ),
-                onDismissed: (_) => _delete(context, expense),
-                child: ExpenseRow(
-                  expense: expense,
-                  category: state.categories[expense.categoryId],
-                  onTap: () => context.push(RoutePaths.editExpense(expense.id)),
-                ),
+                onDismissed: (_) => _delete(context, entry),
+                child: switch (entry) {
+                  TransactionEntry(:final expense) => ExpenseRow(
+                    expense: expense,
+                    category: state.categories[expense.categoryId],
+                    // The wallet's name is only news in All wallets.
+                    walletName: state.walletId == null ? wallets[expense.walletId]?.displayName : null,
+                    onTap: () => context.push(RoutePaths.editExpense(entry.id)),
+                  ),
+                  TransferEntry(:final transfer) => TransferRow(
+                    transfer: transfer,
+                    walletId: state.walletId,
+                    from: wallets[transfer.fromWalletId],
+                    to: wallets[transfer.toWalletId],
+                    onTap: () => context.push(RoutePaths.editExpense(entry.id)),
+                  ),
+                },
               ),
           ],
         ),

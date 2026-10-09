@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:masroofy/core/domain/date_range.dart';
 import 'package:masroofy/core/domain/local_date.dart';
 import 'package:masroofy/core/domain/money.dart';
 import 'package:masroofy/core/domain/transaction_kind.dart';
@@ -11,19 +12,26 @@ import 'package:masroofy/features/recurring_expenses/domain/entities/recurring_f
 import 'package:masroofy/features/recurring_expenses/domain/repositories/i_recurring_expense_repository.dart';
 import 'package:masroofy/features/recurring_expenses/domain/usecases/save_recurring.dart';
 import 'package:masroofy/features/recurring_expenses/presentation/cubits/recurring_form_state.dart';
+import 'package:masroofy/features/wallets/domain/entities/wallet_summary.dart';
+import 'package:masroofy/features/wallets/domain/repositories/i_wallet_repository.dart';
+import 'package:masroofy/features/wallets/domain/wallet_preselect.dart';
 
 export 'package:masroofy/features/recurring_expenses/presentation/cubits/recurring_form_state.dart';
 
-/// Add / Edit Recurring Expense. Pass `recurringId` to edit.
+/// Add / Edit Recurring Expense. Pass `recurringId` to edit. A new template
+/// starts in the wallet given to [walletSelected] before [load] (the one being
+/// viewed, or the default wallet), or in the first wallet.
 class RecurringFormCubit extends Cubit<RecurringFormState> {
   RecurringFormCubit(
     this._recurring,
     this._categories,
+    this._wallets,
     this._saveRecurring, {
     required int fractionDigits,
     int? recurringId,
     LocalDate Function()? today,
-  }) : super(
+  }) : _today = today ?? LocalDate.today,
+       super(
          RecurringFormState(
            id: recurringId,
            startDate: (today ?? LocalDate.today)(),
@@ -33,8 +41,11 @@ class RecurringFormCubit extends Cubit<RecurringFormState> {
 
   final IRecurringExpenseRepository _recurring;
   final ICategoryRepository _categories;
+  final IWalletRepository _wallets;
   final SaveRecurring _saveRecurring;
+  final LocalDate Function() _today;
   StreamSubscription<void>? _categoriesSub;
+  StreamSubscription<void>? _walletsSub;
 
   Future<void> load() async {
     _categoriesSub = _categories.watchAll().listen(
@@ -43,6 +54,14 @@ class RecurringFormCubit extends Cubit<RecurringFormState> {
         (categories) => emit(state.copyWith(categories: categories)),
       ),
     );
+    _walletsSub = _wallets
+        .watchSummaries(DateRange.monthToDate(_today()))
+        .listen(
+          (result) => result.match(
+            (failure) => emit(state.copyWith(status: RecurringFormStatus.loadFailure, failure: failure)),
+            _onWallets,
+          ),
+        );
     final id = state.id;
     if (id == null) {
       emit(state.copyWith(status: RecurringFormStatus.ready));
@@ -57,12 +76,25 @@ class RecurringFormCubit extends Cubit<RecurringFormState> {
           status: RecurringFormStatus.ready,
           kind: template.kind,
           amountText: template.amount.toDecimalString(state.fractionDigits),
+          walletId: template.walletId,
           categoryId: template.categoryId,
           title: template.title,
           frequency: template.frequency,
           startDate: template.startDate,
           isActive: template.isActive,
         ),
+      ),
+    );
+  }
+
+  /// Settles a new template's wallet once the wallets are known (the preset
+  /// one if it exists, else the first).
+  void _onWallets(List<WalletSummary> wallets) {
+    final ids = [for (final w in wallets) w.wallet.id];
+    emit(
+      state.copyWith(
+        wallets: wallets,
+        walletId: state.isEditing ? state.walletId : WalletPreselect.validated(state.walletId, ids),
       ),
     );
   }
@@ -76,6 +108,8 @@ class RecurringFormCubit extends Cubit<RecurringFormState> {
   }
 
   void amountChanged(String text) => emit(state.copyWith(amountText: text, errors: _without('amount')));
+
+  void walletSelected(int id) => emit(state.copyWith(walletId: id, errors: _without('walletId')));
 
   void categorySelected(int id) => emit(state.copyWith(categoryId: id, errors: _without('categoryId')));
 
@@ -98,6 +132,8 @@ class RecurringFormCubit extends Cubit<RecurringFormState> {
     } else if (amount == null) {
       errors['amount'] = ValidationReason.invalidFormat;
     }
+    final walletId = state.walletId;
+    if (walletId == null) errors['walletId'] = ValidationReason.required;
     final categoryId = state.categoryId;
     if (categoryId == null) {
       errors['categoryId'] = ValidationReason.required;
@@ -115,6 +151,7 @@ class RecurringFormCubit extends Cubit<RecurringFormState> {
       RecurringDraft(
         title: state.title,
         amount: amount!,
+        walletId: walletId!,
         categoryId: categoryId!,
         frequency: state.frequency,
         startDate: state.startDate,
@@ -139,6 +176,7 @@ class RecurringFormCubit extends Cubit<RecurringFormState> {
   @override
   Future<void> close() async {
     await _categoriesSub?.cancel();
+    await _walletsSub?.cancel();
     return super.close();
   }
 }

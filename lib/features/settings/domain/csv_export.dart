@@ -4,11 +4,27 @@ import 'package:masroofy/features/settings/domain/entities/expense_export_row.da
 /// Names a row's category in the current UI language.
 typedef CategoryLabeler = String Function({String? seedKey, String? name});
 
+/// Names a row's wallet in the current UI language.
+typedef WalletLabeler = String Function({String? seedKey, String? name});
+
 /// The transactions CSV (Settings PRD → CSV Export Format): RFC 4180, comma
-/// delimited, CRLF rows. Column names, `expense`/`income` and `Yes`/`No` stay in
-/// English so the file reads the same whatever the UI language.
+/// delimited, CRLF rows. Column names, `expense`/`income`/`transfer` and
+/// `Yes`/`No` stay in English so the file reads the same whatever the UI
+/// language. A transfer is one row: type `transfer`, its source wallet in
+/// Wallet and its target wallet in Transfer (empty for every other row).
 abstract final class CsvExport {
-  static const header = ['Date', 'Type', 'Title', 'Amount', 'Currency', 'Category', 'Note', 'Recurring'];
+  static const header = [
+    'Date',
+    'Type',
+    'Title',
+    'Amount',
+    'Currency',
+    'Category',
+    'Wallet',
+    'Transfer',
+    'Note',
+    'Recurring',
+  ];
 
   /// Excel needs a UTF-8 byte order mark to read Arabic text correctly.
   static const bom = [0xEF, 0xBB, 0xBF];
@@ -39,18 +55,30 @@ abstract final class CsvExport {
     Iterable<ExpenseExportRow> expenses,
     Currency currency,
     CategoryLabeler categoryLabel,
+    WalletLabeler walletLabel,
   ) => [
     header,
-    for (final e in expenses)
-      [
-        e.date.toIso(),
-        e.kind.name,
-        e.title ?? '',
-        e.amount.toDecimalString(currency.fractionDigits),
-        currency.code,
-        categoryLabel(seedKey: e.categorySeedKey, name: e.categoryName),
-        e.note ?? '',
-        if (e.isRecurring) 'Yes' else 'No',
-      ],
+    for (final e in expenses) _record(e, currency, categoryLabel, walletLabel),
   ];
+
+  static List<String> _record(
+    ExpenseExportRow e,
+    Currency currency,
+    CategoryLabeler categoryLabel,
+    WalletLabeler walletLabel,
+  ) {
+    final transfer = e.isTransfer;
+    return [
+      e.date.toIso(),
+      if (transfer) 'transfer' else e.kind.name,
+      e.title ?? '',
+      e.amount.toDecimalString(currency.fractionDigits),
+      currency.code,
+      if (transfer) '' else categoryLabel(seedKey: e.categorySeedKey, name: e.categoryName),
+      walletLabel(seedKey: e.walletSeedKey, name: e.walletName),
+      if (transfer) walletLabel(seedKey: e.toWalletSeedKey, name: e.toWalletName) else '',
+      e.note ?? '',
+      if (e.isRecurring) 'Yes' else 'No',
+    ];
+  }
 }

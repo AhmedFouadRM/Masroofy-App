@@ -6,12 +6,22 @@ import 'package:masroofy/core/database/tables/budgets_table.dart';
 import 'package:masroofy/core/database/tables/categories_table.dart';
 import 'package:masroofy/core/database/tables/expenses_table.dart';
 import 'package:masroofy/core/database/tables/recurring_expenses_table.dart';
+import 'package:masroofy/core/database/tables/transfers_table.dart';
+import 'package:masroofy/core/database/tables/wallets_table.dart';
 import 'package:masroofy/core/domain/local_date.dart';
 import 'package:masroofy/core/domain/money.dart';
 import 'package:masroofy/core/domain/transaction_kind.dart';
 import 'package:masroofy/core/theme/app_colors.dart';
 
 part 'app_database.g.dart';
+
+/// The wallet every database starts with. Its display name comes from
+/// `wallets.me` in the translation files.
+abstract final class DefaultWallets {
+  static const meSeedKey = 'me';
+  static const meIcon = 'person';
+  static final int meColor = AppColors.walletEmerald.toARGB32();
+}
 
 /// A pre-seeded category. Its display name comes from `categories.<seedKey>`
 /// in the translation files.
@@ -104,6 +114,8 @@ abstract final class DefaultCategories {
     ExpensesTable,
     BudgetsTable,
     RecurringExpensesTable,
+    WalletsTable,
+    TransfersTable,
   ],
 )
 class AppDatabase extends _$AppDatabase {
@@ -114,13 +126,14 @@ class AppDatabase extends _$AppDatabase {
   /// `dart run drift_dev make-migrations` to snapshot the new version and
   /// generate its migration test. Never destructive after the first release.
   @override
-  int get schemaVersion => 2;
+  int get schemaVersion => 3;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
     onCreate: (m) async {
       await m.createAll();
       await seedDefaultCategories();
+      await seedDefaultWallet();
     },
     onUpgrade: stepByStep(
       from1To2: (m, schema) async {
@@ -135,12 +148,67 @@ class AppDatabase extends _$AppDatabase {
           );
         }
       },
+      from2To3: (m, schema) async {
+        // Raw SQL, so the step doesn't depend on the current table classes.
+        await m.createTable(schema.wallets);
+        await m.createIndex(schema.idxWalletsSortOrder);
+        await m.database.customStatement(
+          'INSERT INTO wallets (seed_key, icon, color, sort_order) VALUES (?, ?, ?, ?)',
+          [DefaultWallets.meSeedKey, DefaultWallets.meIcon, DefaultWallets.meColor, 0],
+        );
+        final meId =
+            (await m.database
+                    .customSelect(
+                      'SELECT id FROM wallets WHERE seed_key = ?',
+                      variables: [const Variable(DefaultWallets.meSeedKey)],
+                    )
+                    .getSingle())
+                .read<int>('id');
+        await m.createTable(schema.transfers);
+        // Rebuilds both tables: SQLite can't relax NOT NULL on category_id or
+        // add a NOT NULL column without a default in place. Every existing
+        // row moves into Me.
+        await m.alterTable(
+          TableMigration(
+            schema.expenses,
+            columnTransformer: {schema.expenses.walletId: Constant<int>(meId)},
+            newColumns: [schema.expenses.walletId, schema.expenses.transferId, schema.expenses.direction],
+          ),
+        );
+        await m.alterTable(
+          TableMigration(
+            schema.recurringExpenses,
+            columnTransformer: {schema.recurringExpenses.walletId: Constant<int>(meId)},
+            newColumns: [schema.recurringExpenses.walletId],
+          ),
+        );
+        await m.createIndex(schema.idxExpensesWalletDate);
+      },
     ),
     beforeOpen: (details) async {
       // SQLite ignores FOREIGN KEY clauses (incl. ON DELETE) unless enabled per connection.
       await customStatement('PRAGMA foreign_keys = ON');
     },
   );
+
+  /// Inserts the wallet "Me" when there is no wallet at all, and returns the
+  /// id of the first wallet. Safe to call again, e.g. after "Clear All Data".
+  Future<int> seedDefaultWallet() async {
+    final existing =
+        await (select(walletsTable)
+              ..orderBy([(w) => OrderingTerm(expression: w.sortOrder), (w) => OrderingTerm(expression: w.id)])
+              ..limit(1))
+            .getSingleOrNull();
+    if (existing != null) return existing.id;
+    return into(walletsTable).insert(
+      WalletsTableCompanion.insert(
+        seedKey: const Value(DefaultWallets.meSeedKey),
+        icon: DefaultWallets.meIcon,
+        color: DefaultWallets.meColor,
+        sortOrder: 0,
+      ),
+    );
+  }
 
   /// Inserts the default categories that are missing. Safe to call again,
   /// e.g. after "Clear All Data".

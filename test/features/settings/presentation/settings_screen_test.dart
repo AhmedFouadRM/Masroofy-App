@@ -12,6 +12,7 @@ import 'package:masroofy/core/utils/currency_utils.dart';
 import 'package:masroofy/features/settings/domain/entities/app_info.dart';
 import 'package:masroofy/features/settings/domain/entities/backup_preview.dart';
 import 'package:masroofy/features/settings/presentation/cubits/data_management_cubit.dart';
+import 'package:masroofy/features/settings/presentation/cubits/wallet_count_cubit.dart';
 import 'package:masroofy/features/settings/presentation/screens/settings_screen.dart';
 import 'package:masroofy/features/settings/presentation/widgets/hold_to_delete_button.dart';
 import 'package:masroofy/shared/auth/auth_cubit.dart';
@@ -26,10 +27,13 @@ class _MockAuth extends MockCubit<AuthState> implements AuthCubit {}
 
 class _MockData extends MockCubit<DataManagementState> implements DataManagementCubit {}
 
+class _MockWalletCount extends MockCubit<int?> implements WalletCountCubit {}
+
 void main() {
   late MockSettingsCubit settings;
   late _MockAuth auth;
   late _MockData data;
+  late _MockWalletCount walletCount;
   late List<Object?> opened;
 
   const appInfo = AppInfo(version: '1.0.0', buildNumber: '1');
@@ -40,12 +44,14 @@ void main() {
     registerFallbackValue(ThemeMode.system);
     registerFallbackValue(CurrencyUtils.defaultCurrency);
     registerFallbackValue(_label);
+    registerFallbackValue(_walletLabel);
   });
 
   setUp(() {
     settings = MockSettingsCubit();
     auth = _MockAuth();
     data = _MockData();
+    walletCount = _MockWalletCount();
     opened = [];
     when(() => settings.setThemeMode(any())).thenAnswer((_) async {});
     when(() => settings.setWesternDigits(enabled: any(named: 'enabled'))).thenAnswer((_) async {});
@@ -60,6 +66,7 @@ void main() {
       () => data.exportCsv(
         currency: any(named: 'currency'),
         categoryLabel: any(named: 'categoryLabel'),
+        walletLabel: any(named: 'walletLabel'),
       ),
     ).thenAnswer((_) async {});
   });
@@ -69,6 +76,7 @@ void main() {
     Locale locale = const Locale('en'),
     AuthState authState = lockOff,
     bool westernDigits = false,
+    int? wallets = 3,
     Stream<DataManagementState>? dataStates,
   }) async {
     tester.view
@@ -78,6 +86,7 @@ void main() {
     final settingsState = testSettings(westernDigits: westernDigits);
     whenListen(settings, const Stream<SettingsState>.empty(), initialState: settingsState);
     whenListen(auth, const Stream<AuthState>.empty(), initialState: authState);
+    whenListen(walletCount, const Stream<int?>.empty(), initialState: wallets);
     whenListen(
       data,
       dataStates ?? const Stream<DataManagementState>.empty(),
@@ -93,7 +102,7 @@ void main() {
           ),
           // Stand-ins for the routes the screen opens: they record what for,
           // and pop `true` or `false`.
-          for (final path in [RoutePaths.verifyPin, RoutePaths.setPin, RoutePaths.currency])
+          for (final path in [RoutePaths.verifyPin, RoutePaths.setPin, RoutePaths.currency, RoutePaths.wallets])
             GoRoute(
               path: path,
               builder: (context, state) {
@@ -116,6 +125,7 @@ void main() {
         BlocProvider<SettingsCubit>.value(value: settings),
         BlocProvider<AuthCubit>.value(value: auth),
         BlocProvider<DataManagementCubit>.value(value: data),
+        BlocProvider<WalletCountCubit>.value(value: walletCount),
       ],
     );
   }
@@ -127,6 +137,7 @@ void main() {
       for (final text in [
         'Settings',
         'General',
+        'Wallets',
         'Currency',
         'EGP',
         'Language',
@@ -178,6 +189,7 @@ void main() {
       for (final text in [
         'الإعدادات',
         'عام',
+        'المحافظ',
         'العملة',
         'ج.م.',
         'اللغة',
@@ -246,6 +258,40 @@ void main() {
 
       expect(find.text('الإعدادات'), findsOneWidget);
       expect(find.text('Settings'), findsNothing);
+    });
+
+    testWidgets('Wallets shows how many wallets there are, and opens the Wallets screen', (tester) async {
+      await pump(tester);
+
+      expect(find.descendant(of: find.widgetWithText(ListTile, 'Wallets'), matching: find.text('3')), findsOneWidget);
+      await tester.tap(find.text('Wallets'));
+      await tester.pumpAndSettle();
+
+      expect(opened, [(RoutePaths.wallets, null)]);
+    });
+
+    testWidgets('Wallets is the first row of General', (tester) async {
+      await pump(tester);
+
+      final wallets = tester.getTopLeft(find.text('Wallets')).dy;
+      expect(wallets, lessThan(tester.getTopLeft(find.text('Currency')).dy));
+      expect(wallets, greaterThan(tester.getTopLeft(find.text('General')).dy));
+    });
+
+    testWidgets('the count follows the wallets, and is hidden until it is known', (tester) async {
+      await pump(tester, wallets: null);
+
+      expect(find.descendant(of: find.widgetWithText(ListTile, 'Wallets'), matching: find.text('3')), findsNothing);
+      expect(tester.widget<ListTile>(find.widgetWithText(ListTile, 'Wallets')).onTap, isNotNull);
+    });
+
+    testWidgets('Wallets in Arabic shapes its count', (tester) async {
+      await pump(tester, locale: const Locale('ar'), wallets: 12);
+
+      expect(
+        find.descendant(of: find.widgetWithText(ListTile, 'المحافظ'), matching: find.text('١٢')),
+        findsOneWidget,
+      );
     });
 
     testWidgets('Currency opens the picker route', (tester) async {
@@ -339,12 +385,17 @@ void main() {
         () => data.exportCsv(
           currency: captureAny(named: 'currency'),
           categoryLabel: captureAny(named: 'categoryLabel'),
+          walletLabel: captureAny(named: 'walletLabel'),
         ),
       ).captured;
       expect((captured[0] as dynamic).code, 'EGP');
       final label = captured[1] as String Function({String? seedKey, String? name});
       expect(label(seedKey: 'food'), 'Food');
       expect(label(name: 'Gym'), 'Gym');
+      // Wallets are named like categories: Me from the translations, the others as typed.
+      final walletLabel = captured[2] as String Function({String? seedKey, String? name});
+      expect(walletLabel(seedKey: 'me'), 'Me');
+      expect(walletLabel(name: 'Son'), 'Son');
     });
 
     testWidgets('Export backup and Restore backup start their actions', (tester) async {
@@ -455,6 +506,15 @@ void main() {
         verify(() => settings.reload()).called(1);
         expect(find.text('Backup restored'), findsOneWidget);
       });
+
+      testWidgets('after clearing, the default and viewed wallet are Me again, so the preferences are reloaded', (
+        tester,
+      ) async {
+        await pump(tester, dataStates: Stream.value(const DataManagementState(completed: DataAction.clearAll)));
+        await tester.pump();
+
+        verify(() => settings.reload()).called(1);
+      });
     });
 
     group('Clear all data', () {
@@ -562,3 +622,5 @@ void main() {
 }
 
 String _label({String? seedKey, String? name}) => seedKey ?? name ?? '';
+
+String _walletLabel({String? seedKey, String? name}) => seedKey ?? name ?? '';

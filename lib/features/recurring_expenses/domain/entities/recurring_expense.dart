@@ -12,6 +12,7 @@ abstract class RecurringExpense with _$RecurringExpense {
     required int id,
     required String title,
     required Money amount,
+    required int walletId,
     required int categoryId,
     required RecurringFrequency frequency,
 
