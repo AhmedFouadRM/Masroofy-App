@@ -9,6 +9,10 @@ import 'package:masroofy/core/domain/money.dart';
 import 'package:masroofy/features/analytics/domain/repositories/i_analytics_repository.dart';
 import 'package:masroofy/features/analytics/presentation/cubits/analytics_cubit.dart';
 import 'package:masroofy/features/analytics/presentation/screens/analytics_screen.dart';
+import 'package:masroofy/features/budgets/domain/entities/budget.dart';
+import 'package:masroofy/features/budgets/domain/entities/budget_period.dart';
+import 'package:masroofy/features/budgets/domain/entities/budget_progress.dart';
+import 'package:masroofy/features/budgets/domain/repositories/i_budget_repository.dart';
 import 'package:masroofy/features/categories/domain/entities/category.dart';
 import 'package:masroofy/features/categories/domain/repositories/i_category_repository.dart';
 import 'package:mocktail/mocktail.dart';
@@ -18,6 +22,8 @@ import '../../../helpers/pump_app.dart';
 class _MockAnalytics extends Mock implements IAnalyticsRepository {}
 
 class _MockCategories extends Mock implements ICategoryRepository {}
+
+class _MockBudgets extends Mock implements IBudgetRepository {}
 
 class _MockCubit extends MockCubit<AnalyticsState> implements AnalyticsCubit {}
 
@@ -33,21 +39,29 @@ Category _category(int id, String seedKey, int color) => Category(
   updatedAt: _epoch,
 );
 
-final _food = _category(1, 'food', 0xFFF97316);
-final _transport = _category(2, 'transport', 0xFF3B82F6);
+final Category _food = _category(1, 'food', 0xFFF97316);
+final Category _transport = _category(2, 'transport', 0xFF3B82F6);
 
 void main() {
-  setUpAll(() => registerFallbackValue(DateRange(LocalDate(2026, 1, 1), LocalDate(2026, 1, 1))));
+  setUpAll(() {
+    registerFallbackValue(DateRange(LocalDate(2026, 1, 1), LocalDate(2026, 1, 1)));
+    registerFallbackValue(LocalDate(2026, 1, 1));
+  });
 
   group('AnalyticsCubit', () {
     late _MockAnalytics analytics;
     late _MockCategories categories;
+    late _MockBudgets budgets;
     final today = LocalDate(2026, 10, 9);
     final ranges = <DateRange>[];
 
     setUp(() {
       analytics = _MockAnalytics();
       categories = _MockCategories();
+      budgets = _MockBudgets();
+      when(
+        () => budgets.watchProgress(any(), firstWeekday: any(named: 'firstWeekday')),
+      ).thenAnswer((_) => Stream.value(const Right([])));
       ranges.clear();
       when(() => categories.watchAll(includeHidden: true)).thenAnswer((_) => Stream.value(Right([_food])));
       when(() => analytics.watchTotal(any())).thenAnswer((invocation) {
@@ -59,7 +73,7 @@ void main() {
     });
 
     AnalyticsCubit build() =>
-        AnalyticsCubit(analytics, categories, firstWeekday: DateTime.saturday, today: () => today);
+        AnalyticsCubit(analytics, categories, budgets, firstWeekday: DateTime.saturday, today: () => today);
 
     blocTest<AnalyticsCubit, AnalyticsState>(
       'starts on this month, compared with the same days of last month',
@@ -158,6 +172,26 @@ void main() {
 
       await tester.tap(find.text('Last month'));
       verify(() => cubit.selectPeriod(AnalyticsPeriod.lastMonth)).called(1);
+    });
+
+    testWidgets('budgets show their own current period', (tester) async {
+      final budget = BudgetProgress(
+        budget: Budget(
+          id: 1,
+          categoryId: 2,
+          limit: const Money(50000),
+          period: BudgetPeriod.weekly,
+          createdAt: _epoch,
+          updatedAt: _epoch,
+        ),
+        periodStart: today,
+        periodEnd: today.addDays(6),
+        spent: const Money(25000),
+      );
+      await pump(tester, loaded.copyWith(budgets: [budget]));
+
+      expect(find.text('Budgets'), findsOneWidget);
+      expect(find.text('This week · EGP 250 of EGP 500'), findsOneWidget);
     });
 
     testWidgets('an empty period shows the empty state', (tester) async {

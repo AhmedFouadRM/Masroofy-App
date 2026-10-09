@@ -4,7 +4,6 @@ import 'package:masroofy/core/domain/money.dart';
 import 'package:masroofy/features/budgets/domain/entities/budget.dart';
 import 'package:masroofy/features/budgets/domain/entities/budget_period.dart';
 import 'package:masroofy/features/budgets/domain/entities/budget_progress.dart';
-import 'package:masroofy/features/categories/domain/entities/category.dart';
 
 void main() {
   final created = DateTime.utc(2026, 10);
@@ -16,23 +15,13 @@ void main() {
     createdAt: created,
     updatedAt: created,
   );
-  final category = Category(
-    id: 1,
-    seedKey: 'food',
-    icon: 'restaurant',
-    color: 0xFFFF7043,
-    sortOrder: 0,
-    createdAt: created,
-    updatedAt: created,
-  );
 
   BudgetProgress progress(int spentMinor) => BudgetProgress(
-        budget: budget,
-        category: category,
-        periodStart: LocalDate(2026, 10, 1),
-        periodEnd: LocalDate(2026, 10, 31),
-        spent: Money(spentMinor),
-      );
+    budget: budget,
+    periodStart: LocalDate(2026, 10, 1),
+    periodEnd: LocalDate(2026, 10, 31),
+    spent: Money(spentMinor),
+  );
 
   test('safe below 80%, warning from 80% up to and including 100%', () {
     expect(progress(79999).status, BudgetStatus.safe);

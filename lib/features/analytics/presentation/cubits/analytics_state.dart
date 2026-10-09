@@ -4,6 +4,7 @@ import 'package:masroofy/core/domain/local_date.dart';
 import 'package:masroofy/core/domain/money.dart';
 import 'package:masroofy/core/error/failures.dart';
 import 'package:masroofy/features/analytics/domain/analytics_math.dart';
+import 'package:masroofy/features/budgets/domain/entities/budget_progress.dart';
 import 'package:masroofy/features/categories/domain/entities/category.dart';
 
 part 'analytics_state.freezed.dart';
@@ -31,6 +32,9 @@ abstract class AnalyticsState with _$AnalyticsState {
 
     /// Every category (hidden ones too), by id.
     @Default(<int, Category>{}) Map<int, Category> categories,
+
+    /// Every budget in its own current week or month (ignores [range]).
+    @Default(<BudgetProgress>[]) List<BudgetProgress> budgets,
     Failure? failure,
   }) = _AnalyticsState;
 

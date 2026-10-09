@@ -7,6 +7,10 @@ import 'package:masroofy/app/di.dart';
 import 'package:masroofy/app/routes.dart';
 import 'package:masroofy/features/analytics/presentation/cubits/analytics_cubit.dart';
 import 'package:masroofy/features/analytics/presentation/screens/analytics_screen.dart';
+import 'package:masroofy/features/budgets/presentation/cubits/budget_form_cubit.dart';
+import 'package:masroofy/features/budgets/presentation/cubits/budget_list_cubit.dart';
+import 'package:masroofy/features/budgets/presentation/screens/budget_form_screen.dart';
+import 'package:masroofy/features/budgets/presentation/screens/budget_list_screen.dart';
 import 'package:masroofy/features/categories/presentation/cubits/categories_cubit.dart';
 import 'package:masroofy/features/categories/presentation/cubits/category_form_cubit.dart';
 import 'package:masroofy/features/categories/presentation/screens/category_form_screen.dart';
@@ -38,11 +42,12 @@ class DummyScreen extends StatelessWidget {
   );
 }
 
-final _rootNavigatorKey = GlobalKey<NavigatorState>();
+/// The root navigator; app-wide dialogs (the budget alert) open on it.
+final rootNavigatorKey = GlobalKey<NavigatorState>();
 final _shellNavigatorKey = GlobalKey<NavigatorState>();
 
 final appRouter = GoRouter(
-  navigatorKey: _rootNavigatorKey,
+  navigatorKey: rootNavigatorKey,
   initialLocation: RoutePaths.expenses,
   routes: [
     ShellRoute(
@@ -62,7 +67,7 @@ final appRouter = GoRouter(
             // `recurring` are listed before `:id` so they match first.
             GoRoute(
               path: 'new',
-              parentNavigatorKey: _rootNavigatorKey,
+              parentNavigatorKey: rootNavigatorKey,
               builder: (context, state) => BlocProvider(
                 create: (context) => _expenseForm(context, null),
                 child: const ExpenseFormScreen(),
@@ -70,7 +75,7 @@ final appRouter = GoRouter(
             ),
             GoRoute(
               path: 'recurring',
-              parentNavigatorKey: _rootNavigatorKey,
+              parentNavigatorKey: rootNavigatorKey,
               builder: (context, state) => BlocProvider(
                 create: (_) => getIt<RecurringListCubit>()..load(),
                 child: const RecurringListScreen(),
@@ -78,7 +83,7 @@ final appRouter = GoRouter(
               routes: [
                 GoRoute(
                   path: 'new',
-                  parentNavigatorKey: _rootNavigatorKey,
+                  parentNavigatorKey: rootNavigatorKey,
                   builder: (context, state) => BlocProvider(
                     create: (context) => _recurringForm(context, null),
                     child: const RecurringFormScreen(),
@@ -86,7 +91,7 @@ final appRouter = GoRouter(
                 ),
                 GoRoute(
                   path: ':id',
-                  parentNavigatorKey: _rootNavigatorKey,
+                  parentNavigatorKey: rootNavigatorKey,
                   builder: (context, state) => BlocProvider(
                     create: (context) => _recurringForm(context, int.parse(state.pathParameters['id']!)),
                     child: const RecurringFormScreen(),
@@ -96,7 +101,7 @@ final appRouter = GoRouter(
             ),
             GoRoute(
               path: ':id',
-              parentNavigatorKey: _rootNavigatorKey,
+              parentNavigatorKey: rootNavigatorKey,
               builder: (context, state) => BlocProvider(
                 create: (context) => _expenseForm(context, int.parse(state.pathParameters['id']!)),
                 child: const ExpenseFormScreen(),
@@ -118,8 +123,35 @@ final appRouter = GoRouter(
           routes: [
             // Full-screen pages above the tab bar (root navigator).
             GoRoute(
+              path: 'budgets',
+              parentNavigatorKey: rootNavigatorKey,
+              builder: (context, state) => BlocProvider(
+                create: (context) =>
+                    getIt<BudgetListCubit>(param1: context.read<SettingsCubit>().state.firstWeekday)..load(),
+                child: const BudgetListScreen(),
+              ),
+              routes: [
+                GoRoute(
+                  path: 'new',
+                  parentNavigatorKey: rootNavigatorKey,
+                  builder: (context, state) => BlocProvider(
+                    create: (context) => _budgetForm(context, null),
+                    child: const BudgetFormScreen(),
+                  ),
+                ),
+                GoRoute(
+                  path: ':id',
+                  parentNavigatorKey: rootNavigatorKey,
+                  builder: (context, state) => BlocProvider(
+                    create: (context) => _budgetForm(context, int.parse(state.pathParameters['id']!)),
+                    child: const BudgetFormScreen(),
+                  ),
+                ),
+              ],
+            ),
+            GoRoute(
               path: 'categories',
-              parentNavigatorKey: _rootNavigatorKey,
+              parentNavigatorKey: rootNavigatorKey,
               builder: (context, state) => BlocProvider(
                 create: (_) => getIt<CategoriesCubit>()..load(),
                 child: const CategoryListScreen(),
@@ -127,7 +159,7 @@ final appRouter = GoRouter(
               routes: [
                 GoRoute(
                   path: 'new',
-                  parentNavigatorKey: _rootNavigatorKey,
+                  parentNavigatorKey: rootNavigatorKey,
                   builder: (context, state) => BlocProvider(
                     create: (_) => _categoryForm(null),
                     child: const CategoryFormScreen(),
@@ -135,7 +167,7 @@ final appRouter = GoRouter(
                 ),
                 GoRoute(
                   path: ':id',
-                  parentNavigatorKey: _rootNavigatorKey,
+                  parentNavigatorKey: rootNavigatorKey,
                   builder: (context, state) => BlocProvider(
                     create: (_) => _categoryForm(int.parse(state.pathParameters['id']!)),
                     child: const CategoryFormScreen(),
@@ -176,6 +208,15 @@ ExpenseFormCubit _expenseForm(BuildContext context, int? id) {
 
 RecurringFormCubit _recurringForm(BuildContext context, int? id) {
   final cubit = getIt<RecurringFormCubit>(
+    param1: context.read<SettingsCubit>().state.currency.fractionDigits,
+    param2: id,
+  );
+  unawaited(cubit.load());
+  return cubit;
+}
+
+BudgetFormCubit _budgetForm(BuildContext context, int? id) {
+  final cubit = getIt<BudgetFormCubit>(
     param1: context.read<SettingsCubit>().state.currency.fractionDigits,
     param2: id,
   );

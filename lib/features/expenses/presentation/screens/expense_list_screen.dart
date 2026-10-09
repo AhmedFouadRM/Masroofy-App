@@ -12,7 +12,6 @@ import 'package:masroofy/core/theme/masroofy_colors.dart';
 import 'package:masroofy/features/expenses/domain/entities/expense.dart';
 import 'package:masroofy/features/expenses/presentation/cubits/expense_list_cubit.dart';
 import 'package:masroofy/features/expenses/presentation/widgets/expense_row.dart';
-import 'package:masroofy/shared/widgets/summary_card.dart';
 import 'package:masroofy/shared/categories/category_chip.dart';
 import 'package:masroofy/shared/categories/category_display.dart';
 import 'package:masroofy/shared/categories/category_icon_registry.dart';
@@ -23,6 +22,7 @@ import 'package:masroofy/shared/widgets/empty_state_widget.dart';
 import 'package:masroofy/shared/widgets/glass_app_bar.dart';
 import 'package:masroofy/shared/widgets/grouped_list.dart';
 import 'package:masroofy/shared/widgets/segmented_pills.dart';
+import 'package:masroofy/shared/widgets/summary_card.dart';
 import 'package:material_symbols_icons/symbols.dart';
 
 /// Home: the expense feed. Expects an [ExpenseListCubit] above it.

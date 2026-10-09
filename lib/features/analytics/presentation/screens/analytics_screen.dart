@@ -9,7 +9,9 @@ import 'package:masroofy/core/theme/masroofy_colors.dart';
 import 'package:masroofy/features/analytics/presentation/cubits/analytics_cubit.dart';
 import 'package:masroofy/features/analytics/presentation/widgets/spending_bar_chart.dart';
 import 'package:masroofy/features/analytics/presentation/widgets/spending_pie_chart.dart';
+import 'package:masroofy/features/budgets/domain/entities/budget_period.dart';
 import 'package:masroofy/features/categories/domain/entities/category.dart';
+import 'package:masroofy/shared/budgets/budget_progress_row.dart';
 import 'package:masroofy/shared/categories/category_avatar.dart';
 import 'package:masroofy/shared/categories/category_display.dart';
 import 'package:masroofy/shared/formatting/display_format.dart';
@@ -64,6 +66,7 @@ class AnalyticsScreen extends StatelessWidget {
                     title: StringManager.noAnalyticsData,
                     message: StringManager.noAnalyticsDataHint,
                   ),
+                  ..._budgetSection(state),
                 ],
                 AnalyticsStatus.loaded => [
                   SectionHeader(title: StringManager.byCategory),
@@ -80,6 +83,7 @@ class AnalyticsScreen extends StatelessWidget {
                       ),
                     ),
                   ),
+                  ..._budgetSection(state),
                 ],
               },
             ],
@@ -89,6 +93,28 @@ class AnalyticsScreen extends StatelessWidget {
     );
   }
 }
+
+/// Budget progress (Analytics PRD → flow step 2d): each budget in its own
+/// current week or month, whatever range is selected. Hidden when there are
+/// no budgets.
+List<Widget> _budgetSection(AnalyticsState state) => [
+  if (state.budgets.isNotEmpty) ...[
+    SectionHeader(title: StringManager.budgetsTitle),
+    GroupedCard(
+      children: [
+        for (final progress in state.budgets)
+          BudgetProgressRow(
+            progress: progress,
+            category: state.categories[progress.budget.categoryId],
+            periodLabel: switch (progress.budget.period) {
+              BudgetPeriod.weekly => StringManager.thisWeek,
+              BudgetPeriod.monthly => StringManager.thisMonth,
+            },
+          ),
+      ],
+    ),
+  ],
+];
 
 String _rangeLabel(BuildContext context, DateRange range) =>
     '${context.shortDate(range.start)} – ${context.shortDate(range.end)}';

@@ -3,6 +3,8 @@ import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:masroofy/app/di.dart';
 import 'package:masroofy/core/database/app_database.dart';
+import 'package:masroofy/features/budgets/presentation/cubits/budget_form_cubit.dart';
+import 'package:masroofy/features/budgets/presentation/cubits/budget_list_cubit.dart';
 import 'package:masroofy/features/categories/presentation/cubits/categories_cubit.dart';
 import 'package:masroofy/features/categories/presentation/cubits/category_form_cubit.dart';
 import 'package:masroofy/features/recurring_expenses/presentation/cubits/recurring_form_cubit.dart';
@@ -33,5 +35,9 @@ void main() {
     final recurring = getIt<RecurringListCubit>();
     expect(getIt<RecurringFormCubit>(param1: 2, param2: 5).state.id, 5);
     await recurring.close();
+
+    final budgets = getIt<BudgetListCubit>(param1: DateTime.saturday);
+    expect(getIt<BudgetFormCubit>(param1: 2, param2: 4).state.id, 4);
+    await budgets.close();
   });
 }

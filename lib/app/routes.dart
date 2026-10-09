@@ -13,4 +13,8 @@ abstract final class RoutePaths {
   static const categories = '/settings/categories';
   static const newCategory = '/settings/categories/new';
   static String editCategory(int id) => '/settings/categories/$id';
+
+  static const budgets = '/settings/budgets';
+  static const newBudget = '/settings/budgets/new';
+  static String editBudget(int id) => '/settings/budgets/$id';
 }

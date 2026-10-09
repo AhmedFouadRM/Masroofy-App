@@ -43,10 +43,8 @@ class SettingsScreen extends StatelessWidget {
             onTap: () => context.push(RoutePaths.categories),
           ),
           ListTile(
-            title: const Text('Budgets'),
-            onTap: () {
-              // TODO: Navigate to budget list
-            },
+            title: Text(StringManager.manageBudgets),
+            onTap: () => context.push(RoutePaths.budgets),
           ),
           ListTile(
             title: const Text('Export Data'),

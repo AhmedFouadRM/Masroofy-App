@@ -2,7 +2,6 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:masroofy/core/domain/local_date.dart';
 import 'package:masroofy/core/domain/money.dart';
 import 'package:masroofy/features/budgets/domain/entities/budget.dart';
-import 'package:masroofy/features/categories/domain/entities/category.dart';
 
 part 'budget_progress.freezed.dart';
 
@@ -14,7 +13,6 @@ enum BudgetStatus { safe, warning, exceeded }
 abstract class BudgetProgress with _$BudgetProgress {
   const factory BudgetProgress({
     required Budget budget,
-    required Category category,
     required LocalDate periodStart,
     required LocalDate periodEnd,
     required Money spent,

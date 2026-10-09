@@ -7,7 +7,9 @@ import 'package:intl/date_symbol_data_local.dart';
 import 'package:liquid_glass_widgets/liquid_glass_widgets.dart';
 import 'package:masroofy/app/app.dart';
 import 'package:masroofy/app/di.dart';
+import 'package:masroofy/app/router.dart';
 import 'package:masroofy/core/theme/thmanyah_font_loader.dart';
+import 'package:masroofy/features/budgets/presentation/widgets/budget_alert_listener.dart';
 import 'package:masroofy/features/recurring_expenses/presentation/widgets/recurring_auto_generator.dart';
 import 'package:masroofy/shared/settings/settings_cubit.dart';
 
@@ -39,7 +41,16 @@ Future<void> main() async {
         child: LiquidGlassWidgets.wrap(
           brightnessResolver: Theme.maybeBrightnessOf,
           adaptiveQuality: true,
-          child: RecurringAutoGenerator(processDue: getIt(), child: const MasroofyApp()),
+          child: RecurringAutoGenerator(
+            processDue: getIt(),
+            child: BudgetAlertListener(
+              budgets: getIt(),
+              categories: getIt(),
+              takeAlerts: getIt(),
+              navigatorKey: rootNavigatorKey,
+              child: const MasroofyApp(),
+            ),
+          ),
         ),
       ),
     ),

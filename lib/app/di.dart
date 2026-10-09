@@ -5,6 +5,14 @@ import 'package:masroofy/features/analytics/data/datasources/analytics_local_dat
 import 'package:masroofy/features/analytics/data/repositories/analytics_repository_impl.dart';
 import 'package:masroofy/features/analytics/domain/repositories/i_analytics_repository.dart';
 import 'package:masroofy/features/analytics/presentation/cubits/analytics_cubit.dart';
+import 'package:masroofy/features/budgets/data/datasources/budget_local_datasource.dart';
+import 'package:masroofy/features/budgets/data/repositories/budget_repository_impl.dart';
+import 'package:masroofy/features/budgets/domain/repositories/i_budget_repository.dart';
+import 'package:masroofy/features/budgets/domain/usecases/delete_budget.dart';
+import 'package:masroofy/features/budgets/domain/usecases/save_budget.dart';
+import 'package:masroofy/features/budgets/domain/usecases/take_new_budget_alerts.dart';
+import 'package:masroofy/features/budgets/presentation/cubits/budget_form_cubit.dart';
+import 'package:masroofy/features/budgets/presentation/cubits/budget_list_cubit.dart';
 import 'package:masroofy/features/categories/data/datasources/category_local_datasource.dart';
 import 'package:masroofy/features/categories/data/datasources/reserved_category_names_asset.dart';
 import 'package:masroofy/features/categories/data/repositories/category_repository_impl.dart';
@@ -58,6 +66,7 @@ Future<void> configureDependencies({AppDatabase Function() openDatabase = AppDat
   _registerCategories();
   _registerExpenses();
   _registerRecurring();
+  _registerBudgets();
   _registerAnalytics();
 }
 
@@ -114,6 +123,24 @@ void _registerAnalytics() {
     ..registerLazySingleton<IAnalyticsRepository>(() => AnalyticsRepositoryImpl(getIt()))
     // param1: the device's first weekday (from SettingsCubit).
     ..registerFactoryParam<AnalyticsCubit, int, void>(
-      (firstWeekday, _) => AnalyticsCubit(getIt(), getIt(), firstWeekday: firstWeekday),
+      (firstWeekday, _) => AnalyticsCubit(getIt(), getIt(), getIt(), firstWeekday: firstWeekday),
+    );
+}
+
+void _registerBudgets() {
+  getIt
+    ..registerLazySingleton(() => BudgetLocalDatasource(getIt()))
+    ..registerLazySingleton<IBudgetRepository>(() => BudgetRepositoryImpl(getIt()))
+    ..registerLazySingleton(() => SaveBudget(getIt()))
+    ..registerLazySingleton(() => DeleteBudget(getIt()))
+    ..registerLazySingleton(() => TakeNewBudgetAlerts(getIt()))
+    // param1: the device's first weekday (from SettingsCubit).
+    ..registerFactoryParam<BudgetListCubit, int, void>(
+      (firstWeekday, _) => BudgetListCubit(getIt(), getIt(), getIt(), firstWeekday: firstWeekday),
+    )
+    // param1: the currency's fraction digits; param2: the id to edit, or null.
+    ..registerFactoryParam<BudgetFormCubit, int, int?>(
+      (fractionDigits, budgetId) =>
+          BudgetFormCubit(getIt(), getIt(), getIt(), fractionDigits: fractionDigits, budgetId: budgetId),
     );
 }

@@ -6,24 +6,32 @@ import 'package:masroofy/core/domain/local_date.dart';
 import 'package:masroofy/core/error/failures.dart';
 import 'package:masroofy/features/analytics/domain/repositories/i_analytics_repository.dart';
 import 'package:masroofy/features/analytics/presentation/cubits/analytics_state.dart';
+import 'package:masroofy/features/budgets/domain/repositories/i_budget_repository.dart';
 import 'package:masroofy/features/categories/domain/repositories/i_category_repository.dart';
 
 export 'package:masroofy/features/analytics/presentation/cubits/analytics_state.dart';
 
 /// The Analytics dashboard: live totals for the selected period.
 class AnalyticsCubit extends Cubit<AnalyticsState> {
-  AnalyticsCubit(this._analytics, this._categories, {required int firstWeekday, LocalDate Function()? today})
-    : _today = today ?? LocalDate.today,
-      super(
-        AnalyticsState(
-          period: AnalyticsPeriod.month,
-          range: DateRange.monthToDate((today ?? LocalDate.today)()),
-          firstWeekday: firstWeekday,
-        ),
-      );
+  AnalyticsCubit(
+    this._analytics,
+    this._categories,
+    this._budgets, {
+    required int firstWeekday,
+    LocalDate Function()? today,
+  }) : _today = today ?? LocalDate.today,
+       super(
+         AnalyticsState(
+           period: AnalyticsPeriod.month,
+           range: DateRange.monthToDate((today ?? LocalDate.today)()),
+           firstWeekday: firstWeekday,
+         ),
+       );
 
   final IAnalyticsRepository _analytics;
   final ICategoryRepository _categories;
+  final IBudgetRepository _budgets;
+  StreamSubscription<void>? _budgetsSub;
   final LocalDate Function() _today;
   StreamSubscription<void>? _categoriesSub;
   final List<StreamSubscription<void>> _rangeSubs = [];
@@ -38,6 +46,11 @@ class AnalyticsCubit extends Cubit<AnalyticsState> {
             (categories) => emit(state.copyWith(categories: {for (final c in categories) c.id: c})),
           ),
         );
+    // Budgets always show their own current period, whatever the range.
+    unawaited(_budgetsSub?.cancel());
+    _budgetsSub = _budgets
+        .watchProgress(_today(), firstWeekday: state.firstWeekday)
+        .listen((r) => r.match(_onFailure, (budgets) => emit(state.copyWith(budgets: budgets))));
     _subscribe();
   }
 
@@ -104,6 +117,7 @@ class AnalyticsCubit extends Cubit<AnalyticsState> {
   @override
   Future<void> close() async {
     await _categoriesSub?.cancel();
+    await _budgetsSub?.cancel();
     await Future.wait(_rangeSubs.map((s) => s.cancel()));
     return super.close();
   }

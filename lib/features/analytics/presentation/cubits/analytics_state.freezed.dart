@@ -17,7 +17,8 @@ mixin _$AnalyticsState {
  AnalyticsPeriod get period; DateRange get range;/// `DateTime.weekday` the week starts on, for weekly bars.
  int get firstWeekday; AnalyticsStatus get status; Money get total;/// Total of the comparison period; null until it has loaded.
  Money? get previousTotal; Map<int, Money> get byCategory; Map<LocalDate, Money> get daily;/// Every category (hidden ones too), by id.
- Map<int, Category> get categories; Failure? get failure;
+ Map<int, Category> get categories;/// Every budget in its own current week or month (ignores [range]).
+ List<BudgetProgress> get budgets; Failure? get failure;
 /// Create a copy of AnalyticsState
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -28,16 +29,16 @@ $AnalyticsStateCopyWith<AnalyticsState> get copyWith => _$AnalyticsStateCopyWith
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is AnalyticsState&&(identical(other.period, period) || other.period == period)&&(identical(other.range, range) || other.range == range)&&(identical(other.firstWeekday, firstWeekday) || other.firstWeekday == firstWeekday)&&(identical(other.status, status) || other.status == status)&&(identical(other.total, total) || other.total == total)&&(identical(other.previousTotal, previousTotal) || other.previousTotal == previousTotal)&&const DeepCollectionEquality().equals(other.byCategory, byCategory)&&const DeepCollectionEquality().equals(other.daily, daily)&&const DeepCollectionEquality().equals(other.categories, categories)&&(identical(other.failure, failure) || other.failure == failure));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is AnalyticsState&&(identical(other.period, period) || other.period == period)&&(identical(other.range, range) || other.range == range)&&(identical(other.firstWeekday, firstWeekday) || other.firstWeekday == firstWeekday)&&(identical(other.status, status) || other.status == status)&&(identical(other.total, total) || other.total == total)&&(identical(other.previousTotal, previousTotal) || other.previousTotal == previousTotal)&&const DeepCollectionEquality().equals(other.byCategory, byCategory)&&const DeepCollectionEquality().equals(other.daily, daily)&&const DeepCollectionEquality().equals(other.categories, categories)&&const DeepCollectionEquality().equals(other.budgets, budgets)&&(identical(other.failure, failure) || other.failure == failure));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,period,range,firstWeekday,status,total,previousTotal,const DeepCollectionEquality().hash(byCategory),const DeepCollectionEquality().hash(daily),const DeepCollectionEquality().hash(categories),failure);
+int get hashCode => Object.hash(runtimeType,period,range,firstWeekday,status,total,previousTotal,const DeepCollectionEquality().hash(byCategory),const DeepCollectionEquality().hash(daily),const DeepCollectionEquality().hash(categories),const DeepCollectionEquality().hash(budgets),failure);
 
 @override
 String toString() {
-  return 'AnalyticsState(period: $period, range: $range, firstWeekday: $firstWeekday, status: $status, total: $total, previousTotal: $previousTotal, byCategory: $byCategory, daily: $daily, categories: $categories, failure: $failure)';
+  return 'AnalyticsState(period: $period, range: $range, firstWeekday: $firstWeekday, status: $status, total: $total, previousTotal: $previousTotal, byCategory: $byCategory, daily: $daily, categories: $categories, budgets: $budgets, failure: $failure)';
 }
 
 
@@ -48,7 +49,7 @@ abstract mixin class $AnalyticsStateCopyWith<$Res>  {
   factory $AnalyticsStateCopyWith(AnalyticsState value, $Res Function(AnalyticsState) _then) = _$AnalyticsStateCopyWithImpl;
 @useResult
 $Res call({
- AnalyticsPeriod period, DateRange range, int firstWeekday, AnalyticsStatus status, Money total, Money? previousTotal, Map<int, Money> byCategory, Map<LocalDate, Money> daily, Map<int, Category> categories, Failure? failure
+ AnalyticsPeriod period, DateRange range, int firstWeekday, AnalyticsStatus status, Money total, Money? previousTotal, Map<int, Money> byCategory, Map<LocalDate, Money> daily, Map<int, Category> categories, List<BudgetProgress> budgets, Failure? failure
 });
 
 
@@ -65,7 +66,7 @@ class _$AnalyticsStateCopyWithImpl<$Res>
 
 /// Create a copy of AnalyticsState
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? period = null,Object? range = null,Object? firstWeekday = null,Object? status = null,Object? total = null,Object? previousTotal = freezed,Object? byCategory = null,Object? daily = null,Object? categories = null,Object? failure = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? period = null,Object? range = null,Object? firstWeekday = null,Object? status = null,Object? total = null,Object? previousTotal = freezed,Object? byCategory = null,Object? daily = null,Object? categories = null,Object? budgets = null,Object? failure = freezed,}) {
   return _then(_self.copyWith(
 period: null == period ? _self.period : period // ignore: cast_nullable_to_non_nullable
 as AnalyticsPeriod,range: null == range ? _self.range : range // ignore: cast_nullable_to_non_nullable
@@ -76,7 +77,8 @@ as Money,previousTotal: freezed == previousTotal ? _self.previousTotal : previou
 as Money?,byCategory: null == byCategory ? _self.byCategory : byCategory // ignore: cast_nullable_to_non_nullable
 as Map<int, Money>,daily: null == daily ? _self.daily : daily // ignore: cast_nullable_to_non_nullable
 as Map<LocalDate, Money>,categories: null == categories ? _self.categories : categories // ignore: cast_nullable_to_non_nullable
-as Map<int, Category>,failure: freezed == failure ? _self.failure : failure // ignore: cast_nullable_to_non_nullable
+as Map<int, Category>,budgets: null == budgets ? _self.budgets : budgets // ignore: cast_nullable_to_non_nullable
+as List<BudgetProgress>,failure: freezed == failure ? _self.failure : failure // ignore: cast_nullable_to_non_nullable
 as Failure?,
   ));
 }
@@ -174,10 +176,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( AnalyticsPeriod period,  DateRange range,  int firstWeekday,  AnalyticsStatus status,  Money total,  Money? previousTotal,  Map<int, Money> byCategory,  Map<LocalDate, Money> daily,  Map<int, Category> categories,  Failure? failure)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( AnalyticsPeriod period,  DateRange range,  int firstWeekday,  AnalyticsStatus status,  Money total,  Money? previousTotal,  Map<int, Money> byCategory,  Map<LocalDate, Money> daily,  Map<int, Category> categories,  List<BudgetProgress> budgets,  Failure? failure)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _AnalyticsState() when $default != null:
-return $default(_that.period,_that.range,_that.firstWeekday,_that.status,_that.total,_that.previousTotal,_that.byCategory,_that.daily,_that.categories,_that.failure);case _:
+return $default(_that.period,_that.range,_that.firstWeekday,_that.status,_that.total,_that.previousTotal,_that.byCategory,_that.daily,_that.categories,_that.budgets,_that.failure);case _:
   return orElse();
 
 }
@@ -195,10 +197,10 @@ return $default(_that.period,_that.range,_that.firstWeekday,_that.status,_that.t
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( AnalyticsPeriod period,  DateRange range,  int firstWeekday,  AnalyticsStatus status,  Money total,  Money? previousTotal,  Map<int, Money> byCategory,  Map<LocalDate, Money> daily,  Map<int, Category> categories,  Failure? failure)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( AnalyticsPeriod period,  DateRange range,  int firstWeekday,  AnalyticsStatus status,  Money total,  Money? previousTotal,  Map<int, Money> byCategory,  Map<LocalDate, Money> daily,  Map<int, Category> categories,  List<BudgetProgress> budgets,  Failure? failure)  $default,) {final _that = this;
 switch (_that) {
 case _AnalyticsState():
-return $default(_that.period,_that.range,_that.firstWeekday,_that.status,_that.total,_that.previousTotal,_that.byCategory,_that.daily,_that.categories,_that.failure);case _:
+return $default(_that.period,_that.range,_that.firstWeekday,_that.status,_that.total,_that.previousTotal,_that.byCategory,_that.daily,_that.categories,_that.budgets,_that.failure);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -215,10 +217,10 @@ return $default(_that.period,_that.range,_that.firstWeekday,_that.status,_that.t
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( AnalyticsPeriod period,  DateRange range,  int firstWeekday,  AnalyticsStatus status,  Money total,  Money? previousTotal,  Map<int, Money> byCategory,  Map<LocalDate, Money> daily,  Map<int, Category> categories,  Failure? failure)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( AnalyticsPeriod period,  DateRange range,  int firstWeekday,  AnalyticsStatus status,  Money total,  Money? previousTotal,  Map<int, Money> byCategory,  Map<LocalDate, Money> daily,  Map<int, Category> categories,  List<BudgetProgress> budgets,  Failure? failure)?  $default,) {final _that = this;
 switch (_that) {
 case _AnalyticsState() when $default != null:
-return $default(_that.period,_that.range,_that.firstWeekday,_that.status,_that.total,_that.previousTotal,_that.byCategory,_that.daily,_that.categories,_that.failure);case _:
+return $default(_that.period,_that.range,_that.firstWeekday,_that.status,_that.total,_that.previousTotal,_that.byCategory,_that.daily,_that.categories,_that.budgets,_that.failure);case _:
   return null;
 
 }
@@ -230,7 +232,7 @@ return $default(_that.period,_that.range,_that.firstWeekday,_that.status,_that.t
 
 
 class _AnalyticsState extends AnalyticsState {
-  const _AnalyticsState({required this.period, required this.range, required this.firstWeekday, this.status = AnalyticsStatus.loading, this.total = Money.zero, this.previousTotal, final  Map<int, Money> byCategory = const <int, Money>{}, final  Map<LocalDate, Money> daily = const <LocalDate, Money>{}, final  Map<int, Category> categories = const <int, Category>{}, this.failure}): _byCategory = byCategory,_daily = daily,_categories = categories,super._();
+  const _AnalyticsState({required this.period, required this.range, required this.firstWeekday, this.status = AnalyticsStatus.loading, this.total = Money.zero, this.previousTotal, final  Map<int, Money> byCategory = const <int, Money>{}, final  Map<LocalDate, Money> daily = const <LocalDate, Money>{}, final  Map<int, Category> categories = const <int, Category>{}, final  List<BudgetProgress> budgets = const <BudgetProgress>[], this.failure}): _byCategory = byCategory,_daily = daily,_categories = categories,_budgets = budgets,super._();
   
 
 @override final  AnalyticsPeriod period;
@@ -264,6 +266,15 @@ class _AnalyticsState extends AnalyticsState {
   return EqualUnmodifiableMapView(_categories);
 }
 
+/// Every budget in its own current week or month (ignores [range]).
+ final  List<BudgetProgress> _budgets;
+/// Every budget in its own current week or month (ignores [range]).
+@override@JsonKey() List<BudgetProgress> get budgets {
+  if (_budgets is EqualUnmodifiableListView) return _budgets;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableListView(_budgets);
+}
+
 @override final  Failure? failure;
 
 /// Create a copy of AnalyticsState
@@ -276,16 +287,16 @@ _$AnalyticsStateCopyWith<_AnalyticsState> get copyWith => __$AnalyticsStateCopyW
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _AnalyticsState&&(identical(other.period, period) || other.period == period)&&(identical(other.range, range) || other.range == range)&&(identical(other.firstWeekday, firstWeekday) || other.firstWeekday == firstWeekday)&&(identical(other.status, status) || other.status == status)&&(identical(other.total, total) || other.total == total)&&(identical(other.previousTotal, previousTotal) || other.previousTotal == previousTotal)&&const DeepCollectionEquality().equals(other._byCategory, _byCategory)&&const DeepCollectionEquality().equals(other._daily, _daily)&&const DeepCollectionEquality().equals(other._categories, _categories)&&(identical(other.failure, failure) || other.failure == failure));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _AnalyticsState&&(identical(other.period, period) || other.period == period)&&(identical(other.range, range) || other.range == range)&&(identical(other.firstWeekday, firstWeekday) || other.firstWeekday == firstWeekday)&&(identical(other.status, status) || other.status == status)&&(identical(other.total, total) || other.total == total)&&(identical(other.previousTotal, previousTotal) || other.previousTotal == previousTotal)&&const DeepCollectionEquality().equals(other._byCategory, _byCategory)&&const DeepCollectionEquality().equals(other._daily, _daily)&&const DeepCollectionEquality().equals(other._categories, _categories)&&const DeepCollectionEquality().equals(other._budgets, _budgets)&&(identical(other.failure, failure) || other.failure == failure));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,period,range,firstWeekday,status,total,previousTotal,const DeepCollectionEquality().hash(_byCategory),const DeepCollectionEquality().hash(_daily),const DeepCollectionEquality().hash(_categories),failure);
+int get hashCode => Object.hash(runtimeType,period,range,firstWeekday,status,total,previousTotal,const DeepCollectionEquality().hash(_byCategory),const DeepCollectionEquality().hash(_daily),const DeepCollectionEquality().hash(_categories),const DeepCollectionEquality().hash(_budgets),failure);
 
 @override
 String toString() {
-  return 'AnalyticsState(period: $period, range: $range, firstWeekday: $firstWeekday, status: $status, total: $total, previousTotal: $previousTotal, byCategory: $byCategory, daily: $daily, categories: $categories, failure: $failure)';
+  return 'AnalyticsState(period: $period, range: $range, firstWeekday: $firstWeekday, status: $status, total: $total, previousTotal: $previousTotal, byCategory: $byCategory, daily: $daily, categories: $categories, budgets: $budgets, failure: $failure)';
 }
 
 
@@ -296,7 +307,7 @@ abstract mixin class _$AnalyticsStateCopyWith<$Res> implements $AnalyticsStateCo
   factory _$AnalyticsStateCopyWith(_AnalyticsState value, $Res Function(_AnalyticsState) _then) = __$AnalyticsStateCopyWithImpl;
 @override @useResult
 $Res call({
- AnalyticsPeriod period, DateRange range, int firstWeekday, AnalyticsStatus status, Money total, Money? previousTotal, Map<int, Money> byCategory, Map<LocalDate, Money> daily, Map<int, Category> categories, Failure? failure
+ AnalyticsPeriod period, DateRange range, int firstWeekday, AnalyticsStatus status, Money total, Money? previousTotal, Map<int, Money> byCategory, Map<LocalDate, Money> daily, Map<int, Category> categories, List<BudgetProgress> budgets, Failure? failure
 });
 
 
@@ -313,7 +324,7 @@ class __$AnalyticsStateCopyWithImpl<$Res>
 
 /// Create a copy of AnalyticsState
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? period = null,Object? range = null,Object? firstWeekday = null,Object? status = null,Object? total = null,Object? previousTotal = freezed,Object? byCategory = null,Object? daily = null,Object? categories = null,Object? failure = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? period = null,Object? range = null,Object? firstWeekday = null,Object? status = null,Object? total = null,Object? previousTotal = freezed,Object? byCategory = null,Object? daily = null,Object? categories = null,Object? budgets = null,Object? failure = freezed,}) {
   return _then(_AnalyticsState(
 period: null == period ? _self.period : period // ignore: cast_nullable_to_non_nullable
 as AnalyticsPeriod,range: null == range ? _self.range : range // ignore: cast_nullable_to_non_nullable
@@ -324,7 +335,8 @@ as Money,previousTotal: freezed == previousTotal ? _self.previousTotal : previou
 as Money?,byCategory: null == byCategory ? _self._byCategory : byCategory // ignore: cast_nullable_to_non_nullable
 as Map<int, Money>,daily: null == daily ? _self._daily : daily // ignore: cast_nullable_to_non_nullable
 as Map<LocalDate, Money>,categories: null == categories ? _self._categories : categories // ignore: cast_nullable_to_non_nullable
-as Map<int, Category>,failure: freezed == failure ? _self.failure : failure // ignore: cast_nullable_to_non_nullable
+as Map<int, Category>,budgets: null == budgets ? _self._budgets : budgets // ignore: cast_nullable_to_non_nullable
+as List<BudgetProgress>,failure: freezed == failure ? _self.failure : failure // ignore: cast_nullable_to_non_nullable
 as Failure?,
   ));
 }

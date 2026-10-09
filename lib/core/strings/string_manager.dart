@@ -150,9 +150,31 @@ class StringManager {
   // ── Budgets ──
   static String get budgetsTitle => 'budgets.title'.tr();
   static String get addBudget => 'budgets.add'.tr();
+  static String get editBudget => 'budgets.edit'.tr();
   static String overBudget(String amount) => 'budgets.over_budget'.tr(args: [amount]);
   static String budgetRemaining(String amount) => 'budgets.remaining'.tr(args: [amount]);
-  static String budgetExceeded(String category) => 'budgets.exceeded_alert'.tr(args: [category]);
+
+  /// "EGP 1,200 of EGP 2,000".
+  static String budgetOfLimit(String spent, String limit) => 'budgets.of_limit'.tr(args: [spent, limit]);
+
+  /// `Weekly` / `Monthly` by period name.
+  static String budgetPeriod(String name) => 'budgets.$name'.tr();
+  static String get budgetPeriodLabel => 'budgets.period'.tr();
+  static String get budgetLimitLabel => 'budgets.limit'.tr();
+  static String get emptyBudgets => 'budgets.empty'.tr();
+  static String get emptyBudgetsHint => 'budgets.empty_hint'.tr();
+  static String get addFirstBudget => 'budgets.add_first'.tr();
+  static String get allCategoriesBudgeted => 'budgets.all_budgeted'.tr();
+  static String get budgetCategoryLocked => 'budgets.category_locked'.tr();
+  static String deleteBudgetTitle(String category) => 'budgets.delete_title'.tr(args: [category]);
+  static String get deleteBudgetBody => 'budgets.delete_body'.tr();
+  static String get saveBudget => 'budgets.save'.tr();
+  static String get budgetExceededTitle => 'budgets.exceeded_title'.tr();
+  static String get budgetExceededBody => 'budgets.exceeded_body'.tr();
+  static String get gotIt => 'budgets.got_it'.tr();
+
+  /// Screen-reader status: `safe`, `warning` or `exceeded`.
+  static String budgetStatus(String name) => 'budgets.status_$name'.tr();
 
   // ── Settings ──
   static String get settingsTitle => 'settings.title'.tr();

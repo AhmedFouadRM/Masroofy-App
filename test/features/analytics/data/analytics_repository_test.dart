@@ -54,10 +54,11 @@ void main() {
 
   test('re-emits when an expense is added', () async {
     final totals = repository.watchTotal(october).map(first);
-    expectLater(totals, emitsInOrder([const Money(1800), const Money(1900)]));
+    final done = expectLater(totals, emitsInOrder([const Money(1800), const Money(1900)]));
     await Future<void>.delayed(Duration.zero);
     await db
         .into(db.expensesTable)
         .insert(ExpensesTableCompanion.insert(amountMinor: 100, categoryId: food, date: LocalDate(2026, 10, 9)));
+    await done;
   });
 }
