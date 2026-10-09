@@ -32,6 +32,8 @@ class StringManager {
   static String expenseDeleted(String title) => 'expenses.deleted'.tr(args: [title]);
   static String get emptyExpenses => 'expenses.empty'.tr();
   static String get emptyExpensesHint => 'expenses.empty_hint'.tr();
+  static String get emptyTransactions => 'expenses.empty_all'.tr();
+  static String get emptyTransactionsHint => 'expenses.empty_all_hint'.tr();
   static String get total => 'expenses.total'.tr();
   static String get filter => 'expenses.filter'.tr();
   static String get spentThisWeek => 'expenses.spent_week'.tr();

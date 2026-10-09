@@ -169,6 +169,8 @@ class _Form extends StatelessWidget {
           ),
         _Heading(StringManager.categoryIcon),
         GridView.count(
+          // Without it, the grid inherits the top inset meant for the page.
+          padding: EdgeInsets.zero,
           crossAxisCount: 6,
           mainAxisSpacing: AppSpacing.sm,
           crossAxisSpacing: AppSpacing.sm,

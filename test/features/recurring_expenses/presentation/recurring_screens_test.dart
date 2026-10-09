@@ -111,7 +111,7 @@ void main() {
         ),
       );
 
-      final amount = tester.widget<Text>(find.text('\u2066+EGP 5,000\u2069'));
+      final amount = tester.widget<Text>(find.text('+EGP 5,000'));
       expect(amount.style!.color, MasroofyColors.light.textPositive);
     });
 

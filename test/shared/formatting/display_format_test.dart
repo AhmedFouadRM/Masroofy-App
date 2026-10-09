@@ -33,18 +33,18 @@ void main() {
     await pumpAmounts(tester);
 
     expect(shown, [
-      '$_lri+EGP 5,000$_pdi',
-      '$_lri−EGP 200$_pdi',
-      '${_lri}EGP 0$_pdi',
-      '${_lri}EGP 5,000$_pdi',
-      '$_lri−EGP 200$_pdi',
+      '+EGP 5,000',
+      '−EGP 200',
+      'EGP 0',
+      'EGP 5,000',
+      '−EGP 200',
     ]);
   });
 
   testWidgets('signedMoney in Arabic keeps the sign first, with Eastern digits', (tester) async {
     await pumpAmounts(tester, locale: const Locale('ar'));
 
-    expect(shown[0], '$_lri+٥٬٠٠٠ ج.م.$_pdi');
-    expect(shown[1], '$_lri−٢٠٠ ج.م.$_pdi');
+    expect(shown[0], '$_lri+٥٬٠٠٠$_pdi ج.م.');
+    expect(shown[1], '$_lri−٢٠٠$_pdi ج.م.');
   });
 }

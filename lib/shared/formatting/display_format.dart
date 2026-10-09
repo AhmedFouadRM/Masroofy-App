@@ -36,12 +36,15 @@ extension DisplayFormat on BuildContext {
 
   /// An amount with its sign before the number in both directions:
   /// `+EGP 5,000` / `+٥٬٠٠٠ ج.م.`, `−EGP 200` for a negative one. Zero has no
-  /// sign, and [plus] `false` leaves positive amounts bare. The text sits in an
-  /// LTR isolate so the sign doesn't jump to the other end in Arabic.
+  /// sign, and [plus] `false` leaves positive amounts bare. In Arabic only
+  /// the sign and number sit in an LTR isolate, so the sign stays on the
+  /// number and the currency follows it as in unsigned amounts.
   String signedMoney(Money amount, {bool plus = true}) {
     final sign = amount.isNegative ? '−' : (plus && amount.isPositive ? '+' : '');
-    final text = money(amount.isNegative ? -amount : amount);
-    return '\u2066$sign$text\u2069';
+    final magnitude = amount.isNegative ? -amount : amount;
+    if (sign.isEmpty) return money(magnitude);
+    if (locale.languageCode == 'ar') return '\u2066$sign${this.amount(magnitude)}\u2069 ${currency.symbolAr}';
+    return '$sign${money(magnitude)}';
   }
 
   /// An amount without the currency: `1,320` / `١٬٣٢٠`.

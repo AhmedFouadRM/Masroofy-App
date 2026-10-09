@@ -175,8 +175,9 @@ class _ExpenseListScreenState extends State<ExpenseListScreen> {
                   )
                 : EmptyStateWidget(
                     icon: Symbols.receipt_long_rounded,
-                    title: StringManager.emptyExpenses,
-                    message: StringManager.emptyExpensesHint,
+                    // With All selected the list holds income too.
+                    title: state.kind == null ? StringManager.emptyTransactions : StringManager.emptyExpenses,
+                    message: state.kind == null ? StringManager.emptyTransactionsHint : StringManager.emptyExpensesHint,
                     actionLabel: StringManager.addFirstExpense,
                     actionIcon: Symbols.add_rounded,
                     onAction: () => context.push(RoutePaths.newExpense),

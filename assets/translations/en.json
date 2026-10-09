@@ -18,6 +18,8 @@
     "deleted": "“{}” deleted",
     "empty": "No expenses yet",
     "empty_hint": "Tap + to add your first expense",
+    "empty_all": "No transactions yet",
+    "empty_all_hint": "Tap + to add an expense, or your income",
     "total": "Total",
     "filter": "Filter",
     "spent_week": "Spent this week",

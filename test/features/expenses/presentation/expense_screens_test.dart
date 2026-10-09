@@ -162,15 +162,15 @@ void main() {
       await pump(tester, all);
 
       expect(find.text('Left this month'), findsOneWidget);
-      expect(find.text('${_lri}EGP 4,764.50$_pdi'), findsOneWidget, reason: 'no plus sign on a balance');
+      expect(find.text('EGP 4,764.50'), findsOneWidget, reason: 'no plus sign on a balance');
       expect(find.text('In'), findsOneWidget);
       expect(find.text('Out'), findsOneWidget);
       expect(find.text('EGP 5,000'), findsOneWidget);
       expect(find.text('EGP 235.50'), findsOneWidget);
       expect(find.textContaining('Spent this month'), findsNothing);
       // Day headers: the day's net with a sign.
-      expect(find.text('$_lri+EGP 4,850$_pdi'), findsOneWidget);
-      expect(find.text('$_lri\u2212EGP 85.50$_pdi'), findsOneWidget);
+      expect(find.text('+EGP 4,850'), findsOneWidget);
+      expect(find.text('\u2212EGP 85.50'), findsOneWidget);
     });
 
     testWidgets('a negative balance keeps the label and shows a minus sign', (tester) async {
@@ -182,13 +182,13 @@ void main() {
       );
 
       expect(find.text('Left this month'), findsOneWidget);
-      expect(find.text('$_lri\u2212EGP 200$_pdi'), findsOneWidget);
+      expect(find.text('\u2212EGP 200'), findsOneWidget);
     });
 
     testWidgets('an income row shows +EGP 5,000 in the positive colour', (tester) async {
       await pump(tester, all);
 
-      final amount = tester.widget<Text>(find.text('$_lri+EGP 5,000$_pdi'));
+      final amount = tester.widget<Text>(find.text('+EGP 5,000'));
       expect(amount.style!.color, MasroofyColors.light.textPositive);
       expect(find.text('Salary'), findsWidgets);
       // The expense rows stay unsigned.
@@ -257,8 +257,8 @@ void main() {
       expect(find.text('خارج'), findsOneWidget);
       expect(find.text('الدخل'), findsOneWidget);
       expect(find.text('المصروفات'), findsOneWidget);
-      expect(find.text('$_lri+٥٬٠٠٠ ج.م.$_pdi'), findsOneWidget);
-      expect(Directionality.of(tester.element(find.text('$_lri+٥٬٠٠٠ ج.م.$_pdi'))), TextDirection.rtl);
+      expect(find.text('$_lri+٥٬٠٠٠$_pdi ج.م.'), findsOneWidget);
+      expect(Directionality.of(tester.element(find.text('$_lri+٥٬٠٠٠$_pdi ج.م.'))), TextDirection.rtl);
     });
 
     testWidgets('Arabic: the Income filter and its empty state', (tester) async {

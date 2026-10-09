@@ -184,7 +184,7 @@ void main() {
 
       expect(find.text('Income vs spending'), findsOneWidget);
       expect(find.text('EGP 5,000'), findsOneWidget);
-      expect(find.text('\u2066EGP 4,000\u2069'), findsOneWidget);
+      expect(find.text('EGP 4,000'), findsOneWidget);
       expect(find.text('Savings rate'), findsOneWidget);
       expect(find.text('80%'), findsOneWidget);
     });
@@ -209,7 +209,7 @@ void main() {
         ),
       );
 
-      expect(find.text('\u2066−EGP 800\u2069'), findsOneWidget);
+      expect(find.text('−EGP 800'), findsOneWidget);
     });
 
     testWidgets('the breakdown switch asks the cubit', (tester) async {
